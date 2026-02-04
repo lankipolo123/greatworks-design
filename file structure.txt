@@ -1,0 +1,48 @@
+coworking-space/
+├── backend/
+│   ├── .env
+│   ├── .gitignore
+│   ├── package.json
+│   ├── server.js
+│   ├── db.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── upload.js
+│   └── routes/
+│       ├── auth.js
+│       ├── roomTypes.js
+│       ├── rooms.js
+│       ├── bookings.js
+│       └── payments.js
+│
+└── frontend/
+    ├── package.json
+    ├── index.html
+    ├── vite.config.js
+    └── src/
+        ├── app.js
+        ├── router.js
+        ├── styles/
+        │   └── main.css
+        ├── services/
+        │   └── api.js
+        ├── components/
+        │   ├── auth/
+        │   │   ├── login-form.js
+        │   │   └── register-form.js
+        │   ├── admin/
+        │   │   ├── admin-dashboard.js
+        │   │   ├── room-type-list.js
+        │   │   ├── room-type-form.js
+        │   │   ├── room-list.js
+        │   │   ├── room-form.js
+        │   │   ├── booking-list.js
+        │   │   └── payment-confirmations.js
+        │   └── customer/
+        │       ├── customer-dashboard.js
+        │       ├── room-browser.js
+        │       ├── booking-form.js
+        │       ├── my-bookings.js
+        │       └── payment-upload.js
+        └── utils/
+            └── helpers.js

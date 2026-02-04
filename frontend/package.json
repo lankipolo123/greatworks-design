@@ -1,0 +1,19 @@
+{
+    "name": "coworking-frontend",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "dependencies": {
+        "@fullcalendar/common": "^5.11.5",
+        "@fullcalendar/core": "^6.1.20",
+        "@fullcalendar/daygrid": "^6.1.20",
+        "flatpickr": "^4.6.13",
+        "lit": "^3.1.0"
+    },
+    "devDependencies": {
+        "vite": "^5.0.0"
+    }
+}

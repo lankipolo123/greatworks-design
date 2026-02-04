@@ -1,0 +1,17 @@
+coworking-frontend/
+├── package.json
+├── index.html
+├── vite.config.js
+└── src/
+    ├── app.js
+    ├── styles.css
+    ├──assets/
+    ├──components/
+    ├──configs/
+    ├── layouts/
+    ├──mock-datas
+    ├──services/
+    ├──pages/ admin & customer
+    ├──styles/
+    ├──utility/
+    
