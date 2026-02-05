@@ -2,7 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import { TooltipManager } from '/src/components/tool-tips.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import '/src/components/reusable-dialog.js';
+import '/src/components/app-dialog.js';
 
 class AppSidebar extends LitElement {
   static properties = {
@@ -70,11 +70,11 @@ class AppSidebar extends LitElement {
     }
 
     .nav-item:hover {
-      color: #8d1409;
+      color: #ff0707d7;
     }
 
     .nav-item.active {
-      color: #ff0707d7;
+      color: #8d1409;
     }
 
     .nav-icon {
@@ -186,8 +186,8 @@ class AppSidebar extends LitElement {
       <div class="logo">
         <img
           src=${this.collapsed
-        ? '/src/assets/logoCollapse.svg'
-        : '/src/assets/logoExtended.svg'}
+        ? '/assets/logoCollapse.svg'
+        : '/assets/logoExtended.svg'}
           alt="CoWork Logo"
         />
       </div>
@@ -218,19 +218,20 @@ class AppSidebar extends LitElement {
         <span class="logout-text">Logout</span>
       </div>
 
-            <reusable-dialog
+            <app-dialog
         .isOpen=${this.showLogoutDialog}
         title="Confirm Logout"
-        description="Are you sure you want to log out?"
         cancelText="Cancel"
         confirmText="Sign out"
         confirmColor="danger"
+         styleMode="clean"
         size="small"
         .closeOnOverlay=${false}
         @dialog-confirm=${this.handleLogoutConfirm}
         @dialog-cancel=${this.handleLogoutCancel}
       >
-      </reusable-dialog>
+      Are you sure you want to log out?
+      </app-dialog>
     `;
   }
 }

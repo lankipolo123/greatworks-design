@@ -1,3 +1,7 @@
+// src/configs/reservation-config.js
+import { html } from 'lit';
+import '/src/components/badge-component.js';
+
 export const reservationTableConfig = {
     columns: [
         {
@@ -14,7 +18,18 @@ export const reservationTableConfig = {
         },
         {
             key: 'status',
-            label: 'Status'
+            label: 'Status',
+            render: (value) => {
+                const variant = value?.toLowerCase() === 'confirmed' || value?.toLowerCase() === 'ongoing' ? 'confirmed' :
+                    value?.toLowerCase() === 'completed' ? 'completed' :
+                        value?.toLowerCase() === 'pending' || value?.toLowerCase() === 'upcoming' ? 'pending' :
+                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
+                return html`
+                    <badge-component variant="${variant}" size="small">
+                        ${value}
+                    </badge-component>
+                `;
+            }
         },
         {
             key: 'date',
@@ -24,7 +39,6 @@ export const reservationTableConfig = {
         {
             key: 'time',
             label: 'Time',
-
         },
     ],
 

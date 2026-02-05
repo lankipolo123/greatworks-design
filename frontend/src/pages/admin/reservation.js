@@ -8,12 +8,15 @@ import '/src/components/pagination.js';
 import '/src/components/tabs-component.js';
 import '/src/components/search-bar.js';
 import '/src/components/app-button.js';
+import '/src/components/app-dialog.js';
+import '/src/components/book-someone-form.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/tabs-wrapper.js';
 import '/src/layouts/search-wrapper.js';
 import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
+import { toast } from '/src/service/toast-widget.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -22,7 +25,12 @@ class AdminReservation extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     activeTab: { type: String },
-    searchValue: { type: String }
+    searchValue: { type: String },
+    showAddDialog: { type: Boolean },
+    showExportDialog: { type: Boolean },
+    showDetailsDialog: { type: Boolean },
+    selectedReservation: { type: Object },
+    reservationLoading: { type: Boolean }
   };
 
   static styles = css`
@@ -48,6 +56,11 @@ class AdminReservation extends LitElement {
     this.itemsPerPage = 10;
     this.activeTab = 'all';
     this.searchValue = '';
+    this.showAddDialog = false;
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedReservation = null;
+    this.reservationLoading = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Upcoming' },
@@ -120,15 +133,67 @@ class AdminReservation extends LitElement {
 
   handleTableAction(e) {
     const { action, item } = e.detail;
-    console.log('Reservation action:', action, item);
+    if (action === 'view') {
+      this.selectedReservation = item;
+      this.showDetailsDialog = true;
+    }
   }
 
   handleAddReservation() {
-    console.log('Add new reservation');
+    this.showAddDialog = true;
   }
 
   handleExport() {
-    console.log('Export reservations');
+    this.showExportDialog = true;
+  }
+
+  handleExportSelect(e) {
+    console.log('Export reservations as:', e.detail.format);
+    this.showExportDialog = false;
+  }
+
+  handleDialogClose() {
+    this.showAddDialog = false;
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedReservation = null;
+  }
+
+  handleAddReservationSubmit(e) {
+    e.preventDefault();
+    this.reservationLoading = true;
+
+    const formData = new FormData(e.target);
+    const data = {
+      userName: formData.get('userName'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      date: formData.get('date'),
+      time: formData.get('time'),
+      duration: formData.get('duration'),
+      roomType: formData.get('roomType'),
+      guests: formData.get('guests'),
+      notes: formData.get('notes')
+    };
+
+    console.log('Create reservation data:', data);
+
+    // TODO: Call API to create reservation
+    // Example: await fetch('/api/reservations', { method: 'POST', body: JSON.stringify(data) })
+
+    setTimeout(() => {
+      this.reservationLoading = false;
+      toast.success('Reservation created successfully!');
+      this.showAddDialog = false;
+
+      // Optionally add to local array for immediate UI update
+      // this.reservation = [...this.reservation, newReservation];
+      // this.updatePagination();
+    }, 1000);
+  }
+
+  handleCancelDialog() {
+    this.showAddDialog = false;
   }
 
   render() {
@@ -184,6 +249,67 @@ class AdminReservation extends LitElement {
           </pagination-component>
         </pagination-wrapper>
       </content-card>
+
+      <app-dialog
+        .isOpen=${this.showAddDialog}
+        title="Add Reservation"
+        description="Fill in the reservation details"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <book-someone-form>
+          <app-button 
+            slot="actions" 
+            type="warning" 
+            size="medium" 
+            @click=${this.handleCancelDialog} 
+            ?disabled=${this.reservationLoading}>
+            Cancel
+          </app-button>
+          <app-button 
+            slot="actions" 
+            type="primary" 
+            size="medium" 
+            @click=${(e) => {
+        const form = this.shadowRoot.querySelector('book-someone-form').shadowRoot.getElementById('book-form');
+        if (form.checkValidity()) {
+          this.handleAddReservationSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else {
+          form.reportValidity();
+        }
+      }} 
+            ?disabled=${this.reservationLoading}>
+            ${this.reservationLoading ? 'Creating...' : 'Create Reservation'}
+          </app-button>
+        </book-someone-form>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showExportDialog}
+        title="Export Reservations"
+        description="Select export format and date range"
+        mode="export"
+        size="medium"
+        styleMode="clean"
+        .closeOnOverlay=${false}
+        @export-select=${this.handleExportSelect}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showDetailsDialog}
+        title="Reservation Details"
+        mode="details"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        .detailsData=${this.selectedReservation}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
     `;
   }
 }

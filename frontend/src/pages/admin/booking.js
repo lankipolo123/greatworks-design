@@ -6,6 +6,9 @@ import '/src/components/today-btn.js';
 import '/src/components/content-card.js';
 import '/src/components/pagination.js';
 import '/src/components/floating-action-button.js';
+import '/src/components/app-dialog.js';
+import '/src/components/book-someone-form.js';
+import '/src/components/create-room-form.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
 import { mockReservations } from '/src/mock-datas/mock-reservation.js';
@@ -25,7 +28,13 @@ class AdminBooking extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     branches: { type: Array },
-    selectedBranch: { type: String }
+    selectedBranch: { type: String },
+    showBookDialog: { type: Boolean },
+    showRoomDialog: { type: Boolean },
+    showExportDialog: { type: Boolean },
+    roomImagePreview: { type: String },
+    bookLoading: { type: Boolean },
+    roomLoading: { type: Boolean }
   };
 
   static styles = css`
@@ -95,6 +104,14 @@ class AdminBooking extends LitElement {
       { value: 'branch1', label: 'Branch 1' },
     ];
     this.selectedBranch = 'all';
+
+    // Dialog states
+    this.showBookDialog = false;
+    this.showRoomDialog = false;
+    this.showExportDialog = false;
+    this.roomImagePreview = null;
+    this.bookLoading = false;
+    this.roomLoading = false;
   }
 
   get paginatedBookings() {
@@ -172,14 +189,105 @@ class AdminBooking extends LitElement {
     const { action, label } = e.detail;
 
     if (action === 'book-someone') {
+      this.showBookDialog = true;
       toast.success('Opening booking form...');
-      console.log('Book someone clicked');
-      // TODO: Open booking modal/form here
     } else if (action === 'create-room') {
+      this.showRoomDialog = true;
       toast.success('Opening room creation form...');
-      console.log('Create room clicked');
-      // TODO: Open room creation modal/form here
     }
+  }
+
+  handleExportSelect(e) {
+    const { format, fromDate, toDate } = e.detail;
+    console.log('Export bookings:', { format, fromDate, toDate });
+    toast.success(`Exporting as ${format.toUpperCase()}...`);
+    // TODO: Call API to export data
+    this.showExportDialog = false;
+  }
+
+  handleRoomImageUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        this.roomImagePreview = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  handleBookSomeoneSubmit(e) {
+    e.preventDefault();
+    this.bookLoading = true;
+
+    const formData = new FormData(e.target);
+    const data = {
+      userName: formData.get('userName'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      date: formData.get('date'),
+      time: formData.get('time'),
+      duration: formData.get('duration'),
+      roomType: formData.get('roomType'),
+      guests: formData.get('guests'),
+      notes: formData.get('notes')
+    };
+
+    console.log('Book someone data:', data);
+
+    // TODO: Call API to create booking
+    // Example: await fetch('/api/bookings', { method: 'POST', body: JSON.stringify(data) })
+
+    setTimeout(() => {
+      this.bookLoading = false;
+      toast.success('Booking created successfully!');
+      this.showBookDialog = false;
+    }, 1000);
+  }
+
+  handleCreateRoomSubmit(e) {
+    e.preventDefault();
+    this.roomLoading = true;
+
+    const formData = new FormData(e.target);
+    const amenities = formData.getAll('amenities');
+
+    const data = {
+      roomName: formData.get('roomName'),
+      roomType: formData.get('roomType'),
+      capacity: formData.get('capacity'),
+      pricePerHour: formData.get('pricePerHour'),
+      floor: formData.get('floor'),
+      location: formData.get('location'),
+      amenities: amenities,
+      description: formData.get('description'),
+      image: this.roomImagePreview
+    };
+
+    console.log('Create room data:', data);
+
+    // TODO: Call API to create room
+    // Example: await fetch('/api/rooms', { method: 'POST', body: JSON.stringify(data) })
+
+    setTimeout(() => {
+      this.roomLoading = false;
+      toast.success('Room created successfully!');
+      this.showRoomDialog = false;
+      this.roomImagePreview = null;
+    }, 1000);
+  }
+
+  handleCancelDialog() {
+    this.showBookDialog = false;
+    this.showRoomDialog = false;
+    this.roomImagePreview = null;
+  }
+
+  handleDialogClose() {
+    this.showBookDialog = false;
+    this.showRoomDialog = false;
+    this.showExportDialog = false;
+    this.roomImagePreview = null;
   }
 
   render() {
@@ -229,6 +337,75 @@ class AdminBooking extends LitElement {
         .options=${bookingFabOptions}
         @fab-option-click=${this.handleFabAction}>
       </floating-action-button>
+
+      <app-dialog
+        .isOpen=${this.showBookDialog}
+        title="Book Someone"
+        description="Fill in the booking details"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <book-someone-form>
+          <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
+            Cancel
+          </app-button>
+          <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
+        const form = this.shadowRoot.querySelector('book-someone-form').shadowRoot.getElementById('book-form');
+        if (form.checkValidity()) {
+          this.handleBookSomeoneSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else {
+          form.reportValidity();
+        }
+      }} ?disabled=${this.bookLoading}>
+            ${this.bookLoading ? 'Creating...' : 'Create Booking'}
+          </app-button>
+        </book-someone-form>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showRoomDialog}
+        title="Create New Room"
+        description="Enter room details and upload image"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <create-room-form @change=${(e) => {
+        if (e.target.name === 'roomImage') this.handleRoomImageUpload(e);
+      }}>
+          ${this.roomImagePreview ? html`<img slot="image-preview" src="${this.roomImagePreview}" style="margin-top: 12px; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;" alt="Room preview" />` : ''}
+          <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.roomLoading}>
+            Cancel
+          </app-button>
+          <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
+        const form = this.shadowRoot.querySelector('create-room-form').shadowRoot.getElementById('room-form');
+        if (form.checkValidity()) {
+          this.handleCreateRoomSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else {
+          form.reportValidity();
+        }
+      }} ?disabled=${this.roomLoading}>
+            ${this.roomLoading ? 'Creating...' : 'Create Room'}
+          </app-button>
+        </create-room-form>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showExportDialog}
+        title="Export Bookings"
+        description="Select export format and date range"
+        mode="export"
+        size="medium"
+        styleMode="clean"
+        .closeOnOverlay=${false}
+        @export-select=${this.handleExportSelect}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
     `;
   }
 }

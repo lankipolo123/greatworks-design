@@ -7,6 +7,7 @@ import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
 import '@/components/app-button.js';
+import '@/components/app-dialog.js';
 import '@/layouts/header-controls.js';
 import '@/layouts/tabs-wrapper.js';
 import '@/layouts/search-wrapper.js';
@@ -22,7 +23,10 @@ class AdminTicket extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     activeTab: { type: String },
-    searchValue: { type: String }
+    searchValue: { type: String },
+    showExportDialog: { type: Boolean },
+    showTicketDialog: { type: Boolean },
+    selectedTicket: { type: Object }
   };
 
   static styles = css`
@@ -48,6 +52,9 @@ class AdminTicket extends LitElement {
     this.itemsPerPage = 10;
     this.activeTab = 'all';
     this.searchValue = '';
+    this.showExportDialog = false;
+    this.showTicketDialog = false;
+    this.selectedTicket = null;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'pending', label: 'Pending' },
@@ -115,7 +122,10 @@ class AdminTicket extends LitElement {
 
   handleTableAction(e) {
     const { action, item } = e.detail;
-    if (action === 'view') console.log('View log:', item);
+    if (action === 'view') {
+      this.selectedTicket = item;
+      this.showTicketDialog = true;
+    }
   }
 
   handlePageChange(e) {
@@ -123,7 +133,42 @@ class AdminTicket extends LitElement {
   }
 
   handleExport() {
-    console.log('Export tickets');
+    this.showExportDialog = true;
+  }
+
+  handleExportSelect(e) {
+    console.log('Export tickets as:', e.detail.format);
+    this.showExportDialog = false;
+  }
+
+  handleTicketAction(e) {
+    const { action, ticket } = e.detail;
+    console.log(`Ticket ${action}:`, ticket);
+
+    // Update ticket status based on action
+    if (action === 'accept') {
+      // Update ticket status to ongoing
+      const index = this.tickets.findIndex(t => t.id === ticket.id);
+      if (index !== -1) {
+        this.tickets[index].status = 'ongoing';
+        this.requestUpdate();
+      }
+    } else if (action === 'close') {
+      // Update ticket status to completed
+      const index = this.tickets.findIndex(t => t.id === ticket.id);
+      if (index !== -1) {
+        this.tickets[index].status = 'completed';
+        this.requestUpdate();
+      }
+    }
+
+    this.showTicketDialog = false;
+  }
+
+  handleDialogClose() {
+    this.showExportDialog = false;
+    this.showTicketDialog = false;
+    this.selectedTicket = null;
   }
 
   render() {
@@ -173,6 +218,33 @@ class AdminTicket extends LitElement {
           </pagination-component>
         </pagination-wrapper>
       </content-card>
+
+      <!-- Export Dialog -->
+      <app-dialog
+        .isOpen=${this.showExportDialog}
+        title="Export Tickets"
+        description="Select export format and date range"
+        mode="export"
+        size="medium"
+        styleMode="clean"
+        .closeOnOverlay=${false}
+        @export-select=${this.handleExportSelect}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <!-- Ticket View Dialog -->
+      <app-dialog
+        .isOpen=${this.showTicketDialog}
+        .title=${this.selectedTicket?.subject || 'Ticket Details'}
+        mode="ticket"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        .ticketData=${this.selectedTicket}
+        @ticket-action=${this.handleTicketAction}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
     `;
   }
 }

@@ -2,21 +2,26 @@
 import { LitElement, html, css } from 'lit';
 
 class InputField extends LitElement {
-    static properties = {
-        label: { type: String },
-        type: { type: String },
-        name: { type: String },
-        placeholder: { type: String },
-        required: { type: Boolean },
-        disabled: { type: Boolean },
-        value: { type: String },
-        error: { type: String }
-    };
+  static properties = {
+    label: { type: String },
+    type: { type: String },
+    name: { type: String },
+    placeholder: { type: String },
+    required: { type: Boolean },
+    disabled: { type: Boolean },
+    value: { type: String },
+    error: { type: String },
+    variant: { type: String }
+  };
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
       margin-bottom: 1.5rem;
+    }
+
+    :host([variant="compact"]) {
+      margin-bottom: 0;
     }
 
     .form-group {
@@ -63,26 +68,33 @@ class InputField extends LitElement {
     }
   `;
 
-    constructor() {
-        super();
-        this.type = 'text';
-        this.required = false;
-        this.disabled = false;
-        this.value = '';
-        this.error = '';
-    }
+  constructor() {
+    super();
+    this.type = 'text';
+    this.required = false;
+    this.disabled = false;
+    this.value = '';
+    this.error = '';
+    this.variant = 'default'; // default, compact
+  }
 
-    handleInput(e) {
-        this.value = e.target.value;
-        this.dispatchEvent(new CustomEvent('input-change', {
-            detail: { name: this.name, value: this.value },
-            bubbles: true,
-            composed: true
-        }));
+  updated(changedProperties) {
+    if (changedProperties.has('variant')) {
+      this.setAttribute('variant', this.variant);
     }
+  }
 
-    render() {
-        return html`
+  handleInput(e) {
+    this.value = e.target.value;
+    this.dispatchEvent(new CustomEvent('input-change', {
+      detail: { name: this.name, value: this.value },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  render() {
+    return html`
       <div class="form-group">
         ${this.label ? html`<label for="${this.name}">${this.label}</label>` : ''}
         <input
@@ -99,7 +111,7 @@ class InputField extends LitElement {
         ${this.error ? html`<span class="error-message">${this.error}</span>` : ''}
       </div>
     `;
-    }
+  }
 }
 
 customElements.define('input-field', InputField);

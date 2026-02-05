@@ -15,7 +15,7 @@ class AuthLayout extends LitElement {
 
     .auth-wrapper {
       flex: 1;
-      background: url('/src/assets/greatworks.avif') center/cover;
+      background: url('/assets/greatworks.avif');
       background-color: #f5f5f5;
       position: relative;
     }
@@ -119,7 +119,7 @@ class AuthLayout extends LitElement {
         <div class="auth-wrapper">
           <div class="auth-container">
             <div class="logo">
-              <img src="/src/assets/logoExtended.svg" alt="CoWork Logo">
+              <img src="/assets/logoExtended.svg" alt="CoWork Logo">
             </div>
             <div class="auth-form-section">
               <slot name="form"></slot>
@@ -138,7 +138,7 @@ class AuthLayout extends LitElement {
       <div class="auth-wrapper">
         <div class="auth-container">
           <div class="logo">
-            <img src="/src/assets/logoExtended.svg" alt="CoWork Logo">
+            <img src="/assets/logoExtended.svg" alt="CoWork Logo">
           </div>
           <div class="auth-form-section">
             <slot name="form"></slot>

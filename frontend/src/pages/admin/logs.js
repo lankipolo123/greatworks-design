@@ -10,6 +10,7 @@ import '@/layouts/header-controls.js';
 import '@/layouts/search-bar-wrapper.js';
 import '@/layouts/pagination-wrapper.js';
 import '@/components/pagination.js';
+import '@/components/app-dialog.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 
 class AdminLogs extends LitElement {
@@ -18,7 +19,10 @@ class AdminLogs extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
-    searchValue: { type: String }
+    searchValue: { type: String },
+    showExportDialog: { type: Boolean },
+    showDetailsDialog: { type: Boolean },
+    selectedLog: { type: Object }
   };
 
   static styles = css`
@@ -43,6 +47,9 @@ class AdminLogs extends LitElement {
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.searchValue = '';
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedLog = null;
     this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
   }
@@ -86,7 +93,10 @@ class AdminLogs extends LitElement {
 
   handleTableAction(e) {
     const { action, item } = e.detail;
-    if (action === 'view') console.log('View log:', item);
+    if (action === 'view') {
+      this.selectedLog = item;
+      this.showDetailsDialog = true;
+    }
   }
 
   handlePageChange(e) {
@@ -94,7 +104,18 @@ class AdminLogs extends LitElement {
   }
 
   handleExport() {
-    console.log('Export logs data');
+    this.showExportDialog = true;
+  }
+
+  handleExportSelect(e) {
+    console.log('Export logs as:', e.detail.format);
+    this.showExportDialog = false;
+  }
+
+  handleDialogClose() {
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedLog = null;
   }
 
   render() {
@@ -133,6 +154,30 @@ class AdminLogs extends LitElement {
           </pagination-component>
         </pagination-wrapper>
       </content-card>
+
+      <app-dialog
+        .isOpen=${this.showExportDialog}
+        title="Export Logs"
+        description="Select export format and date range"
+        mode="export"
+        size="medium"
+        styleMode="clean"
+        .closeOnOverlay=${false}
+        @export-select=${this.handleExportSelect}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showDetailsDialog}
+        title="Log Details"
+        mode="details"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        .detailsData=${this.selectedLog}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
     `;
   }
 }

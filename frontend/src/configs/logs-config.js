@@ -1,3 +1,7 @@
+// src/configs/logs-config.js
+import { html } from 'lit';
+import '/src/components/badge-component.js';
+
 export const logsTableConfig = {
     columns: [
         {
@@ -6,11 +10,16 @@ export const logsTableConfig = {
         },
         {
             key: 'action',
-            label: 'Action'
+            label: 'Action',
         },
         {
             key: 'module',
-            label: 'Module'
+            label: 'Module',
+            render: (value) => html`
+                <badge-component variant="primary" size="small">
+                    ${value}
+                </badge-component>
+            `
         },
         {
             key: 'date',

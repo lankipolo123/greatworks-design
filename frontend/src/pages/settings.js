@@ -28,6 +28,24 @@ export class AppSettings extends LitElement {
     console.log('Updated personal info:', e.detail);
   }
 
+  handleProfilePhotoUpload(e) {
+    const file = e.detail.file;
+
+    // Here you would typically upload the file to your storage service
+    // For now, we'll just log it and show a toast
+    console.log('Profile photo upload:', file);
+
+    // Show loading state
+    toast.info('Uploading profile photo...');
+
+    // Simulate upload
+    setTimeout(() => {
+      toast.success('Profile photo updated successfully!');
+      // You would update the photoURL in userInfo here
+      // this.userInfo = { ...this.userInfo, photoURL: newPhotoURL };
+    }, 1500);
+  }
+
   handleChangeEmail(e) {
     toast.success(`Email change requested: ${e.detail.newEmail}`);
     console.log('Change email event:', e.detail);
@@ -46,7 +64,10 @@ export class AppSettings extends LitElement {
   render() {
     return html`
       <settings-layout>
-        <profile-header slot="one"></profile-header>
+        <profile-header 
+          slot="one"
+          @profile-photo-upload=${this.handleProfilePhotoUpload}
+        ></profile-header>
 
         <personal-info-form
           slot="three"

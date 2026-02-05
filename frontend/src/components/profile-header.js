@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
-
+import '/src/components/app-dialog.js';
 
 export class ProfileHeader extends LitElement {
   static properties = {
@@ -12,7 +12,8 @@ export class ProfileHeader extends LitElement {
     lastLoginDate: { type: String },
     photoURL: { type: String },
     gender: { type: String },
-    isUploading: { type: Boolean }
+    isUploading: { type: Boolean },
+    showUploadDialog: { type: Boolean }
   };
 
   static styles = css`
@@ -169,18 +170,53 @@ export class ProfileHeader extends LitElement {
     this.photoURL = '';
     this.gender = '';
     this.isUploading = false;
+    this.showUploadDialog = false;
   }
 
   changeAvatar() {
-    const dialog = this.shadowRoot?.querySelector('configurable-dialog');
-    dialog?.open(DialogConfigs.CHANGE_PROFILE_PHOTO);
+    this.showUploadDialog = true;
+  }
+
+  handleFileUpload(e) {
+    const file = e.detail.file;
+
+    // Dispatch event to parent component
+    this.dispatchEvent(new CustomEvent('profile-photo-upload', {
+      detail: { file },
+      bubbles: true,
+      composed: true
+    }));
+
+    this.showUploadDialog = false;
+  }
+
+  handleDialogClose() {
+    this.showUploadDialog = false;
   }
 
   render() {
     return html`
-      <configurable-dialog></configurable-dialog>
+      <app-dialog
+        .isOpen=${this.showUploadDialog}
+        title="Change Profile Photo"
+        description="Upload a new profile picture"
+        mode="upload"
+        styleMode="compact"
+        size="medium"
+        confirmText="Upload"
+        confirmColor="primary"
+        @file-upload=${this.handleFileUpload}
+        @dialog-close=${this.handleDialogClose}
+        @dialog-cancel=${this.handleDialogClose}
+      ></app-dialog>
 
       <div class="profile-card">
+        ${this.isUploading ? html`
+          <div class="loading-overlay">
+            <div class="spinner"></div>
+          </div>
+        ` : ''}
+
         <div class="left-bar"></div>
 
         <div class="content">
@@ -192,7 +228,8 @@ export class ProfileHeader extends LitElement {
               .src=${this.photoURL}
             ></user-avatar>
 
-            <div class="camera-icon" @click=${this.changeAvatar}>
+            <div class="camera-icon ${this.isUploading ? 'uploading' : ''}" 
+                 @click=${this.changeAvatar}>
               add_photo_alternate
             </div>
           </div>

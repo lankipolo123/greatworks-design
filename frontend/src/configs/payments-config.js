@@ -1,3 +1,7 @@
+// src/configs/payments-config.js
+import { html } from 'lit';
+import '/src/components/badge-component.js';
+
 export const paymentsTableConfig = {
     columns: [
         {
@@ -18,11 +22,27 @@ export const paymentsTableConfig = {
         },
         {
             key: 'method',
-            label: 'Method'
+            label: 'Method',
+            render: (value) => html`
+                <badge-component variant="info" size="small">
+                    ${value}
+                </badge-component>
+            `
         },
         {
-            key: ' status',
-            label: 'Status'
+            key: 'status',
+            label: 'Status',
+            render: (value) => {
+                const variant = value?.toLowerCase() === 'completed' || value?.toLowerCase() === 'paid' || value?.toLowerCase() === 'success' ? 'success' :
+                    value?.toLowerCase() === 'pending' ? 'pending' :
+                        value?.toLowerCase() === 'failed' ? 'failed' :
+                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
+                return html`
+                    <badge-component variant="${variant}" size="small">
+                        ${value}
+                    </badge-component>
+                `;
+            }
         },
         {
             key: 'createdAt',

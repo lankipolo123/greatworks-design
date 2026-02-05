@@ -113,7 +113,7 @@ class DashboardLayout extends LitElement {
       <slot name="content"></slot>
       
       <button class="toggle-btn" @click=${this.toggleSidebar}>
-        <img src="/src/assets/collapsible.svg" alt="Toggle sidebar" />
+        <img src="/assets/collapsible.svg" alt="Toggle sidebar" />
       </button>
     `;
   }

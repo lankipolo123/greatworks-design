@@ -9,6 +9,7 @@ import '/src/components/app-button.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
+import '/src/components/app-dialog.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 
 class AdminPayments extends LitElement {
@@ -17,7 +18,10 @@ class AdminPayments extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
-    searchValue: { type: String }
+    searchValue: { type: String },
+    showExportDialog: { type: Boolean },
+    showDetailsDialog: { type: Boolean },
+    selectedPayment: { type: Object }
   };
 
   static styles = css`
@@ -42,6 +46,9 @@ class AdminPayments extends LitElement {
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.searchValue = '';
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedPayment = null;
     this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
   }
@@ -89,11 +96,25 @@ class AdminPayments extends LitElement {
 
   handleTableAction(e) {
     const { action, item } = e.detail;
-    console.log('Payment action:', action, item);
+    if (action === 'view') {
+      this.selectedPayment = item;
+      this.showDetailsDialog = true;
+    }
   }
 
   handleExport() {
-    console.log('Export payments data');
+    this.showExportDialog = true;
+  }
+
+  handleExportSelect(e) {
+    console.log('Export payments as:', e.detail.format);
+    this.showExportDialog = false;
+  }
+
+  handleDialogClose() {
+    this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedPayment = null;
   }
 
   render() {
@@ -132,6 +153,30 @@ class AdminPayments extends LitElement {
           </pagination-component>
         </pagination-wrapper>
       </content-card>
+
+      <app-dialog
+        .isOpen=${this.showExportDialog}
+        title="Export Payments"
+        description="Select export format and date range"
+        mode="export"
+        size="medium"
+        styleMode="clean"
+        .closeOnOverlay=${false}
+        @export-select=${this.handleExportSelect}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showDetailsDialog}
+        title="Payment Details"
+        mode="details"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        .detailsData=${this.selectedPayment}
+        @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
     `;
   }
 }
