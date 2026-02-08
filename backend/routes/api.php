@@ -25,38 +25,78 @@ Route::get('/rooms/{room}', [RoomController::class, 'show']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Authentication Required)
+| Protected Routes (Authentication Required - All Roles)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth routes
+    // Auth routes (all authenticated users)
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
 
-    // Users management (admin only in real app, but accessible for now)
-    Route::apiResource('users', UserController::class);
-
-    // Rooms management
-    Route::post('/rooms', [RoomController::class, 'store']);
-    Route::put('/rooms/{room}', [RoomController::class, 'update']);
-    Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
-
-    // Bookings
+    // Bookings (all authenticated users can view/create their own)
     Route::get('/bookings/calendar', [BookingController::class, 'calendar']);
-    Route::apiResource('bookings', BookingController::class);
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/{booking}', [BookingController::class, 'show']);
 
-    // Reservations
-    Route::apiResource('reservations', ReservationController::class);
+    // Reservations (all authenticated users can view/create their own)
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
 
-    // Tickets
-    Route::apiResource('tickets', TicketController::class);
+    // Tickets (all authenticated users can create/view their own)
+    Route::get('/tickets', [TicketController::class, 'index']);
+    Route::post('/tickets', [TicketController::class, 'store']);
+    Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
 
-    // Payments
-    Route::apiResource('payments', PaymentController::class);
+    // Payments (view own payments)
+    Route::get('/payments', [PaymentController::class, 'index']);
+    Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 
-    // Activity Logs
-    Route::apiResource('activity-logs', ActivityLogController::class)->only(['index', 'show', 'store']);
+    /*
+    |--------------------------------------------------------------------------
+    | Admin & Moderator Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin,moderator')->group(function () {
+        // Room management
+        Route::post('/rooms', [RoomController::class, 'store']);
+        Route::put('/rooms/{room}', [RoomController::class, 'update']);
+        Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+
+        // Booking management
+        Route::put('/bookings/{booking}', [BookingController::class, 'update']);
+        Route::delete('/bookings/{booking}', [BookingController::class, 'destroy']);
+
+        // Reservation management
+        Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
+        Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
+
+        // Ticket management
+        Route::put('/tickets/{ticket}', [TicketController::class, 'update']);
+        Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy']);
+
+        // Payment management
+        Route::post('/payments', [PaymentController::class, 'store']);
+        Route::put('/payments/{payment}', [PaymentController::class, 'update']);
+        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Only Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        // User management
+        Route::apiResource('users', UserController::class);
+
+        // Activity Logs
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show']);
+        Route::post('/activity-logs', [ActivityLogController::class, 'store']);
+    });
 });
