@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/authentication-card.js';
 import '/src/components/input-field.js';
 import '/src/layouts/auth-layout.js';
+import { auth, isAuthenticated } from '/src/service/api.js';
 
 class RegisterPage extends LitElement {
   static properties = {
@@ -89,12 +90,56 @@ class RegisterPage extends LitElement {
     super();
     this.loading = false;
     this.error = '';
+
+    // Redirect if already logged in
+    if (isAuthenticated()) {
+      window.location.hash = 'dashboard';
+    }
   }
 
-  handleSubmit(e) {
+  async handleSubmit(e) {
     e.preventDefault();
-    // Just route to dashboard
-    window.location.hash = 'dashboard';
+    this.error = '';
+    this.loading = true;
+
+    const formData = new FormData(e.target);
+    const name = formData.get('fullName');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      this.error = 'Passwords do not match';
+      this.loading = false;
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      this.error = 'Password must be at least 8 characters';
+      this.loading = false;
+      return;
+    }
+
+    try {
+      const response = await auth.register(name, email, password, confirmPassword);
+      console.log('Registration successful:', response.user);
+
+      // Redirect to booking page for customers
+      window.location.hash = 'booking';
+    } catch (err) {
+      console.error('Registration error:', err);
+      if (err.errors) {
+        // Get first error message
+        const firstError = Object.values(err.errors)[0];
+        this.error = Array.isArray(firstError) ? firstError[0] : firstError;
+      } else {
+        this.error = err.message || 'Registration failed. Please try again.';
+      }
+    } finally {
+      this.loading = false;
+    }
   }
 
   render() {
@@ -128,7 +173,7 @@ class RegisterPage extends LitElement {
             <input-field
               type="password"
               name="password"
-              placeholder="Create a password"
+              placeholder="Create a password (min 8 characters)"
               ?required=${true}
               ?disabled=${this.loading}
             ></input-field>
@@ -141,8 +186,8 @@ class RegisterPage extends LitElement {
               ?disabled=${this.loading}
             ></input-field>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="register-btn"
               ?disabled=${this.loading}
             >

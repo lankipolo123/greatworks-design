@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/authentication-card.js';
 import '/src/components/input-field.js';
 import '/src/layouts/auth-layout.js';
+import { auth, isAuthenticated } from '/src/service/api.js';
 
 class LoginPage extends LitElement {
   static properties = {
@@ -104,12 +105,38 @@ class LoginPage extends LitElement {
     super();
     this.loading = false;
     this.error = '';
+
+    // Redirect if already logged in
+    if (isAuthenticated()) {
+      window.location.hash = 'dashboard';
+    }
   }
 
-  handleSubmit(e) {
+  async handleSubmit(e) {
     e.preventDefault();
-    // Just route to dashboard
-    window.location.hash = 'dashboard';
+    this.error = '';
+    this.loading = true;
+
+    const formData = new FormData(e.target);
+    const email = formData.get('email');
+    const password = formData.get('password');
+
+    try {
+      const response = await auth.login(email, password);
+      console.log('Login successful:', response.user);
+
+      // Redirect based on role
+      if (response.user.role === 'admin' || response.user.role === 'moderator') {
+        window.location.hash = 'dashboard';
+      } else {
+        window.location.hash = 'booking';
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      this.error = err.message || 'Invalid email or password';
+    } finally {
+      this.loading = false;
+    }
   }
 
   render() {
@@ -140,8 +167,8 @@ class LoginPage extends LitElement {
               ?disabled=${this.loading}
             ></input-field>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               class="login-btn"
               ?disabled=${this.loading}
             >
