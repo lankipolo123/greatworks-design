@@ -2,7 +2,7 @@
  * API Service for connecting to Laravel Backend
  */
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // Get stored token
 const getToken = () => localStorage.getItem('auth_token');

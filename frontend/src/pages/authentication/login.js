@@ -1,4 +1,3 @@
-// src/pages/authentication/login.js
 import { LitElement, html, css } from 'lit';
 import '/src/components/authentication-card.js';
 import '/src/components/input-field.js';
@@ -8,7 +7,9 @@ import { auth, isAuthenticated } from '/src/service/api.js';
 class LoginPage extends LitElement {
   static properties = {
     loading: { type: Boolean },
-    error: { type: String }
+    error: { type: String },
+    email: { type: String },
+    password: { type: String },
   };
 
   static styles = css`
@@ -53,51 +54,12 @@ class LoginPage extends LitElement {
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
       margin-top: 0.5rem;
-    }
-
-    .login-btn:hover {
-      background: rgb(212, 36, 6);
     }
 
     .login-btn:disabled {
       background: #ccc;
       cursor: not-allowed;
-    }
-
-    .forgot-password {
-      text-align: center;
-      margin-top: 1rem;
-    }
-
-    .forgot-password a {
-      color: #8d1409;
-      text-decoration: none;
-      font-size: 0.85rem;
-    }
-
-    .forgot-password a:hover {
-      text-decoration: underline;
-    }
-
-    .register-link {
-      text-align: center;
-      margin-top: 1.25rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid #e0e0e0;
-      color: #666;
-      font-size: 0.85rem;
-    }
-
-    .register-link a {
-      color: #da0d0dd7;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .register-link a:hover {
-      text-decoration: underline;
     }
   `;
 
@@ -105,8 +67,9 @@ class LoginPage extends LitElement {
     super();
     this.loading = false;
     this.error = '';
+    this.email = '';
+    this.password = '';
 
-    // Redirect if already logged in
     if (isAuthenticated()) {
       window.location.hash = 'dashboard';
     }
@@ -114,25 +77,19 @@ class LoginPage extends LitElement {
 
   async handleSubmit(e) {
     e.preventDefault();
+
     this.error = '';
     this.loading = true;
 
-    const formData = new FormData(e.target);
-    const email = formData.get('email');
-    const password = formData.get('password');
-
     try {
-      const response = await auth.login(email, password);
-      console.log('Login successful:', response.user);
+      const response = await auth.login(this.email, this.password);
 
-      // Redirect based on role
-      if (response.user.role === 'admin' || response.user.role === 'moderator') {
+      if (['admin', 'moderator'].includes(response.user.role)) {
         window.location.hash = 'dashboard';
       } else {
         window.location.hash = 'booking';
       }
     } catch (err) {
-      console.error('Login error:', err);
       this.error = err.message || 'Invalid email or password';
     } finally {
       this.loading = false;
@@ -146,43 +103,33 @@ class LoginPage extends LitElement {
           <h2>Sign in</h2>
           <p class="subtitle">Please enter your Login ID</p>
 
-          ${this.error ? html`
-            <div class="error-message">${this.error}</div>
-          ` : ''}
+          ${this.error
+        ? html`<div class="error-message">${this.error}</div>`
+        : null}
 
           <form @submit=${this.handleSubmit}>
             <input-field
               type="email"
-              name="email"
-              placeholder="Please enter your Login ID"
-              ?required=${true}
+              placeholder="Please enter your Email"
+              .value=${this.email}
+              @input=${e => (this.email = e.target.value)}
               ?disabled=${this.loading}
+              required
             ></input-field>
 
             <input-field
               type="password"
-              name="password"
               placeholder="Please enter your password"
-              ?required=${true}
+              .value=${this.password}
+              @input=${e => (this.password = e.target.value)}
               ?disabled=${this.loading}
+              required
             ></input-field>
 
-            <button
-              type="submit"
-              class="login-btn"
-              ?disabled=${this.loading}
-            >
+            <button class="login-btn" type="submit" ?disabled=${this.loading}>
               ${this.loading ? 'Signing in...' : 'Continue'}
             </button>
           </form>
-
-          <div class="forgot-password">
-            <a href="#forgot-password">Forgot your password?</a>
-          </div>
-
-          <div class="register-link">
-            Don't have an account? <a href="#register">Apply Now</a>
-          </div>
         </authentication-card>
       </auth-layout>
     `;

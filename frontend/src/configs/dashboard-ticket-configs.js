@@ -1,4 +1,7 @@
 // src/configs/dashboard-ticket-configs.js
+import { html } from 'lit';
+import '/src/components/badge-component.js';
+
 export const dasboardTicketConfig = {
     columns: [
         {
@@ -15,7 +18,18 @@ export const dasboardTicketConfig = {
         },
         {
             key: 'status',
-            label: 'Status'
+            label: 'Status',
+            render: (value) => {
+                const variant = value?.toLowerCase() === 'pending' ? 'pending' :
+                    value?.toLowerCase() === 'ongoing' ? 'ongoing' :
+                        value?.toLowerCase() === 'completed' || value?.toLowerCase() === 'closed' ? 'completed' :
+                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
+                return html`
+                    <badge-component variant="${variant}" size="small">
+                        ${value}
+                    </badge-component>
+                `;
+            }
         },
         {
             key: 'createdAt',

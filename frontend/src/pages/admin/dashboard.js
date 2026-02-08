@@ -10,7 +10,7 @@ import { ICONS } from '/src/components/dashboard-icons.js';
 import { mockTickets } from '/src/mock-datas/mock-ticket.js';
 import { mockUsers } from '/src/mock-datas/mock-users.js';
 import { mockReservations } from '/src/mock-datas/mock-reservation.js';
-import { ticketsTableConfig } from '/src/configs/tickets-config.js';
+import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
 
 class AdminDashboard extends LitElement {
@@ -147,7 +147,7 @@ class AdminDashboard extends LitElement {
           >
             <data-table
               .data=${this.recentTickets}
-              .conf=${ticketsTableConfig}
+              .conf=${dasboardTicketConfig}
               mode="3"
               @table-action=${this.handleTableAction}
             ></data-table>
