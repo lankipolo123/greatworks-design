@@ -1,8 +1,8 @@
 // src/pages/admin/logs.js
 import { LitElement, html, css } from 'lit';
 import { logsTableConfig } from '@/configs/logs-config.js';
-import { mockLogs } from '@/mock-datas/mock-logs.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
+import { activityLogs } from '/src/service/api.js';
 import '@/components/data-table.js';
 import '@/components/search-bar.js';
 import '@/components/app-button.js';
@@ -43,15 +43,29 @@ class AdminLogs extends LitElement {
 
   constructor() {
     super();
-    this.logs = mockLogs;
+    this.logs = [];
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.searchValue = '';
     this.showExportDialog = false;
     this.showDetailsDialog = false;
     this.selectedLog = null;
-    this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchLogs();
+  }
+
+  async fetchLogs() {
+    try {
+      const data = await activityLogs.getAll({ per_page: 100 });
+      this.logs = data.data || data;
+      this.updatePagination();
+    } catch (e) {
+      console.error('Failed to fetch logs:', e);
+    }
   }
 
   get filteredLogs() {
@@ -60,10 +74,10 @@ class AdminLogs extends LitElement {
     if (this.searchValue) {
       const search = this.searchValue.toLowerCase();
       filtered = filtered.filter(l =>
-        l.id?.toLowerCase().includes(search) ||
+        l.id?.toString().includes(search) ||
         l.action?.toLowerCase().includes(search) ||
         l.module?.toLowerCase().includes(search) ||
-        l.userId?.toLowerCase().includes(search)
+        l.user?.name?.toLowerCase().includes(search)
       );
     }
 

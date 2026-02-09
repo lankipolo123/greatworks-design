@@ -9,8 +9,9 @@ export const dasboardTicketConfig = {
             label: 'ID'
         },
         {
-            key: 'userId',
-            label: 'User ID'
+            key: 'user',
+            label: 'User',
+            render: (value) => value?.name || '—'
         },
         {
             key: 'subject',
@@ -32,7 +33,7 @@ export const dasboardTicketConfig = {
             }
         },
         {
-            key: 'createdAt',
+            key: 'created_at',
             label: 'Date',
             render: value => new Date(value).toLocaleDateString()
         }

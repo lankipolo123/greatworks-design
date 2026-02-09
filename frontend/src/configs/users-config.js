@@ -46,7 +46,7 @@ export const usersTableConfig = {
             }
         },
         {
-            key: 'createdAt',
+            key: 'created_at',
             label: 'Joined',
             render: value => new Date(value).toLocaleString()
         }

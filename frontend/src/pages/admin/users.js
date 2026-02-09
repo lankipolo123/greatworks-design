@@ -1,7 +1,7 @@
 // src/pages/admin/user.js
 import { LitElement, html, css } from 'lit';
-import { mockUsers } from '/src/mock-datas/mock-users';
 import { usersTableConfig } from '/src/configs/users-config';
+import { users as usersApi } from '/src/service/api.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import '@/components/data-table.js';
@@ -49,7 +49,7 @@ class AdminUser extends LitElement {
 
   constructor() {
     super();
-    this.users = mockUsers;
+    this.users = [];
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.activeTab = 'all';
@@ -65,8 +65,22 @@ class AdminUser extends LitElement {
       { id: 'archived', label: 'Archived' }
     ];
 
-    this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchUsers();
+  }
+
+  async fetchUsers() {
+    try {
+      const data = await usersApi.getAll({ per_page: 100 });
+      this.users = data.data || data;
+      this.updatePagination();
+    } catch (e) {
+      console.error('Failed to fetch users:', e);
+    }
   }
 
   get filteredUsers() {
@@ -81,7 +95,7 @@ class AdminUser extends LitElement {
     if (this.searchValue) {
       const search = this.searchValue.toLowerCase();
       filtered = filtered.filter(u =>
-        u.id?.toLowerCase().includes(search) ||
+        u.id?.toString().includes(search) ||
         u.name?.toLowerCase().includes(search) ||
         u.email?.toLowerCase().includes(search) ||
         u.role?.toLowerCase().includes(search)

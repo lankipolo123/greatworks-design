@@ -6,14 +6,11 @@ import '/src/components/stat-card.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { mockReservations } from '/src/mock-datas/mock-reservation.js';
-import { mockTickets } from '/src/mock-datas/mock-ticket.js';
-import { mockPayments } from '/src/mock-datas/mock-payments.js';
 import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
+import { tickets as ticketsApi, payments as paymentsApi } from '/src/service/api.js';
 
 class CustomerDashboard extends LitElement {
   static properties = {
-    reservations: { type: Array },
     tickets: { type: Array },
     payments: { type: Array },
     recentBookings: { type: Array },
@@ -35,12 +32,30 @@ class CustomerDashboard extends LitElement {
 
   constructor() {
     super();
-    this.reservations = [...mockReservations];
-    this.tickets = [...mockTickets];
-    this.payments = [...mockPayments];
-    this.recentBookings = this.reservations
-      .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
-      .slice(0, 5);
+    this.tickets = [];
+    this.payments = [];
+    this.recentBookings = [];
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchData();
+  }
+
+  async fetchData() {
+    try {
+      const [ticketRes, paymentRes] = await Promise.all([
+        ticketsApi.getAll({ per_page: 100 }),
+        paymentsApi.getAll({ per_page: 100 }),
+      ]);
+      this.tickets = ticketRes.data || ticketRes;
+      this.payments = paymentRes.data || paymentRes;
+      this.recentBookings = [...this.tickets]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5);
+    } catch (e) {
+      console.error('Failed to fetch dashboard data:', e);
+    }
   }
 
   render() {
@@ -50,18 +65,18 @@ class CustomerDashboard extends LitElement {
 
           <stat-card
             slot="one"
-            title="My Bookings"
+            title="My Tickets"
             textColor="#811a0a"
-            .value=${this.reservations.filter(r => r.status === 'confirmed').length}
-            .icon=${ICONS.booking}
+            .value=${this.tickets.length}
+            .icon=${ICONS.ticketInbox}
           ></stat-card>
 
           <stat-card
             slot="two"
-            title="Reservations"
+            title="Open Tickets"
             textColor="#580460"
-            .value=${this.reservations.length}
-            .icon=${ICONS.calendar}
+            .value=${this.tickets.filter(t => t.status === 'open').length}
+            .icon=${ICONS.clock}
           ></stat-card>
 
           <stat-card

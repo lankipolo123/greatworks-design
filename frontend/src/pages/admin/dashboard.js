@@ -7,11 +7,9 @@ import '/src/components/dashboard-chart.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { mockTickets } from '/src/mock-datas/mock-ticket.js';
-import { mockUsers } from '/src/mock-datas/mock-users.js';
-import { mockReservations } from '/src/mock-datas/mock-reservation.js';
 import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
+import { tickets as ticketsApi, users as usersApi } from '/src/service/api.js';
 
 class AdminDashboard extends LitElement {
   static properties = {
@@ -39,18 +37,35 @@ class AdminDashboard extends LitElement {
   constructor() {
     super();
 
-    this.tickets = [...mockTickets];
-    this.users = [...mockUsers];
-    this.reservations = [...mockReservations];
+    this.tickets = [];
+    this.users = [];
+    this.reservations = [];
     this.recentTickets = [];
     this.stats = {
       monthlyUsers: 0,
-      users: 0,
+      totalUsers: 0,
       totalTickets: 0,
       pendingTickets: 0
     };
+  }
 
-    this.updateDashboard();
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchData();
+  }
+
+  async fetchData() {
+    try {
+      const [ticketRes, userRes] = await Promise.all([
+        ticketsApi.getAll({ per_page: 100 }),
+        usersApi.getAll({ per_page: 100 }),
+      ]);
+      this.tickets = ticketRes.data || ticketRes;
+      this.users = userRes.data || userRes;
+      this.updateDashboard();
+    } catch (e) {
+      console.error('Failed to fetch dashboard data:', e);
+    }
   }
 
   updateDashboard() {

@@ -1,7 +1,7 @@
 // customer-ticket.js
 import { LitElement, html, css } from 'lit';
-import { mockTickets } from '/src/mock-datas/mock-ticket';
 import { ticketsTableConfig } from '/src/configs/tickets-config';
+import { tickets as ticketsApi } from '/src/service/api.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
@@ -44,7 +44,7 @@ class CustomerTicket extends LitElement {
 
   constructor() {
     super();
-    this.tickets = mockTickets;
+    this.tickets = [];
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.activeTab = 'all';
@@ -53,30 +53,40 @@ class CustomerTicket extends LitElement {
     this.selectedTicket = null;
     this.tabs = [
       { id: 'all', label: 'All' },
-      { id: 'pending', label: 'Pending' },
-      { id: 'ongoing', label: 'Ongoing' },
-      { id: 'completed', label: 'Resolved' }
+      { id: 'open', label: 'Open' },
+      { id: 'in_progress', label: 'In Progress' },
+      { id: 'closed', label: 'Closed' }
     ];
 
-    this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchTickets();
+  }
+
+  async fetchTickets() {
+    try {
+      const data = await ticketsApi.getAll({ per_page: 100 });
+      this.tickets = data.data || data;
+      this.updatePagination();
+    } catch (e) {
+      console.error('Failed to fetch tickets:', e);
+    }
   }
 
   get filteredTickets() {
     let filtered = this.tickets;
 
     if (this.activeTab !== 'all') {
-      if (this.activeTab === 'completed') {
-        filtered = filtered.filter(t => t.status === 'completed' || t.status === 'closed');
-      } else {
-        filtered = filtered.filter(t => t.status === this.activeTab);
-      }
+      filtered = filtered.filter(t => t.status === this.activeTab);
     }
 
     if (this.searchValue) {
       const search = this.searchValue.toLowerCase();
       filtered = filtered.filter(t =>
-        t.id?.toLowerCase().includes(search) ||
+        t.id?.toString().includes(search) ||
         t.subject?.toLowerCase().includes(search) ||
         t.status?.toLowerCase().includes(search)
       );

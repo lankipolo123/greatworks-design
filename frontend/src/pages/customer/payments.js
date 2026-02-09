@@ -1,7 +1,7 @@
 // customer-payments.js
 import { LitElement, html, css } from 'lit';
 import { paymentsTableConfig } from '/src/configs/payments-config.js';
-import { mockPayments } from '/src/mock-datas/mock-payments';
+import { payments as paymentsApi } from '/src/service/api.js';
 import '/src/components/pagination.js';
 import '/src/components/search-bar.js';
 import '/src/components/app-dialog.js';
@@ -39,14 +39,28 @@ class CustomerPayments extends LitElement {
 
   constructor() {
     super();
-    this.payments = mockPayments;
+    this.payments = [];
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.searchValue = '';
     this.showDetailsDialog = false;
     this.selectedPayment = null;
-    this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.fetchPayments();
+  }
+
+  async fetchPayments() {
+    try {
+      const data = await paymentsApi.getAll({ per_page: 100 });
+      this.payments = data.data || data;
+      this.updatePagination();
+    } catch (e) {
+      console.error('Failed to fetch payments:', e);
+    }
   }
 
   get filteredPayments() {
@@ -55,7 +69,7 @@ class CustomerPayments extends LitElement {
     if (this.searchValue) {
       const search = this.searchValue.toLowerCase();
       filtered = filtered.filter(p =>
-        p.id?.toLowerCase().includes(search) ||
+        p.id?.toString().includes(search) ||
         p.amount?.toString().includes(search) ||
         p.status?.toLowerCase().includes(search)
       );

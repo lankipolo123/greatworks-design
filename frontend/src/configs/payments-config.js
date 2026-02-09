@@ -9,8 +9,9 @@ export const paymentsTableConfig = {
             label: 'PAY-ID'
         },
         {
-            key: 'userId',
-            label: 'UserID'
+            key: 'user',
+            label: 'User',
+            render: (value) => value?.name || '—'
         },
         {
             key: 'amount',
@@ -45,7 +46,7 @@ export const paymentsTableConfig = {
             }
         },
         {
-            key: 'createdAt',
+            key: 'created_at',
             label: 'Date',
             render: value => new Date(value).toLocaleString()
         }

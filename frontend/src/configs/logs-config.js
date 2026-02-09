@@ -5,8 +5,9 @@ import '/src/components/badge-component.js';
 export const logsTableConfig = {
     columns: [
         {
-            key: 'id',
-            label: 'User'
+            key: 'user',
+            label: 'User',
+            render: (value) => value?.name || '—'
         },
         {
             key: 'action',
@@ -22,7 +23,7 @@ export const logsTableConfig = {
             `
         },
         {
-            key: 'date',
+            key: 'created_at',
             label: 'Date',
             render: value => new Date(value).toLocaleString()
         }

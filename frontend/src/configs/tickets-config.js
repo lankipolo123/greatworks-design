@@ -9,8 +9,9 @@ export const ticketsTableConfig = {
             label: 'ID'
         },
         {
-            key: 'userId',
-            label: 'User ID'
+            key: 'user',
+            label: 'User',
+            render: (value) => value?.name || '—'
         },
         {
             key: 'subject',
@@ -47,7 +48,7 @@ export const ticketsTableConfig = {
             }
         },
         {
-            key: 'createdAt',
+            key: 'created_at',
             label: 'Date',
         }
     ],
