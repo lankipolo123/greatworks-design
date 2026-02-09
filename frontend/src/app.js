@@ -7,6 +7,7 @@ import '/src/components/app-content.js';
 import '/src/pages/authentication/login.js';
 import '/src/pages/authentication/register.js';
 import '/src/pages/authentication/forgot-password.js';
+import { auth, isAuthenticated } from '/src/service/api.js';
 
 class AppRoot extends LitElement {
   static properties = {
@@ -43,7 +44,12 @@ class AppRoot extends LitElement {
     window.location.hash = e.detail.page;
   }
 
-  handleLogout() {
+  async handleLogout() {
+    try {
+      await auth.logout();
+    } catch (_) {
+      // Logout cleanup happens in finally block of auth.logout()
+    }
     window.location.hash = 'login';
     this.currentPage = 'login';
   }
@@ -77,6 +83,13 @@ class AppRoot extends LitElement {
   render() {
     // Show auth pages
     if (['login', 'register', 'forgot-password'].includes(this.currentPage)) {
+      return this.renderAuthPage();
+    }
+
+    // Redirect to login if not authenticated
+    if (!isAuthenticated()) {
+      window.location.hash = 'login';
+      this.currentPage = 'login';
       return this.renderAuthPage();
     }
 

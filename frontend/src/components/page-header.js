@@ -98,7 +98,7 @@ class PageHeader extends LitElement {
     .user-role {
       font-size: 11px;
       font-weight: 600;
-      color: rgb(255, 175, 14)d7;
+      color: rgba(255, 175, 14, 0.84);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -138,31 +138,17 @@ class PageHeader extends LitElement {
 
   loadUser() {
     try {
-      const authKey = Object.keys(localStorage)
-        .find(k => k.startsWith('firebase:authUser'));
-      if (!authKey) return;
+      const stored = localStorage.getItem('auth_user');
+      if (!stored) return;
 
-      const authData = JSON.parse(localStorage.getItem(authKey));
-      const uid = authData?.uid;
-      if (!uid) return;
-
-      const session = sessionStorage.getItem(`admin_data_${uid}`);
-      if (!session) return;
-
-      const data = JSON.parse(session);
-      this.userName =
-        data.displayName ||
-        `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() ||
-        'No data yet';
-
-      this.userRole = data.role || '';
-      this.userAvatar = data.photoURL || data.profilePicture || '';
-      this.userGender = data.gender || '';
+      const user = JSON.parse(stored);
+      this.userName = user.name || 'No data yet';
+      this.userRole = user.role || '';
+      this.userAvatar = user.profile_photo || '';
     } catch (_) {
       this.userName = 'No data yet';
       this.userRole = '';
       this.userAvatar = '';
-      this.userGender = '';
     }
   }
 

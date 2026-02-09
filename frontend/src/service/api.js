@@ -50,6 +50,13 @@ const apiRequest = async (endpoint, options = {}) => {
   const data = await response.json();
 
   if (!response.ok) {
+    // Auto-logout on 401 (expired/invalid token)
+    if (response.status === 401 && endpoint !== '/login' && endpoint !== '/register') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      window.location.hash = 'login';
+    }
+
     throw {
       status: response.status,
       message: data.message || 'An error occurred',
