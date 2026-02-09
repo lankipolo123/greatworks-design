@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+// Admin pages
 import '/src/pages/admin/dashboard.js';
 import '/src/pages/admin/reservation.js';
 import '/src/pages/admin/booking.js';
@@ -6,11 +7,19 @@ import '/src/pages/admin/ticket.js';
 import '/src/pages/admin/users.js';
 import '/src/pages/admin/logs.js';
 import '/src/pages/admin/payments.js';
+// Customer pages
+import '/src/pages/customer/dashboard.js';
+import '/src/pages/customer/reservation.js';
+import '/src/pages/customer/booking.js';
+import '/src/pages/customer/ticket.js';
+import '/src/pages/customer/payments.js';
+// Shared
 import '/src/pages/settings.js';
 
 class AppContent extends LitElement {
     static properties = {
-        currentPage: { type: String }
+        currentPage: { type: String },
+        userRole: { type: String }
     };
 
     static styles = css`
@@ -25,9 +34,10 @@ class AppContent extends LitElement {
     constructor() {
         super();
         this.currentPage = 'dashboard';
+        this.userRole = 'customer';
     }
 
-    renderPage() {
+    renderAdminPage() {
         switch (this.currentPage) {
             case 'dashboard': return html`<admin-dashboard></admin-dashboard>`;
             case 'reservation': return html`<admin-reservation></admin-reservation>`;
@@ -41,8 +51,23 @@ class AppContent extends LitElement {
         }
     }
 
+    renderCustomerPage() {
+        switch (this.currentPage) {
+            case 'dashboard': return html`<customer-dashboard></customer-dashboard>`;
+            case 'reservation': return html`<customer-reservation></customer-reservation>`;
+            case 'booking': return html`<customer-booking></customer-booking>`;
+            case 'ticket': return html`<customer-ticket></customer-ticket>`;
+            case 'payments': return html`<customer-payments></customer-payments>`;
+            case 'settings': return html`<app-settings></app-settings>`;
+            default: return html`<customer-dashboard></customer-dashboard>`;
+        }
+    }
+
     render() {
-        return html`${this.renderPage()}`;
+        if (this.userRole === 'admin' || this.userRole === 'moderator') {
+            return html`${this.renderAdminPage()}`;
+        }
+        return html`${this.renderCustomerPage()}`;
     }
 }
 

@@ -7,7 +7,7 @@ import '/src/components/app-content.js';
 import '/src/pages/authentication/login.js';
 import '/src/pages/authentication/register.js';
 import '/src/pages/authentication/forgot-password.js';
-import { auth, isAuthenticated } from '/src/service/api.js';
+import { auth, isAuthenticated, getUser } from '/src/service/api.js';
 
 class AppRoot extends LitElement {
   static properties = {
@@ -54,6 +54,11 @@ class AppRoot extends LitElement {
     this.currentPage = 'login';
   }
 
+  get userRole() {
+    const user = getUser();
+    return user?.role || 'customer';
+  }
+
   getPageTitle() {
     const titles = {
       'dashboard': 'DASHBOARD',
@@ -96,9 +101,10 @@ class AppRoot extends LitElement {
     // Show dashboard
     return html`
       <dashboard-layout>
-        <app-sidebar 
+        <app-sidebar
           slot="sidebar"
           activePage=${this.currentPage}
+          .userRole=${this.userRole}
           @logout=${this.handleLogout}
         ></app-sidebar>
         
@@ -107,9 +113,10 @@ class AppRoot extends LitElement {
           title="${this.getPageTitle()}"
         ></page-header>
         
-        <app-content 
+        <app-content
           slot="content"
           currentPage=${this.currentPage}
+          .userRole=${this.userRole}
         ></app-content>
       </dashboard-layout>
     `;

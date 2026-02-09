@@ -8,7 +8,8 @@ class AppSidebar extends LitElement {
   static properties = {
     activePage: { type: String },
     collapsed: { type: Boolean },
-    showLogoutDialog: { type: Boolean }
+    showLogoutDialog: { type: Boolean },
+    userRole: { type: String }
   };
 
   static styles = css`
@@ -121,6 +122,7 @@ class AppSidebar extends LitElement {
     this.activePage = 'dashboard';
     this.collapsed = false;
     this.showLogoutDialog = false;
+    this.userRole = 'customer';
   }
 
   connectedCallback() {
@@ -134,7 +136,8 @@ class AppSidebar extends LitElement {
   }
 
   get menuItems() {
-    return [
+    const adminOnly = ['user', 'logs'];
+    const allItems = [
       { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
       { id: 'reservation', label: 'Reservation', icon: ICONS.calendar },
       { id: 'booking', label: 'Booking', icon: ICONS.booking },
@@ -144,6 +147,12 @@ class AppSidebar extends LitElement {
       { id: 'payments', label: 'Payments', icon: ICONS.payments },
       { id: 'settings', label: 'Settings', icon: ICONS.settings }
     ];
+
+    if (this.userRole === 'customer') {
+      return allItems.filter(item => !adminOnly.includes(item.id));
+    }
+
+    return allItems;
   }
 
   handleNavClick(pageId) {
