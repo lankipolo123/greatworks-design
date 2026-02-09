@@ -5,8 +5,13 @@ import '/src/components/profile-header.js';
 import '/src/components/personal-info-form.js';
 import '/src/components/manage-account-card.js';
 import { toast } from '/src/service/toast-widget.js';
+import { getUser } from '/src/service/api.js';
 
 export class AppSettings extends LitElement {
+  static properties = {
+    userInfo: { type: Object },
+  };
+
   static styles = css`
     :host {
       display: block;
@@ -21,6 +26,18 @@ export class AppSettings extends LitElement {
   constructor() {
     super();
     this.userInfo = {};
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadUser();
+  }
+
+  loadUser() {
+    const user = getUser();
+    if (user) {
+      this.userInfo = user;
+    }
   }
 
   handlePersonalInfoUpdate(e) {
@@ -64,8 +81,14 @@ export class AppSettings extends LitElement {
   render() {
     return html`
       <settings-layout>
-        <profile-header 
+        <profile-header
           slot="one"
+          .displayName=${this.userInfo.name || ''}
+          .role=${this.userInfo.role || ''}
+          .email=${this.userInfo.email || ''}
+          .status=${this.userInfo.status || ''}
+          .photoURL=${this.userInfo.profile_photo || ''}
+          .joinedDate=${this.userInfo.created_at || ''}
           @profile-photo-upload=${this.handleProfilePhotoUpload}
         ></profile-header>
 
@@ -77,7 +100,7 @@ export class AppSettings extends LitElement {
 
         <manage-account-card
           slot="two"
-          userEmail="admin@example.com"
+          .userEmail=${this.userInfo.email || ''}
           @change-email="${this.handleChangeEmail}"
           @change-password="${this.handleChangePassword}"
           @deactivate-account="${this.handleAccountTermination}"

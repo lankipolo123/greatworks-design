@@ -161,16 +161,26 @@ export class ProfileHeader extends LitElement {
 
   constructor() {
     super();
-    this.displayName = 'Admin User';
-    this.role = 'admin';
-    this.email = 'admin@email.com';
-    this.status = 'active';
-    this.joinedDate = '—';
-    this.lastLoginDate = '—';
+    this.displayName = '';
+    this.role = '';
+    this.email = '';
+    this.status = '';
+    this.joinedDate = '';
+    this.lastLoginDate = '';
     this.photoURL = '';
     this.gender = '';
     this.isUploading = false;
     this.showUploadDialog = false;
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   changeAvatar() {
@@ -237,7 +247,7 @@ export class ProfileHeader extends LitElement {
           <div class="info">
             <div class="name">${this.displayName}</div>
             <div class="role">${this.role}</div>
-            <div class="joined-date">Joined: ${this.joinedDate}</div>
+            <div class="joined-date">Joined: ${this.formatDate(this.joinedDate)}</div>
             <div class="status">Last login: ${this.lastLoginDate}</div>
           </div>
         </div>
