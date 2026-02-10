@@ -6,7 +6,7 @@ import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { ticketsTableConfig } from '/src/configs/tickets-config.js';
-import { tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
+import { auth, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
 
 class CustomerDashboard extends LitElement {
   static properties = {
@@ -132,13 +132,10 @@ class CustomerDashboard extends LitElement {
     this._loadUserName();
   }
 
-  _loadUserName() {
+  async _loadUserName() {
     try {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        this.userName = user.name || user.email || '';
-      }
+      const user = await auth.getUser();
+      this.userName = user.name || user.email || '';
     } catch (e) {
       this.userName = '';
     }
