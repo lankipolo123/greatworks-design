@@ -1,7 +1,6 @@
 // src/pages/admin/reservation.js
 import { LitElement, html, css } from 'lit';
 import { reservationTableConfig } from '/src/configs/reservation-config.js';
-import { mockReservations } from '/src/mock-datas/mock-reservation';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import '/src/components/data-table.js';
 import '/src/components/pagination.js';
@@ -10,6 +9,7 @@ import '/src/components/search-bar.js';
 import '/src/components/app-button.js';
 import '/src/components/app-dialog.js';
 import '/src/components/book-someone-form.js';
+import '/src/components/badge-component.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/tabs-wrapper.js';
 import '/src/layouts/search-wrapper.js';
@@ -17,6 +17,7 @@ import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { toast } from '/src/service/toast-widget.js';
+import { reservations } from '/src/service/api.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -29,8 +30,12 @@ class AdminReservation extends LitElement {
     showAddDialog: { type: Boolean },
     showExportDialog: { type: Boolean },
     showDetailsDialog: { type: Boolean },
+    showEditDialog: { type: Boolean },
+    showDeleteDialog: { type: Boolean },
     selectedReservation: { type: Object },
-    reservationLoading: { type: Boolean }
+    reservationLoading: { type: Boolean },
+    editLoading: { type: Boolean },
+    deleteLoading: { type: Boolean }
   };
 
   static styles = css`
@@ -47,11 +52,73 @@ class AdminReservation extends LitElement {
       padding: 1rem;
       border: 1.25px solid #2d2b2b45;
     }
+
+    .details-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .detail-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .details-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .delete-warning {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .delete-warning p {
+      font-size: 0.9rem;
+      color: #333;
+      margin: 0 0 0.5rem;
+    }
+
+    .delete-warning .reservation-id {
+      font-weight: 700;
+      color: #721c24;
+    }
+
+    .delete-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 1rem;
+    }
   `;
 
   constructor() {
     super();
-    this.reservation = mockReservations;
+    this.reservation = [];
     this.currentPage = 1;
     this.itemsPerPage = 10;
     this.activeTab = 'all';
@@ -59,8 +126,12 @@ class AdminReservation extends LitElement {
     this.showAddDialog = false;
     this.showExportDialog = false;
     this.showDetailsDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
     this.selectedReservation = null;
     this.reservationLoading = false;
+    this.editLoading = false;
+    this.deleteLoading = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Upcoming' },
@@ -68,9 +139,40 @@ class AdminReservation extends LitElement {
       { id: 'completed', label: 'Archived/Complete' }
     ];
 
-    this.updatePagination();
     this.handlePageChange = this.handlePageChange.bind(this);
     this.handleTableAction = this.handleTableAction.bind(this);
+
+    this._loadReservations();
+  }
+
+  async _loadReservations() {
+    try {
+      const response = await reservations.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.reservation = (Array.isArray(data) ? data : []).map(r => this._mapApiReservation(r));
+      this.updatePagination();
+    } catch (e) {
+      console.error('Failed to load reservations:', e.message || e);
+      this.reservation = [];
+    }
+  }
+
+  _mapApiReservation(r) {
+    return {
+      id: r.id,
+      userId: r.user?.name || r.user?.email || `User #${r.user_id}`,
+      userName: r.user?.name || '',
+      userEmail: r.user?.email || '',
+      roomId: r.room_id,
+      roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
+      date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
+      time: typeof r.time === 'string' ? r.time.substring(0, 5) : r.time,
+      guests: r.guests,
+      status: r.status,
+      notes: r.notes || '',
+      user_id: r.user_id,
+      room_id: r.room_id,
+    };
   }
 
   get filteredReservations() {
@@ -87,7 +189,7 @@ class AdminReservation extends LitElement {
     if (this.searchValue) {
       const search = this.searchValue.toLowerCase();
       filtered = filtered.filter(r =>
-        r.id?.toLowerCase().includes(search) ||
+        String(r.id)?.toLowerCase().includes(search) ||
         r.userId?.toLowerCase().includes(search) ||
         r.date?.toLowerCase().includes(search) ||
         r.status?.toLowerCase().includes(search)
@@ -133,9 +235,14 @@ class AdminReservation extends LitElement {
 
   handleTableAction(e) {
     const { action, item } = e.detail;
+    this.selectedReservation = item;
+
     if (action === 'view') {
-      this.selectedReservation = item;
       this.showDetailsDialog = true;
+    } else if (action === 'edit') {
+      this.showEditDialog = true;
+    } else if (action === 'delete') {
+      this.showDeleteDialog = true;
     }
   }
 
@@ -156,44 +263,196 @@ class AdminReservation extends LitElement {
     this.showAddDialog = false;
     this.showExportDialog = false;
     this.showDetailsDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
     this.selectedReservation = null;
-  }
-
-  handleAddReservationSubmit(e) {
-    e.preventDefault();
-    this.reservationLoading = true;
-
-    const formData = new FormData(e.target);
-    const data = {
-      userName: formData.get('userName'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      date: formData.get('date'),
-      time: formData.get('time'),
-      duration: formData.get('duration'),
-      roomType: formData.get('roomType'),
-      guests: formData.get('guests'),
-      notes: formData.get('notes')
-    };
-
-    console.log('Create reservation data:', data);
-
-    // TODO: Call API to create reservation
-    // Example: await fetch('/api/reservations', { method: 'POST', body: JSON.stringify(data) })
-
-    setTimeout(() => {
-      this.reservationLoading = false;
-      toast.success('Reservation created successfully!');
-      this.showAddDialog = false;
-
-      // Optionally add to local array for immediate UI update
-      // this.reservation = [...this.reservation, newReservation];
-      // this.updatePagination();
-    }, 1000);
   }
 
   handleCancelDialog() {
     this.showAddDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
+  }
+
+  // ── Create ──
+  async handleAddReservationSubmit(e) {
+    e.preventDefault();
+    this.reservationLoading = true;
+
+    const form = this.shadowRoot.querySelector('#add-dialog book-someone-form')?.shadowRoot?.getElementById('book-form')
+      || e.target;
+
+    const formData = new FormData(form);
+    const data = {
+      user_id: formData.get('userId') || formData.get('user_id'),
+      room_id: formData.get('roomId') || formData.get('room_id') || null,
+      date: formData.get('date'),
+      time: formData.get('time'),
+      guests: parseInt(formData.get('guests') || '1'),
+      notes: formData.get('notes') || ''
+    };
+
+    try {
+      await reservations.create(data);
+      toast.success('Reservation created successfully!');
+      this.showAddDialog = false;
+      await this._loadReservations();
+    } catch (err) {
+      toast.error(err.message || 'Failed to create reservation');
+    } finally {
+      this.reservationLoading = false;
+    }
+  }
+
+  // ── Edit ──
+  handleEditClick() {
+    this.showDetailsDialog = false;
+    this.showEditDialog = true;
+  }
+
+  async handleEditSubmit(e) {
+    e.preventDefault();
+    if (!this.selectedReservation) return;
+    this.editLoading = true;
+
+    const form = this.shadowRoot.querySelector('#edit-dialog book-someone-form')?.shadowRoot?.getElementById('book-form')
+      || e.target;
+
+    const formData = new FormData(form);
+    const data = {};
+
+    const roomId = formData.get('roomId') || formData.get('room_id');
+    if (roomId) data.room_id = parseInt(roomId);
+
+    const date = formData.get('date');
+    if (date) data.date = date;
+
+    const time = formData.get('time');
+    if (time) data.time = time;
+
+    const guests = formData.get('guests');
+    if (guests) data.guests = parseInt(guests);
+
+    const notes = formData.get('notes');
+    if (notes !== null && notes !== undefined) data.notes = notes;
+
+    try {
+      await reservations.update(this.selectedReservation.id, data);
+      toast.success('Reservation updated successfully!');
+      this.showEditDialog = false;
+      this.selectedReservation = null;
+      await this._loadReservations();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update reservation');
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  // ── Delete ──
+  handleDeleteClick() {
+    this.showDetailsDialog = false;
+    this.showDeleteDialog = true;
+  }
+
+  async handleDeleteConfirm() {
+    if (!this.selectedReservation) return;
+    this.deleteLoading = true;
+
+    try {
+      await reservations.delete(this.selectedReservation.id);
+      toast.success('Reservation deleted successfully!');
+      this.showDeleteDialog = false;
+      this.selectedReservation = null;
+      await this._loadReservations();
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete reservation');
+    } finally {
+      this.deleteLoading = false;
+    }
+  }
+
+  // ── Status change ──
+  async handleStatusChange(newStatus) {
+    if (!this.selectedReservation) return;
+
+    try {
+      await reservations.update(this.selectedReservation.id, { status: newStatus });
+      toast.success(`Reservation ${newStatus} successfully!`);
+      this.showDetailsDialog = false;
+      this.selectedReservation = null;
+      await this._loadReservations();
+    } catch (err) {
+      toast.error(err.message || `Failed to ${newStatus} reservation`);
+    }
+  }
+
+  _renderDetailsDialog() {
+    if (!this.selectedReservation) return '';
+    const r = this.selectedReservation;
+
+    return html`
+      <div class="details-content">
+        <div class="detail-item">
+          <span class="detail-label">Reservation ID</span>
+          <span class="detail-value">${r.id}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <badge-component variant="${r.status}" size="small">${r.status}</badge-component>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">User</span>
+          <span class="detail-value">${r.userName || r.userId}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room</span>
+          <span class="detail-value">${r.roomName || 'No room assigned'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">${r.date ? new Date(r.date).toLocaleDateString() : '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Time</span>
+          <span class="detail-value">${r.time}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Guests</span>
+          <span class="detail-value">${r.guests}</span>
+        </div>
+        ${r.notes ? html`
+          <div class="detail-item full">
+            <span class="detail-label">Notes</span>
+            <span class="detail-value">${r.notes}</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="details-actions">
+        ${r.status === 'pending' ? html`
+          <app-button type="success" size="small" @click=${() => this.handleStatusChange('confirmed')}>
+            Confirm
+          </app-button>
+          <app-button type="warning" size="small" @click=${() => this.handleStatusChange('cancelled')}>
+            Cancel Reservation
+          </app-button>
+        ` : ''}
+        ${r.status === 'confirmed' ? html`
+          <app-button type="success" size="small" @click=${() => this.handleStatusChange('completed')}>
+            Complete
+          </app-button>
+          <app-button type="warning" size="small" @click=${() => this.handleStatusChange('cancelled')}>
+            Cancel Reservation
+          </app-button>
+        ` : ''}
+        <app-button type="secondary" size="small" @click=${this.handleEditClick}>
+          Edit
+        </app-button>
+        <app-button type="danger" size="small" @click=${this.handleDeleteClick}>
+          Delete
+        </app-button>
+      </div>
+    `;
   }
 
   render() {
@@ -208,7 +467,7 @@ class AdminReservation extends LitElement {
               @tab-change=${this.handleTabChange}>
             </tabs-component>
           </tabs-wrapper>
-          
+
           <search-wrapper>
             <app-button
               type="tertiary"
@@ -250,7 +509,9 @@ class AdminReservation extends LitElement {
         </pagination-wrapper>
       </content-card>
 
+      <!-- Add Reservation Dialog -->
       <app-dialog
+        id="add-dialog"
         .isOpen=${this.showAddDialog}
         title="Add Reservation"
         description="Fill in the reservation details"
@@ -260,33 +521,34 @@ class AdminReservation extends LitElement {
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
         <book-someone-form>
-          <app-button 
-            slot="actions" 
-            type="warning" 
-            size="medium" 
-            @click=${this.handleCancelDialog} 
+          <app-button
+            slot="actions"
+            type="warning"
+            size="medium"
+            @click=${this.handleCancelDialog}
             ?disabled=${this.reservationLoading}>
             Cancel
           </app-button>
-          <app-button 
-            slot="actions" 
-            type="primary" 
-            size="medium" 
+          <app-button
+            slot="actions"
+            type="primary"
+            size="medium"
             @click=${(e) => {
-        const form = this.shadowRoot.querySelector('book-someone-form').shadowRoot.getElementById('book-form');
-        if (form.checkValidity()) {
+        const form = this.shadowRoot.querySelector('#add-dialog book-someone-form')?.shadowRoot?.getElementById('book-form');
+        if (form && form.checkValidity()) {
           this.handleAddReservationSubmit(new Event('submit', { cancelable: true, target: form }));
           e.preventDefault();
-        } else {
+        } else if (form) {
           form.reportValidity();
         }
-      }} 
+      }}
             ?disabled=${this.reservationLoading}>
             ${this.reservationLoading ? 'Creating...' : 'Create Reservation'}
           </app-button>
         </book-someone-form>
       </app-dialog>
 
+      <!-- Export Dialog -->
       <app-dialog
         .isOpen=${this.showExportDialog}
         title="Export Reservations"
@@ -299,16 +561,71 @@ class AdminReservation extends LitElement {
         @dialog-close=${this.handleDialogClose}>
       </app-dialog>
 
+      <!-- Details Dialog -->
       <app-dialog
         .isOpen=${this.showDetailsDialog}
         title="Reservation Details"
-        mode="details"
         size="medium"
         styleMode="compact"
         .hideFooter=${true}
         .closeOnOverlay=${true}
-        .detailsData=${this.selectedReservation}
         @dialog-close=${this.handleDialogClose}>
+        ${this._renderDetailsDialog()}
+      </app-dialog>
+
+      <!-- Edit Dialog -->
+      <app-dialog
+        id="edit-dialog"
+        .isOpen=${this.showEditDialog}
+        title="Edit Reservation"
+        description="Update the reservation details"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <book-someone-form>
+          <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
+            Cancel
+          </app-button>
+          <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
+        const form = this.shadowRoot.querySelector('#edit-dialog book-someone-form')?.shadowRoot?.getElementById('book-form');
+        if (form && form.checkValidity()) {
+          this.handleEditSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else if (form) {
+          form.reportValidity();
+        }
+      }} ?disabled=${this.editLoading}>
+            ${this.editLoading ? 'Updating...' : 'Update Reservation'}
+          </app-button>
+        </book-someone-form>
+      </app-dialog>
+
+      <!-- Delete Confirmation Dialog -->
+      <app-dialog
+        .isOpen=${this.showDeleteDialog}
+        title="Delete Reservation"
+        size="small"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <div class="delete-warning">
+          <p>Are you sure you want to delete this reservation?</p>
+          ${this.selectedReservation ? html`
+            <p>Reservation <span class="reservation-id">#${this.selectedReservation.id}</span> for <strong>${this.selectedReservation.userName || this.selectedReservation.userId}</strong></p>
+          ` : ''}
+          <p style="font-size: 0.75rem; color: #888;">This action cannot be undone.</p>
+        </div>
+        <div class="delete-actions">
+          <app-button type="secondary" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.deleteLoading}>
+            Cancel
+          </app-button>
+          <app-button type="danger" size="medium" @click=${this.handleDeleteConfirm} ?disabled=${this.deleteLoading}>
+            ${this.deleteLoading ? 'Deleting...' : 'Delete'}
+          </app-button>
+        </div>
       </app-dialog>
     `;
   }

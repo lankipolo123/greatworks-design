@@ -43,6 +43,8 @@ export const reservationTableConfig = {
     ],
 
     actions: [
-        { key: 'view', label: 'View', icon: 'visibility' }
+        { key: 'view', label: 'View', icon: 'visibility' },
+        { key: 'edit', label: 'Edit', icon: 'edit' },
+        { key: 'delete', label: 'Delete', icon: 'delete', danger: true }
     ]
 };
