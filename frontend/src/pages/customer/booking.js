@@ -9,7 +9,6 @@ import '/src/components/app-dialog.js';
 import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
-import { mockBookings } from '/src/mock-datas/mock-booking.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
@@ -26,8 +25,7 @@ class CustomerBooking extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     showDetailsDialog: { type: Boolean },
-    selectedBooking: { type: Object },
-    isApiMode: { type: Boolean }
+    selectedBooking: { type: Object }
   };
 
   static styles = css`
@@ -103,7 +101,6 @@ class CustomerBooking extends LitElement {
   constructor() {
     super();
     this.allBookings = [];
-    this.isApiMode = false;
 
     const savedDate = localStorage.getItem('booking-selected-date');
     const savedBookings = localStorage.getItem('booking-selected-bookings');
@@ -129,16 +126,14 @@ class CustomerBooking extends LitElement {
       const response = await bookings.getAll({ per_page: 100 });
       const data = response.data || response;
       this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
-      this.isApiMode = true;
 
       if (this.selectedDate) {
         this.selectedBookings = this.allBookings.filter(b => b.date === this.selectedDate);
         this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
       }
     } catch (e) {
-      console.warn('API unavailable, using mock data:', e.message || e);
-      this.allBookings = mockBookings;
-      this.isApiMode = false;
+      console.error('Failed to load bookings:', e.message || e);
+      this.allBookings = [];
     }
   }
 
@@ -179,11 +174,7 @@ class CustomerBooking extends LitElement {
     const { date, bookings: dayBookings } = e.detail;
     this.selectedDate = date;
 
-    if (this.isApiMode && this.allBookings.length > 0) {
-      this.selectedBookings = this.allBookings.filter(b => b.date === date);
-    } else {
-      this.selectedBookings = dayBookings || [];
-    }
+    this.selectedBookings = this.allBookings.filter(b => b.date === date);
 
     this.currentPage = 1;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
@@ -284,7 +275,7 @@ class CustomerBooking extends LitElement {
       <content-card mode="3">
         <calendar-section>
           <booking-calendar
-            .reservations=${this.allBookings.length > 0 ? this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending') : mockBookings.filter(b => b.status === 'confirmed')}
+            .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
             .selectedDate=${this.selectedDate}
             @day-click=${this.handleDayClick}>
 
