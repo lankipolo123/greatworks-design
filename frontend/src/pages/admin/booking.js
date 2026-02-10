@@ -7,19 +7,22 @@ import '/src/components/content-card.js';
 import '/src/components/pagination.js';
 import '/src/components/floating-action-button.js';
 import '/src/components/app-dialog.js';
+import '/src/components/app-button.js';
 import '/src/components/book-someone-form.js';
 import '/src/components/create-room-form.js';
+import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
-import { mockReservations } from '/src/mock-datas/mock-reservation.js';
+import { mockBookings } from '/src/mock-datas/mock-booking.js';
 import { bookingFabOptions } from '/src/configs/fab-options-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
+import { bookings, rooms } from '/src/service/api.js';
 
 class AdminBooking extends LitElement {
   static properties = {
-    reservations: { type: Array },
+    allBookings: { type: Array },
     selectedDate: { type: String },
     selectedBookings: { type: Array },
     sidebarOpen: { type: Boolean },
@@ -32,9 +35,19 @@ class AdminBooking extends LitElement {
     showBookDialog: { type: Boolean },
     showRoomDialog: { type: Boolean },
     showExportDialog: { type: Boolean },
+    showDetailsDialog: { type: Boolean },
+    showEditDialog: { type: Boolean },
+    showDeleteDialog: { type: Boolean },
+    selectedBooking: { type: Object },
     roomImagePreview: { type: String },
     bookLoading: { type: Boolean },
-    roomLoading: { type: Boolean }
+    roomLoading: { type: Boolean },
+    editLoading: { type: Boolean },
+    deleteLoading: { type: Boolean },
+    slotInfo: { type: Object },
+    slotLoading: { type: Boolean },
+    roomsList: { type: Array },
+    isApiMode: { type: Boolean }
   };
 
   static styles = css`
@@ -74,6 +87,111 @@ class AdminBooking extends LitElement {
       display: contents;
     }
 
+    .slot-info {
+      background: #f8f9fa;
+      border: 1.5px solid #2d2b2b25;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .slot-info .slot-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .slot-info .slot-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .slot-info .slot-label {
+      font-weight: 500;
+      color: #555;
+    }
+
+    .slot-info .slot-value {
+      font-weight: 700;
+    }
+
+    .slot-info .slot-value.available {
+      color: #155724;
+    }
+
+    .slot-info .slot-value.full {
+      color: #721c24;
+    }
+
+    .slot-info .slot-loading {
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    }
+
+    .details-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .detail-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .details-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .delete-warning {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .delete-warning p {
+      font-size: 0.9rem;
+      color: #333;
+      margin: 0 0 0.5rem;
+    }
+
+    .delete-warning .booking-id {
+      font-weight: 700;
+      color: #721c24;
+    }
+
+    .delete-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+
     @media (max-width: 1024px) {
       content-card {
         flex-direction: column;
@@ -83,7 +201,8 @@ class AdminBooking extends LitElement {
 
   constructor() {
     super();
-    this.reservations = mockReservations.filter(r => r.status === 'confirmed');
+    this.allBookings = [];
+    this.isApiMode = false;
 
     const savedDate = localStorage.getItem('booking-selected-date');
     const savedBookings = localStorage.getItem('booking-selected-bookings');
@@ -109,9 +228,78 @@ class AdminBooking extends LitElement {
     this.showBookDialog = false;
     this.showRoomDialog = false;
     this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
+    this.selectedBooking = null;
     this.roomImagePreview = null;
     this.bookLoading = false;
     this.roomLoading = false;
+    this.editLoading = false;
+    this.deleteLoading = false;
+
+    // Slot info
+    this.slotInfo = null;
+    this.slotLoading = false;
+
+    // Rooms list for dropdowns
+    this.roomsList = [];
+
+    this._loadBookings();
+    this._loadRooms();
+  }
+
+  async _loadBookings() {
+    try {
+      const response = await bookings.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
+      this.isApiMode = true;
+
+      // Re-filter for selected date if any
+      if (this.selectedDate) {
+        this.selectedBookings = this.allBookings.filter(b => b.date === this.selectedDate);
+        this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
+        localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
+      }
+    } catch (e) {
+      console.warn('API unavailable, using mock data:', e.message || e);
+      this.allBookings = mockBookings;
+      this.isApiMode = false;
+    }
+  }
+
+  async _loadRooms() {
+    try {
+      const response = await rooms.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.roomsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('Could not load rooms:', e.message || e);
+      this.roomsList = [];
+    }
+  }
+
+  _mapApiBooking(b) {
+    return {
+      id: b.id,
+      userId: b.user?.name || b.user?.email || `User #${b.user_id}`,
+      userName: b.user?.name || '',
+      userEmail: b.user?.email || '',
+      roomId: b.room_id,
+      roomName: b.room?.name || `Room #${b.room_id}`,
+      roomType: b.room?.type || '',
+      roomCapacity: b.room?.capacity || 0,
+      date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
+      startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
+      time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
+      durationHours: b.duration_hours,
+      guests: b.guests,
+      status: b.status,
+      notes: b.notes || '',
+      user_id: b.user_id,
+      room_id: b.room_id,
+    };
   }
 
   get paginatedBookings() {
@@ -136,19 +324,26 @@ class AdminBooking extends LitElement {
   }
 
   handleDayClick(e) {
-    const { date, bookings } = e.detail;
+    const { date, bookings: dayBookings } = e.detail;
     this.selectedDate = date;
-    this.selectedBookings = bookings;
+
+    // If API mode, filter from allBookings for the selected date
+    if (this.isApiMode && this.allBookings.length > 0) {
+      this.selectedBookings = this.allBookings.filter(b => b.date === date);
+    } else {
+      this.selectedBookings = dayBookings || [];
+    }
+
     this.currentPage = 1;
-    this.totalPages = getTotalPages(bookings.length, this.itemsPerPage);
+    this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
     localStorage.setItem('booking-selected-date', date);
-    localStorage.setItem('booking-selected-bookings', JSON.stringify(bookings));
+    localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
 
-    if (bookings.length === 0) {
+    if (this.selectedBookings.length === 0) {
       toastSpamProtection.handleToast(
         date,
-        () => toast.info('No date is booked here'),
+        () => toast.info('No bookings on this date'),
         () => toast.warning('Please don\'t spam! Wait a moment before clicking again.', 6000)
       );
     } else {
@@ -161,8 +356,8 @@ class AdminBooking extends LitElement {
 
   handleBookingSelect(e) {
     const { booking } = e.detail;
-    const details = `Booking Details:\n━━━━━━━━━━━━━━━━\nID: ${booking.id}\nUser: ${booking.userId}\nDate: ${booking.date}\nTime: ${booking.time}\nGuests: ${booking.guests}\nStatus: ${booking.status}${booking.space ? `\nSpace: ${booking.space}` : ''}${booking.notes ? `\nNotes: ${booking.notes}` : ''}`;
-    alert(details);
+    this.selectedBooking = booking;
+    this.showDetailsDialog = true;
   }
 
   handleRoomTypeChange(e) {
@@ -186,9 +381,10 @@ class AdminBooking extends LitElement {
   }
 
   handleFabAction(e) {
-    const { action, label } = e.detail;
+    const { action } = e.detail;
 
     if (action === 'book-someone') {
+      this.slotInfo = null;
       this.showBookDialog = true;
       toast.success('Opening booking form...');
     } else if (action === 'create-room') {
@@ -201,7 +397,6 @@ class AdminBooking extends LitElement {
     const { format, fromDate, toDate } = e.detail;
     console.log('Export bookings:', { format, fromDate, toDate });
     toast.success(`Exporting as ${format.toUpperCase()}...`);
-    // TODO: Call API to export data
     this.showExportDialog = false;
   }
 
@@ -216,105 +411,337 @@ class AdminBooking extends LitElement {
     }
   }
 
-  handleBookSomeoneSubmit(e) {
+  async handleBookSomeoneSubmit(e) {
     e.preventDefault();
     this.bookLoading = true;
 
-    const formData = new FormData(e.target);
+    const form = this.shadowRoot.querySelector('#book-dialog book-someone-form')?.shadowRoot?.getElementById('book-form')
+      || e.target;
+
+    const formData = new FormData(form);
     const data = {
-      userName: formData.get('userName'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
+      user_id: formData.get('userId') || formData.get('user_id'),
+      room_id: formData.get('roomId') || formData.get('room_id'),
       date: formData.get('date'),
-      time: formData.get('time'),
-      duration: formData.get('duration'),
-      roomType: formData.get('roomType'),
-      guests: formData.get('guests'),
-      notes: formData.get('notes')
+      start_time: formData.get('time'),
+      duration_hours: parseInt(formData.get('duration') || '1'),
+      guests: parseInt(formData.get('guests') || '1'),
+      notes: formData.get('notes') || ''
     };
 
-    console.log('Book someone data:', data);
-
-    // TODO: Call API to create booking
-    // Example: await fetch('/api/bookings', { method: 'POST', body: JSON.stringify(data) })
-
-    setTimeout(() => {
-      this.bookLoading = false;
+    try {
+      const result = await bookings.create(data);
       toast.success('Booking created successfully!');
       this.showBookDialog = false;
-    }, 1000);
+      await this._loadBookings();
+    } catch (err) {
+      if (err.status === 422 && err.message?.includes('slots')) {
+        toast.error(`Not enough slots! Available: ${err.available_slots || 0}, Requested: ${data.guests}`);
+      } else {
+        toast.error(err.message || 'Failed to create booking');
+      }
+    } finally {
+      this.bookLoading = false;
+    }
   }
 
-  handleCreateRoomSubmit(e) {
+  async handleCreateRoomSubmit(e) {
     e.preventDefault();
     this.roomLoading = true;
 
-    const formData = new FormData(e.target);
+    const form = this.shadowRoot.querySelector('#room-dialog create-room-form')?.shadowRoot?.getElementById('room-form')
+      || e.target;
+
+    const formData = new FormData(form);
     const amenities = formData.getAll('amenities');
 
     const data = {
-      roomName: formData.get('roomName'),
-      roomType: formData.get('roomType'),
-      capacity: formData.get('capacity'),
-      pricePerHour: formData.get('pricePerHour'),
-      floor: formData.get('floor'),
-      location: formData.get('location'),
+      name: formData.get('roomName'),
+      type: formData.get('roomType'),
+      capacity: parseInt(formData.get('capacity') || '1'),
+      price_per_hour: parseFloat(formData.get('pricePerHour') || '0'),
+      floor: formData.get('floor') || null,
+      location: formData.get('location') || null,
       amenities: amenities,
-      description: formData.get('description'),
-      image: this.roomImagePreview
+      description: formData.get('description') || null,
     };
 
-    console.log('Create room data:', data);
-
-    // TODO: Call API to create room
-    // Example: await fetch('/api/rooms', { method: 'POST', body: JSON.stringify(data) })
-
-    setTimeout(() => {
-      this.roomLoading = false;
+    try {
+      await rooms.create(data);
       toast.success('Room created successfully!');
       this.showRoomDialog = false;
       this.roomImagePreview = null;
-    }, 1000);
+      await this._loadRooms();
+    } catch (err) {
+      toast.error(err.message || 'Failed to create room');
+    } finally {
+      this.roomLoading = false;
+    }
+  }
+
+  // ── Edit booking ──
+  handleEditClick() {
+    this.showDetailsDialog = false;
+    this.slotInfo = null;
+    this.showEditDialog = true;
+  }
+
+  async handleEditSubmit(e) {
+    e.preventDefault();
+    if (!this.selectedBooking) return;
+    this.editLoading = true;
+
+    const form = this.shadowRoot.querySelector('#edit-dialog book-someone-form')?.shadowRoot?.getElementById('book-form')
+      || e.target;
+
+    const formData = new FormData(form);
+    const data = {};
+
+    const roomId = formData.get('roomId') || formData.get('room_id');
+    if (roomId) data.room_id = parseInt(roomId);
+
+    const date = formData.get('date');
+    if (date) data.date = date;
+
+    const time = formData.get('time');
+    if (time) data.start_time = time;
+
+    const duration = formData.get('duration');
+    if (duration) data.duration_hours = parseInt(duration);
+
+    const guests = formData.get('guests');
+    if (guests) data.guests = parseInt(guests);
+
+    const notes = formData.get('notes');
+    if (notes !== null && notes !== undefined) data.notes = notes;
+
+    const bookingId = this.selectedBooking.id;
+
+    try {
+      await bookings.update(bookingId, data);
+      toast.success('Booking updated successfully!');
+      this.showEditDialog = false;
+      this.selectedBooking = null;
+      await this._loadBookings();
+    } catch (err) {
+      if (err.status === 422 && err.message?.includes('slots')) {
+        toast.error(`Not enough slots! Available: ${err.available_slots || 0}`);
+      } else {
+        toast.error(err.message || 'Failed to update booking');
+      }
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  // ── Delete booking ──
+  handleDeleteClick() {
+    this.showDetailsDialog = false;
+    this.showDeleteDialog = true;
+  }
+
+  async handleDeleteConfirm() {
+    if (!this.selectedBooking) return;
+    this.deleteLoading = true;
+
+    const bookingId = this.selectedBooking.id;
+
+    try {
+      await bookings.delete(bookingId);
+      toast.success('Booking deleted successfully!');
+      this.showDeleteDialog = false;
+      this.selectedBooking = null;
+      await this._loadBookings();
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete booking');
+    } finally {
+      this.deleteLoading = false;
+    }
+  }
+
+  // ── Status change ──
+  async handleStatusChange(newStatus) {
+    if (!this.selectedBooking) return;
+
+    try {
+      await bookings.update(this.selectedBooking.id, { status: newStatus });
+      toast.success(`Booking ${newStatus} successfully!`);
+      this.showDetailsDialog = false;
+      this.selectedBooking = null;
+      await this._loadBookings();
+    } catch (err) {
+      toast.error(err.message || `Failed to ${newStatus} booking`);
+    }
+  }
+
+  // ── Slot availability check ──
+  async checkAvailability(roomId, date, startTime, durationHours) {
+    if (!roomId || !date || !startTime || !durationHours) {
+      this.slotInfo = null;
+      return;
+    }
+
+    this.slotLoading = true;
+    try {
+      const result = await bookings.getAvailability({
+        room_id: roomId,
+        date: date,
+        start_time: startTime,
+        duration_hours: durationHours
+      });
+      this.slotInfo = result;
+    } catch (err) {
+      this.slotInfo = null;
+    } finally {
+      this.slotLoading = false;
+    }
   }
 
   handleCancelDialog() {
     this.showBookDialog = false;
     this.showRoomDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
     this.roomImagePreview = null;
+    this.slotInfo = null;
   }
 
   handleDialogClose() {
     this.showBookDialog = false;
     this.showRoomDialog = false;
     this.showExportDialog = false;
+    this.showDetailsDialog = false;
+    this.showEditDialog = false;
+    this.showDeleteDialog = false;
     this.roomImagePreview = null;
+    this.slotInfo = null;
+  }
+
+  _renderSlotInfo() {
+    if (this.slotLoading) {
+      return html`<div class="slot-info"><div class="slot-loading">Checking availability...</div></div>`;
+    }
+
+    if (!this.slotInfo) return '';
+
+    const isAvailable = this.slotInfo.available_slots > 0;
+
+    return html`
+      <div class="slot-info">
+        <div class="slot-row">
+          <span class="slot-label">Room Capacity</span>
+          <span class="slot-value">${this.slotInfo.total_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Currently Booked</span>
+          <span class="slot-value">${this.slotInfo.booked_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Available Slots</span>
+          <span class="slot-value ${isAvailable ? 'available' : 'full'}">${this.slotInfo.available_slots}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderDetailsDialog() {
+    if (!this.selectedBooking) return '';
+
+    const b = this.selectedBooking;
+
+    return html`
+      <div class="details-content">
+        <div class="detail-item">
+          <span class="detail-label">Booking ID</span>
+          <span class="detail-value">${b.id}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <badge-component variant="${b.status}" size="small">${b.status}</badge-component>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">User</span>
+          <span class="detail-value">${b.userName || b.userId}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room</span>
+          <span class="detail-value">${b.roomName}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Time</span>
+          <span class="detail-value">${b.startTime || b.time}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Duration</span>
+          <span class="detail-value">${b.durationHours}h</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Guests</span>
+          <span class="detail-value">${b.guests}</span>
+        </div>
+        ${b.notes ? html`
+          <div class="detail-item full">
+            <span class="detail-label">Notes</span>
+            <span class="detail-value">${b.notes}</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="details-actions">
+        ${b.status === 'pending' ? html`
+          <app-button type="success" size="small" @click=${() => this.handleStatusChange('confirmed')}>
+            Confirm
+          </app-button>
+          <app-button type="warning" size="small" @click=${() => this.handleStatusChange('cancelled')}>
+            Cancel Booking
+          </app-button>
+        ` : ''}
+        ${b.status === 'confirmed' ? html`
+          <app-button type="success" size="small" @click=${() => this.handleStatusChange('completed')}>
+            Complete
+          </app-button>
+          <app-button type="warning" size="small" @click=${() => this.handleStatusChange('cancelled')}>
+            Cancel Booking
+          </app-button>
+        ` : ''}
+        <app-button type="secondary" size="small" @click=${this.handleEditClick}>
+          Edit
+        </app-button>
+        <app-button type="danger" size="small" @click=${this.handleDeleteClick}>
+          Delete
+        </app-button>
+      </div>
+    `;
   }
 
   render() {
     return html`
       <content-card mode="3">
         <calendar-section>
-          <booking-calendar 
-            .reservations=${this.reservations}
+          <booking-calendar
+            .reservations=${this.allBookings.length > 0 ? this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending') : mockBookings.filter(b => b.status === 'confirmed')}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
             @day-click=${this.handleDayClick}
             @branch-change=${this.handleBranchChange}>
-            
-            <today-button 
+
+            <today-button
               slot="today-btn"
               @today-click=${this.handleTodayClick}>
             </today-button>
-            <button 
-              slot="controls" 
-              class="toggle-btn" 
+            <button
+              slot="controls"
+              class="toggle-btn"
               @click=${this.toggleSidebar}>
               ${this.sidebarOpen ? 'X' : 'Details'}
             </button>
           </booking-calendar>
         </calendar-section>
-        
+
         <sidebar-section class="${this.sidebarOpen ? '' : 'closed'}">
           <booking-sidebar
             .selectedDate=${this.selectedDate}
@@ -338,7 +765,9 @@ class AdminBooking extends LitElement {
         @fab-option-click=${this.handleFabAction}>
       </floating-action-button>
 
+      <!-- Create Booking Dialog -->
       <app-dialog
+        id="book-dialog"
         .isOpen=${this.showBookDialog}
         title="Book Someone"
         description="Fill in the booking details"
@@ -348,15 +777,16 @@ class AdminBooking extends LitElement {
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
         <book-someone-form>
+          ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
             Cancel
           </app-button>
           <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
-        const form = this.shadowRoot.querySelector('book-someone-form').shadowRoot.getElementById('book-form');
-        if (form.checkValidity()) {
+        const form = this.shadowRoot.querySelector('#book-dialog book-someone-form')?.shadowRoot?.getElementById('book-form');
+        if (form && form.checkValidity()) {
           this.handleBookSomeoneSubmit(new Event('submit', { cancelable: true, target: form }));
           e.preventDefault();
-        } else {
+        } else if (form) {
           form.reportValidity();
         }
       }} ?disabled=${this.bookLoading}>
@@ -365,7 +795,9 @@ class AdminBooking extends LitElement {
         </book-someone-form>
       </app-dialog>
 
+      <!-- Create Room Dialog -->
       <app-dialog
+        id="room-dialog"
         .isOpen=${this.showRoomDialog}
         title="Create New Room"
         description="Enter room details and upload image"
@@ -382,11 +814,11 @@ class AdminBooking extends LitElement {
             Cancel
           </app-button>
           <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
-        const form = this.shadowRoot.querySelector('create-room-form').shadowRoot.getElementById('room-form');
-        if (form.checkValidity()) {
+        const form = this.shadowRoot.querySelector('#room-dialog create-room-form')?.shadowRoot?.getElementById('room-form');
+        if (form && form.checkValidity()) {
           this.handleCreateRoomSubmit(new Event('submit', { cancelable: true, target: form }));
           e.preventDefault();
-        } else {
+        } else if (form) {
           form.reportValidity();
         }
       }} ?disabled=${this.roomLoading}>
@@ -395,6 +827,7 @@ class AdminBooking extends LitElement {
         </create-room-form>
       </app-dialog>
 
+      <!-- Export Dialog -->
       <app-dialog
         .isOpen=${this.showExportDialog}
         title="Export Bookings"
@@ -405,6 +838,74 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         @export-select=${this.handleExportSelect}
         @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <!-- Booking Details Dialog -->
+      <app-dialog
+        .isOpen=${this.showDetailsDialog}
+        title="Booking Details"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this._renderDetailsDialog()}
+      </app-dialog>
+
+      <!-- Edit Booking Dialog -->
+      <app-dialog
+        id="edit-dialog"
+        .isOpen=${this.showEditDialog}
+        title="Edit Booking"
+        description="Update the booking details"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <book-someone-form>
+          ${this._renderSlotInfo()}
+          <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
+            Cancel
+          </app-button>
+          <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
+        const form = this.shadowRoot.querySelector('#edit-dialog book-someone-form')?.shadowRoot?.getElementById('book-form');
+        if (form && form.checkValidity()) {
+          this.handleEditSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else if (form) {
+          form.reportValidity();
+        }
+      }} ?disabled=${this.editLoading}>
+            ${this.editLoading ? 'Updating...' : 'Update Booking'}
+          </app-button>
+        </book-someone-form>
+      </app-dialog>
+
+      <!-- Delete Confirmation Dialog -->
+      <app-dialog
+        .isOpen=${this.showDeleteDialog}
+        title="Delete Booking"
+        size="small"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <div class="delete-warning">
+          <p>Are you sure you want to delete this booking?</p>
+          ${this.selectedBooking ? html`
+            <p>Booking <span class="booking-id">#${this.selectedBooking.id}</span> for <strong>${this.selectedBooking.userName || this.selectedBooking.userId}</strong></p>
+          ` : ''}
+          <p style="font-size: 0.75rem; color: #888;">This action cannot be undone.</p>
+        </div>
+        <div class="delete-actions">
+          <app-button type="secondary" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.deleteLoading}>
+            Cancel
+          </app-button>
+          <app-button type="danger" size="medium" @click=${this.handleDeleteConfirm} ?disabled=${this.deleteLoading}>
+            ${this.deleteLoading ? 'Deleting...' : 'Delete'}
+          </app-button>
+        </div>
       </app-dialog>
     `;
   }

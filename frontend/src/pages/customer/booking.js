@@ -5,16 +5,19 @@ import '/src/components/booking-sidebar.js';
 import '/src/components/today-btn.js';
 import '/src/components/content-card.js';
 import '/src/components/pagination.js';
+import '/src/components/app-dialog.js';
+import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
-import { mockReservations } from '/src/mock-datas/mock-reservation.js';
+import { mockBookings } from '/src/mock-datas/mock-booking.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
+import { bookings } from '/src/service/api.js';
 
 class CustomerBooking extends LitElement {
   static properties = {
-    reservations: { type: Array },
+    allBookings: { type: Array },
     selectedDate: { type: String },
     selectedBookings: { type: Array },
     sidebarOpen: { type: Boolean },
@@ -22,6 +25,9 @@ class CustomerBooking extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
+    showDetailsDialog: { type: Boolean },
+    selectedBooking: { type: Object },
+    isApiMode: { type: Boolean }
   };
 
   static styles = css`
@@ -57,6 +63,36 @@ class CustomerBooking extends LitElement {
       transform: translateY(-1px);
     }
 
+    .details-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .detail-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
     @media (max-width: 1024px) {
       content-card {
         flex-direction: column;
@@ -66,7 +102,8 @@ class CustomerBooking extends LitElement {
 
   constructor() {
     super();
-    this.reservations = mockReservations.filter(r => r.status === 'confirmed');
+    this.allBookings = [];
+    this.isApiMode = false;
 
     const savedDate = localStorage.getItem('booking-selected-date');
     const savedBookings = localStorage.getItem('booking-selected-bookings');
@@ -81,6 +118,44 @@ class CustomerBooking extends LitElement {
     this.currentPage = 1;
     this.itemsPerPage = 5;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
+    this.showDetailsDialog = false;
+    this.selectedBooking = null;
+
+    this._loadBookings();
+  }
+
+  async _loadBookings() {
+    try {
+      const response = await bookings.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
+      this.isApiMode = true;
+
+      if (this.selectedDate) {
+        this.selectedBookings = this.allBookings.filter(b => b.date === this.selectedDate);
+        this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
+      }
+    } catch (e) {
+      console.warn('API unavailable, using mock data:', e.message || e);
+      this.allBookings = mockBookings;
+      this.isApiMode = false;
+    }
+  }
+
+  _mapApiBooking(b) {
+    return {
+      id: b.id,
+      userId: b.user?.name || b.user?.email || `User #${b.user_id}`,
+      userName: b.user?.name || '',
+      roomName: b.room?.name || `Room #${b.room_id}`,
+      date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
+      startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
+      time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
+      durationHours: b.duration_hours,
+      guests: b.guests,
+      status: b.status,
+      notes: b.notes || '',
+    };
   }
 
   get paginatedBookings() {
@@ -101,16 +176,22 @@ class CustomerBooking extends LitElement {
   }
 
   handleDayClick(e) {
-    const { date, bookings } = e.detail;
+    const { date, bookings: dayBookings } = e.detail;
     this.selectedDate = date;
-    this.selectedBookings = bookings;
+
+    if (this.isApiMode && this.allBookings.length > 0) {
+      this.selectedBookings = this.allBookings.filter(b => b.date === date);
+    } else {
+      this.selectedBookings = dayBookings || [];
+    }
+
     this.currentPage = 1;
-    this.totalPages = getTotalPages(bookings.length, this.itemsPerPage);
+    this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
     localStorage.setItem('booking-selected-date', date);
-    localStorage.setItem('booking-selected-bookings', JSON.stringify(bookings));
+    localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
 
-    if (bookings.length === 0) {
+    if (this.selectedBookings.length === 0) {
       toastSpamProtection.handleToast(
         date,
         () => toast.info('No bookings on this date'),
@@ -126,8 +207,13 @@ class CustomerBooking extends LitElement {
 
   handleBookingSelect(e) {
     const { booking } = e.detail;
-    const details = `Booking Details:\n━━━━━━━━━━━━━━━━\nID: ${booking.id}\nDate: ${booking.date}\nTime: ${booking.time}\nGuests: ${booking.guests}\nStatus: ${booking.status}${booking.space ? `\nSpace: ${booking.space}` : ''}${booking.notes ? `\nNotes: ${booking.notes}` : ''}`;
-    alert(details);
+    this.selectedBooking = booking;
+    this.showDetailsDialog = true;
+  }
+
+  handleDialogClose() {
+    this.showDetailsDialog = false;
+    this.selectedBooking = null;
   }
 
   handleRoomTypeChange(e) {
@@ -149,12 +235,56 @@ class CustomerBooking extends LitElement {
     }
   }
 
+  _renderDetailsDialog() {
+    if (!this.selectedBooking) return '';
+    const b = this.selectedBooking;
+
+    return html`
+      <div class="details-content">
+        <div class="detail-item">
+          <span class="detail-label">Booking ID</span>
+          <span class="detail-value">${b.id}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <badge-component variant="${b.status}" size="small">${b.status}</badge-component>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room</span>
+          <span class="detail-value">${b.roomName || '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Date</span>
+          <span class="detail-value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Time</span>
+          <span class="detail-value">${b.startTime || b.time}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Duration</span>
+          <span class="detail-value">${b.durationHours}h</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Guests</span>
+          <span class="detail-value">${b.guests}</span>
+        </div>
+        ${b.notes ? html`
+          <div class="detail-item full">
+            <span class="detail-label">Notes</span>
+            <span class="detail-value">${b.notes}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <content-card mode="3">
         <calendar-section>
           <booking-calendar
-            .reservations=${this.reservations}
+            .reservations=${this.allBookings.length > 0 ? this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending') : mockBookings.filter(b => b.status === 'confirmed')}
             .selectedDate=${this.selectedDate}
             @day-click=${this.handleDayClick}>
 
@@ -188,6 +318,18 @@ class CustomerBooking extends LitElement {
           </booking-sidebar>
         </sidebar-section>
       </content-card>
+
+      <!-- Booking Details Dialog (read-only for customer) -->
+      <app-dialog
+        .isOpen=${this.showDetailsDialog}
+        title="Booking Details"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this._renderDetailsDialog()}
+      </app-dialog>
     `;
   }
 }

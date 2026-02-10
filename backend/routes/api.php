@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Bookings (all authenticated users can view/create their own)
     Route::get('/bookings/calendar', [BookingController::class, 'calendar']);
+    Route::get('/bookings/availability', [BookingController::class, 'availability']);
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);

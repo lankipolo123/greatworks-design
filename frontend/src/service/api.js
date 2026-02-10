@@ -190,6 +190,11 @@ const bookings = {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/bookings/calendar${query ? `?${query}` : ''}`);
   },
+
+  async getAvailability(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/bookings/availability${query ? `?${query}` : ''}`);
+  },
 };
 
 // Reservations API
