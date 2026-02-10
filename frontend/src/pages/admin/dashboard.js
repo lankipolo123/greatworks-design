@@ -7,9 +7,9 @@ import '/src/components/dashboard-chart.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
+import { ticketsTableConfig } from '/src/configs/tickets-config.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
-import { tickets as ticketsApi, users as usersApi } from '/src/service/api.js';
+import { tickets as ticketsApi, users as usersApi, bookings as bookingsApi } from '/src/service/api.js';
 
 class AdminDashboard extends LitElement {
   static properties = {
@@ -56,12 +56,14 @@ class AdminDashboard extends LitElement {
 
   async fetchData() {
     try {
-      const [ticketRes, userRes] = await Promise.all([
+      const [ticketRes, userRes, bookingRes] = await Promise.all([
         ticketsApi.getAll({ per_page: 100 }),
         usersApi.getAll({ per_page: 100 }),
+        bookingsApi.getAll({ per_page: 100 }),
       ]);
       this.tickets = ticketRes.data || ticketRes;
       this.users = userRes.data || userRes;
+      this.reservations = bookingRes.data || bookingRes;
       this.updateDashboard();
     } catch (e) {
       console.error('Failed to fetch dashboard data:', e);
@@ -74,7 +76,6 @@ class AdminDashboard extends LitElement {
   }
 
   computeStats() {
-    // Use utility to calculate all stats
     this.stats = DashboardStats.getAllStats({
       users: this.users,
       tickets: this.tickets,
@@ -134,7 +135,7 @@ class AdminDashboard extends LitElement {
           <stat-card
             slot="three"
             title="Total Tickets"
-            textColor="#67ab07" 
+            textColor="#67ab07"
             .value=${this.stats.totalTickets}
             .icon=${ICONS.ticketInbox}
           ></stat-card>
@@ -142,7 +143,7 @@ class AdminDashboard extends LitElement {
           <stat-card
             slot="four"
             title="Pending Tickets"
-            textColor="#ffac05" 
+            textColor="#ffac05"
             .value=${this.stats.pendingTickets}
             .icon=${ICONS.clock}
           ></stat-card>
@@ -162,7 +163,7 @@ class AdminDashboard extends LitElement {
           >
             <data-table
               .data=${this.recentTickets}
-              .conf=${dasboardTicketConfig}
+              .conf=${ticketsTableConfig}
               mode="3"
               @table-action=${this.handleTableAction}
             ></data-table>
