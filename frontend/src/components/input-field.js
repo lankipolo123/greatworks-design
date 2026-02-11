@@ -24,6 +24,11 @@ class InputField extends LitElement {
       margin-bottom: 0;
     }
 
+    :host([variant="compact"]) input {
+      padding: 0.55rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
     .form-group {
       display: flex;
       flex-direction: column;

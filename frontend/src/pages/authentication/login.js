@@ -61,6 +61,25 @@ class LoginPage extends LitElement {
       background: #ccc;
       cursor: not-allowed;
     }
+
+    .register-link {
+      text-align: center;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #e0e0e0;
+      color: #666;
+      font-size: 0.85rem;
+    }
+
+    .register-link a {
+      color: #da0d0dd7;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
   `;
 
   constructor() {
@@ -130,6 +149,10 @@ class LoginPage extends LitElement {
               ${this.loading ? 'Signing in...' : 'Continue'}
             </button>
           </form>
+
+          <div class="register-link">
+            Don't have an account? <a href="#register">Sign up</a>
+          </div>
         </authentication-card>
       </auth-layout>
     `;

@@ -33,12 +33,12 @@ class RegisterPage extends LitElement {
       margin-top: 0.5rem;
     }
 
-    form { display: flex; flex-direction: column; }
+    form { display: flex; flex-direction: column; gap: 0.6rem; }
 
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
+      gap: 0.6rem;
     }
 
     .register-btn { width: 100%; padding: 0.75rem; background: #da0d0dd7; color: white; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
@@ -130,6 +130,7 @@ class RegisterPage extends LitElement {
               <input-field
                 type="text"
                 placeholder="First Name"
+                variant="compact"
                 .value=${this.firstName}
                 @input=${e => (this.firstName = e.target.value)}
                 ?required=${true}
@@ -139,6 +140,7 @@ class RegisterPage extends LitElement {
               <input-field
                 type="text"
                 placeholder="Last Name"
+                variant="compact"
                 .value=${this.lastName}
                 @input=${e => (this.lastName = e.target.value)}
                 ?required=${true}
@@ -149,6 +151,7 @@ class RegisterPage extends LitElement {
             <input-field
               type="email"
               placeholder="Email"
+              variant="compact"
               .value=${this.email}
               @input=${e => (this.email = e.target.value)}
               ?required=${true}
@@ -159,6 +162,7 @@ class RegisterPage extends LitElement {
               <input-field
                 type="text"
                 placeholder="Contact Number"
+                variant="compact"
                 .value=${this.contact}
                 @input=${e => (this.contact = e.target.value)}
                 ?disabled=${this.loading}
@@ -167,6 +171,7 @@ class RegisterPage extends LitElement {
               <input-field
                 type="text"
                 placeholder="Address"
+                variant="compact"
                 .value=${this.address}
                 @input=${e => (this.address = e.target.value)}
                 ?disabled=${this.loading}
@@ -178,6 +183,7 @@ class RegisterPage extends LitElement {
             <input-field
               type="password"
               placeholder="Create a password (min 8 characters)"
+              variant="compact"
               .value=${this.password}
               @input=${e => (this.password = e.target.value)}
               ?required=${true}
@@ -187,6 +193,7 @@ class RegisterPage extends LitElement {
             <input-field
               type="password"
               placeholder="Confirm your password"
+              variant="compact"
               .value=${this.confirmPassword}
               @input=${e => (this.confirmPassword = e.target.value)}
               ?required=${true}
