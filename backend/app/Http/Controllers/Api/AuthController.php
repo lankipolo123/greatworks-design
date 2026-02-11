@@ -15,17 +15,20 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
+            'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'email' => $validated['email'],
             'password' => $validated['password'],
             'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
             'role' => 'customer',
             'status' => 'active',
         ]);
@@ -90,6 +93,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
             'profile_photo' => 'nullable|string',
         ]);
 

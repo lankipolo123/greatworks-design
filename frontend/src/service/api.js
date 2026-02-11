@@ -81,10 +81,10 @@ const auth = {
     return data;
   },
 
-  async register(name, email, password, password_confirmation, phone = null) {
+  async register({ first_name, last_name, email, password, password_confirmation, phone = null, address = null }) {
     const data = await apiRequest('/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, password_confirmation, phone }),
+      body: JSON.stringify({ first_name, last_name, email, password, password_confirmation, phone, address }),
     });
 
     localStorage.setItem('auth_token', data.token);

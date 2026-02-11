@@ -8,18 +8,39 @@ class RegisterPage extends LitElement {
   static properties = {
     loading: { type: Boolean },
     error: { type: String },
-    fullName: { type: String },
+    firstName: { type: String },
+    lastName: { type: String },
     email: { type: String },
+    contact: { type: String },
+    address: { type: String },
     password: { type: String },
     confirmPassword: { type: String },
   };
 
   static styles = css`
     :host { display: block; }
-    h2 { margin: 0 0 0.5rem 0; font-size: 1.25rem; color: #1a1a1a; }
-    .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    h2 { margin: 0 0 0.25rem 0; font-size: 1.25rem; color: #1a1a1a; }
+    .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 1rem; }
     .error-message { background: #fee; color: #c00; padding: 0.6rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
     form { display: flex; flex-direction: column; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
     .register-btn { width: 100%; padding: 0.75rem; background: #da0d0dd7; color: white; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
     .register-btn:hover { background: rgb(212, 36, 6); }
     .register-btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -32,8 +53,11 @@ class RegisterPage extends LitElement {
     super();
     this.loading = false;
     this.error = '';
-    this.fullName = '';
+    this.firstName = '';
+    this.lastName = '';
     this.email = '';
+    this.contact = '';
+    this.address = '';
     this.password = '';
     this.confirmPassword = '';
 
@@ -47,7 +71,6 @@ class RegisterPage extends LitElement {
     this.error = '';
     this.loading = true;
 
-    // Simple client-side validation
     if (this.password !== this.confirmPassword) {
       this.error = 'Passwords do not match';
       this.loading = false;
@@ -61,16 +84,18 @@ class RegisterPage extends LitElement {
     }
 
     try {
-      const response = await auth.register(
-        this.fullName,
-        this.email,
-        this.password,
-        this.confirmPassword
-      );
+      const response = await auth.register({
+        first_name: this.firstName,
+        last_name: this.lastName,
+        email: this.email,
+        password: this.password,
+        password_confirmation: this.confirmPassword,
+        phone: this.contact || null,
+        address: this.address || null,
+      });
 
       console.log('Registration successful:', response.user);
 
-      // Redirect based on role
       if (['admin', 'moderator'].includes(response.user.role)) {
         window.location.hash = 'dashboard';
       } else {
@@ -99,23 +124,56 @@ class RegisterPage extends LitElement {
           ${this.error ? html`<div class="error-message">${this.error}</div>` : ''}
 
           <form @submit=${this.handleSubmit}>
-            <input-field
-              type="text"
-              placeholder="Enter your full name"
-              .value=${this.fullName}
-              @input=${e => (this.fullName = e.target.value)}
-              ?required=${true}
-              ?disabled=${this.loading}
-            ></input-field>
+            <div class="section-label">Personal Information</div>
+
+            <div class="row">
+              <input-field
+                type="text"
+                placeholder="First Name"
+                .value=${this.firstName}
+                @input=${e => (this.firstName = e.target.value)}
+                ?required=${true}
+                ?disabled=${this.loading}
+              ></input-field>
+
+              <input-field
+                type="text"
+                placeholder="Last Name"
+                .value=${this.lastName}
+                @input=${e => (this.lastName = e.target.value)}
+                ?required=${true}
+                ?disabled=${this.loading}
+              ></input-field>
+            </div>
 
             <input-field
               type="email"
-              placeholder="Enter your email"
+              placeholder="Email"
               .value=${this.email}
               @input=${e => (this.email = e.target.value)}
               ?required=${true}
               ?disabled=${this.loading}
             ></input-field>
+
+            <div class="row">
+              <input-field
+                type="text"
+                placeholder="Contact Number"
+                .value=${this.contact}
+                @input=${e => (this.contact = e.target.value)}
+                ?disabled=${this.loading}
+              ></input-field>
+
+              <input-field
+                type="text"
+                placeholder="Address"
+                .value=${this.address}
+                @input=${e => (this.address = e.target.value)}
+                ?disabled=${this.loading}
+              ></input-field>
+            </div>
+
+            <div class="section-label">Account Security</div>
 
             <input-field
               type="password"
