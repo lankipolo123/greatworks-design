@@ -56,9 +56,10 @@ export class ChangeEmailCard extends LitElement {
     e.preventDefault();
     const formData = new FormData(e.target);
     const newEmail = formData.get('newEmail');
+    const password = formData.get('password');
 
     this.dispatchEvent(new CustomEvent('change-email', {
-      detail: { newEmail },
+      detail: { newEmail, password },
       bubbles: true,
       composed: true
     }));
@@ -72,13 +73,19 @@ export class ChangeEmailCard extends LitElement {
         <h3 class="section-title">Change Email</h3>
 
         <form @submit=${this.handleSubmit}>
-          <input 
-            type="email" 
-            name="newEmail" 
+          <input
+            type="email"
+            name="newEmail"
             placeholder="New email address"
-            required 
+            required
           />
-          
+          <input
+            type="password"
+            name="password"
+            placeholder="Confirm your password"
+            required
+          />
+
           <app-button type="secondary" size="small">
             Update Email
           </app-button>

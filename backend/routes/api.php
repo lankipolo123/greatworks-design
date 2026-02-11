@@ -35,6 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::put('/change-password', [AuthController::class, 'changePassword']);
+    Route::put('/change-email', [AuthController::class, 'changeEmail']);
+    Route::post('/deactivate-account', [AuthController::class, 'deactivateAccount']);
+    Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
 
     // Bookings (all authenticated users can view/create their own)
     Route::get('/bookings/calendar', [BookingController::class, 'calendar']);

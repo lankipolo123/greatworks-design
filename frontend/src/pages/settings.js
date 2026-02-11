@@ -5,7 +5,7 @@ import '/src/components/profile-header.js';
 import '/src/components/personal-info-form.js';
 import '/src/components/manage-account-card.js';
 import { toast } from '/src/service/toast-widget.js';
-import { getUser } from '/src/service/api.js';
+import { auth } from '/src/service/api.js';
 
 export class AppSettings extends LitElement {
   static properties = {
@@ -33,49 +33,91 @@ export class AppSettings extends LitElement {
     this.loadUser();
   }
 
-  loadUser() {
-    const user = getUser();
-    if (user) {
+  async loadUser() {
+    try {
+      const user = await auth.getUser();
       this.userInfo = user;
+    } catch (e) {
+      console.error('Failed to load user:', e);
     }
   }
 
-  handlePersonalInfoUpdate(e) {
-    toast.success('Profile updated successfully!');
-    console.log('Updated personal info:', e.detail);
+  async handlePersonalInfoUpdate(e) {
+    try {
+      const data = e.detail;
+      const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
+      const res = await auth.updateProfile({
+        name: name || undefined,
+        phone: data.contact || null,
+        address: data.address || null,
+      });
+      this.userInfo = res.user || { ...this.userInfo, name, phone: data.contact, address: data.address };
+      toast.success('Profile updated successfully!');
+    } catch (err) {
+      console.error('Profile update failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to update profile'));
+    }
   }
 
   handleProfilePhotoUpload(e) {
     const file = e.detail.file;
-
-    // Here you would typically upload the file to your storage service
-    // For now, we'll just log it and show a toast
     console.log('Profile photo upload:', file);
-
-    // Show loading state
     toast.info('Uploading profile photo...');
-
-    // Simulate upload
     setTimeout(() => {
       toast.success('Profile photo updated successfully!');
-      // You would update the photoURL in userInfo here
-      // this.userInfo = { ...this.userInfo, photoURL: newPhotoURL };
     }, 1500);
   }
 
-  handleChangeEmail(e) {
-    toast.success(`Email change requested: ${e.detail.newEmail}`);
-    console.log('Change email event:', e.detail);
+  async handleChangeEmail(e) {
+    try {
+      const res = await auth.changeEmail(e.detail.newEmail, e.detail.password);
+      this.userInfo = res.user || { ...this.userInfo, email: e.detail.newEmail };
+      toast.success('Email updated successfully!');
+    } catch (err) {
+      console.error('Email change failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to update email'));
+    }
   }
 
-  handleChangePassword(e) {
-    toast.success('Password change requested');
-    console.log('Change password event:', e.detail);
+  async handleChangePassword(e) {
+    try {
+      await auth.changePassword(
+        e.detail.currentPassword,
+        e.detail.newPassword,
+        e.detail.newPasswordConfirmation
+      );
+      toast.success('Password changed successfully!');
+    } catch (err) {
+      console.error('Password change failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to change password'));
+    }
   }
 
-  handleAccountTermination(e) {
-    toast.warning('Account termination action triggered');
-    console.log('Account termination event:', e.type);
+  async handleDeactivateAccount(e) {
+    try {
+      await auth.deactivateAccount(e.detail.password);
+      toast.success('Account deactivated');
+      window.location.hash = 'login';
+    } catch (err) {
+      console.error('Deactivate failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to deactivate account'));
+    }
+  }
+
+  async handleDeleteAccount(e) {
+    try {
+      await auth.deleteAccount(e.detail.password);
+      toast.success('Account deleted');
+      window.location.hash = 'login';
+    } catch (err) {
+      console.error('Delete failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to delete account'));
+    }
   }
 
   render() {
@@ -103,8 +145,8 @@ export class AppSettings extends LitElement {
           .userEmail=${this.userInfo.email || ''}
           @change-email="${this.handleChangeEmail}"
           @change-password="${this.handleChangePassword}"
-          @deactivate-account="${this.handleAccountTermination}"
-          @delete-account="${this.handleAccountTermination}">
+          @deactivate-account="${this.handleDeactivateAccount}"
+          @delete-account="${this.handleDeleteAccount}">
         </manage-account-card>
       </settings-layout>
     `;

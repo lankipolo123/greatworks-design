@@ -125,6 +125,35 @@ const auth = {
       }),
     });
   },
+
+  async changeEmail(newEmail, password) {
+    const data = await apiRequest('/change-email', {
+      method: 'PUT',
+      body: JSON.stringify({ email: newEmail, password }),
+    });
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    return data;
+  },
+
+  async deactivateAccount(password) {
+    const data = await apiRequest('/deactivate-account', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    return data;
+  },
+
+  async deleteAccount(password) {
+    const data = await apiRequest('/delete-account', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    return data;
+  },
 };
 
 // Rooms API

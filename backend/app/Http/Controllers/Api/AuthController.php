@@ -128,4 +128,71 @@ class AuthController extends Controller
             'message' => 'Password changed successfully',
         ]);
     }
+
+    public function changeEmail(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email|max:255|unique:users,email,' . $request->user()->id,
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['The password is incorrect.'],
+            ]);
+        }
+
+        $user->update(['email' => $validated['email']]);
+
+        return response()->json([
+            'message' => 'Email updated successfully',
+            'user' => $user,
+        ]);
+    }
+
+    public function deactivateAccount(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['The password is incorrect.'],
+            ]);
+        }
+
+        $user->update(['status' => 'inactive']);
+        $user->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Account deactivated successfully',
+        ]);
+    }
+
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['The password is incorrect.'],
+            ]);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully',
+        ]);
+    }
 }
