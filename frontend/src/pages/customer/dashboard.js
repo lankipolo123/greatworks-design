@@ -4,6 +4,8 @@ import '/src/components/content-card.js';
 import '/src/components/stat-card.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
+import '/src/layouts/dashboard-page-layout.js';
+import '/src/components/welcome-banner.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { ticketsTableConfig } from '/src/configs/tickets-config.js';
 import { auth, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
@@ -26,23 +28,12 @@ class CustomerDashboard extends LitElement {
       box-sizing: border-box;
     }
 
-    content-card {
-      height: 100%;
-      width: 100%;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 2.2fr 0.9fr 0.9fr;
-      grid-template-rows: 1fr 1.15fr auto;
-      gap: 1rem;
-      width: 100%;
+    dashboard-page-layout {
       height: 90%;
+      width: 100%;
     }
 
     .welcome-banner {
-      grid-column: 1;
-      grid-row: 1 / 3;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       border-radius: 8px;
       padding: 2rem;
@@ -51,6 +42,7 @@ class CustomerDashboard extends LitElement {
       justify-content: center;
       color: white;
       border: 1.25px solid #2d2b2b25;
+      height: 100%;
     }
 
     .welcome-banner .greeting {
@@ -70,49 +62,6 @@ class CustomerDashboard extends LitElement {
       font-size: 0.8rem;
       color: #ffffffa0;
       line-height: 1.5;
-    }
-
-    .stat-one {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .stat-two {
-      grid-column: 3;
-      grid-row: 1;
-    }
-
-    .stat-three {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    .stat-four {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    .table-section {
-      grid-column: 1 / -1;
-      grid-row: 3;
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto;
-      }
-
-      .welcome-banner {
-        grid-column: 1 / -1;
-        grid-row: 1;
-      }
-
-      .stat-one { grid-column: 1; grid-row: 2; }
-      .stat-two { grid-column: 2; grid-row: 2; }
-      .stat-three { grid-column: 1; grid-row: 3; }
-      .stat-four { grid-column: 2; grid-row: 3; }
-      .table-section { grid-column: 1 / -1; grid-row: 4; }
     }
   `;
 
@@ -184,16 +133,10 @@ class CustomerDashboard extends LitElement {
   render() {
     return html`
       <content-card mode="1">
-        <div class="dashboard-grid">
-
-          <div class="welcome-banner">
-            <div class="greeting">Welcome back,</div>
-            <div class="name">${this.userName || 'Guest'}</div>
-            <div class="subtitle">Here's an overview of your activity. Check your reservations, bookings, tickets, and payments below.</div>
-          </div>
-
+        <dashboard-page-layout>
+          
           <stat-card
-            class="stat-one"
+            slot="one"
             title="My Reservations"
             textColor="#811a0a"
             .value=${this.reservationsList.length}
@@ -201,7 +144,7 @@ class CustomerDashboard extends LitElement {
           ></stat-card>
 
           <stat-card
-            class="stat-two"
+            slot="two"
             title="My Tickets"
             textColor="#580460"
             .value=${this.tickets.length}
@@ -209,7 +152,7 @@ class CustomerDashboard extends LitElement {
           ></stat-card>
 
           <stat-card
-            class="stat-three"
+            slot="three"
             title="Overall Payments"
             textColor="#67ab07"
             .value=${this.payments.length}
@@ -217,15 +160,22 @@ class CustomerDashboard extends LitElement {
           ></stat-card>
 
           <stat-card
-            class="stat-four"
+            slot="four"
             title="No. of Bookings"
             textColor="#ffac05"
             .value=${this.bookingsList.length}
             .icon=${ICONS.clock}
           ></stat-card>
 
+          <welcome-banner
+          slot="main"
+          .userName=${this.userName || 'Guest'}
+          greeting="Welcome back,"
+          subtitle="Here's an overview of your activity. Check your reservations, bookings, tickets, and payments below."
+        ></welcome-banner>
+
           <dashboard-table-wrapper
-            class="table-section"
+            slot="table"
             title="Recent Tickets"
             .icon=${ICONS.ticket}
             viewMoreText="View more on Tickets"
@@ -239,7 +189,7 @@ class CustomerDashboard extends LitElement {
             ></data-table>
           </dashboard-table-wrapper>
 
-        </div>
+        </dashboard-page-layout>
       </content-card>
     `;
   }

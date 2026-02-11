@@ -22,7 +22,7 @@ export class StatCard extends LitElement {
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+
       box-sizing: border-box;
     }
 

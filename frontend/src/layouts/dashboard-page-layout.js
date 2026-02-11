@@ -6,10 +6,10 @@ export class DashboardPageLayout extends LitElement {
     :host {
       display: grid;
       grid-template-columns: 0.9fr 0.9fr 2.2fr;
-      grid-template-rows: 1fr 1.15fr auto;
-      gap: 1rem;
+      grid-template-rows: 0.2fr 0.2fr auto;
+      gap:1rem;
       width: 100%;
-      height: 90%;
+      height: 100%;
     }
 
     ::slotted([slot="one"]) {
