@@ -52,9 +52,19 @@ export class ChangePasswordCard extends LitElement {
       font-size: 0.8rem;
     }
 
-    app-button {
+    .submit-btn {
       width: 100%;
+      padding: 8px;
+      background: #d6150b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
     }
+    .submit-btn:hover { background: #b51209; }
   `;
 
   static properties = {
@@ -122,9 +132,7 @@ export class ChangePasswordCard extends LitElement {
           />
           ${this._error ? html`<div class="error">${this._error}</div>` : ''}
 
-          <app-button type="primary" size="small">
-            Change Password
-          </app-button>
+          <button type="submit" class="submit-btn">Change Password</button>
         </form>
       </div>
     `;

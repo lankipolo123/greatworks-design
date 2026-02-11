@@ -47,9 +47,19 @@ export class ChangeEmailCard extends LitElement {
       color: #999;
     }
 
-    app-button {
+    .submit-btn {
       width: 100%;
+      padding: 8px;
+      background: #555;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
     }
+    .submit-btn:hover { background: #333; }
   `;
 
   handleSubmit(e) {
@@ -86,9 +96,7 @@ export class ChangeEmailCard extends LitElement {
             required
           />
 
-          <app-button type="secondary" size="small">
-            Update Email
-          </app-button>
+          <button type="submit" class="submit-btn">Update Email</button>
         </form>
       </div>
     `;

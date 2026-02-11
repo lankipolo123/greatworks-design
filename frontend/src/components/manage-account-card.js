@@ -248,6 +248,7 @@ export class ManageAccountCard extends LitElement {
   handleDeactivateAccount(e) {
     if (this.isUnlocked) {
       this.dispatchEvent(new CustomEvent('deactivate-account', {
+        detail: e.detail,
         bubbles: true,
         composed: true
       }));
@@ -257,6 +258,7 @@ export class ManageAccountCard extends LitElement {
   handleDeleteAccount(e) {
     if (this.isUnlocked) {
       this.dispatchEvent(new CustomEvent('delete-account', {
+        detail: e.detail,
         bubbles: true,
         composed: true
       }));
