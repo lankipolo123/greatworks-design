@@ -98,6 +98,23 @@ export class PersonalInfoForm extends LitElement {
     this.editing = false;
   }
 
+  updated(changedProps) {
+    if (changedProps.has('userInfo')) {
+      const form = this.shadowRoot?.querySelector('form');
+      if (!form) return;
+      const fn = form.querySelector('[name="firstName"]');
+      const ln = form.querySelector('[name="lastName"]');
+      const em = form.querySelector('[name="email"]');
+      const ct = form.querySelector('[name="contact"]');
+      const ad = form.querySelector('[name="address"]');
+      if (fn) fn.value = this._firstName;
+      if (ln) ln.value = this._lastName;
+      if (em) em.value = this.userInfo?.email || '';
+      if (ct) ct.value = this.userInfo?.phone || '';
+      if (ad) ad.value = this.userInfo?.address || '';
+    }
+  }
+
   render() {
     return html`
       <div class="form-card">
@@ -111,7 +128,7 @@ export class PersonalInfoForm extends LitElement {
           <input name="lastName" placeholder="Last Name" .value=${this._lastName} ?disabled=${!this.editing} />
           <input name="email" placeholder="Email" .value=${this.userInfo?.email || ''} disabled />
           <input name="contact" placeholder="Contact" .value=${this.userInfo?.phone || ''} ?disabled=${!this.editing} />
-          <textarea class="address" name="address" placeholder="Address" ?disabled=${!this.editing}>${this.userInfo?.address || ''}</textarea>
+          <textarea class="address" name="address" placeholder="Address" .value=${this.userInfo?.address || ''} ?disabled=${!this.editing}></textarea>
 
           ${this.editing ? html`
             <div class="btn-row">

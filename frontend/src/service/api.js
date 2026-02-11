@@ -144,10 +144,15 @@ const auth = {
   },
 
   async updateProfile(profileData) {
-    return apiRequest('/profile', {
+    const res = await apiRequest('/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
+    _cacheInvalidate('auth-user');
+    if (res.user) {
+      localStorage.setItem('auth_user', JSON.stringify(res.user));
+    }
+    return res;
   },
 
   async changePassword(currentPassword, newPassword, newPasswordConfirmation) {

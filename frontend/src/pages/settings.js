@@ -43,7 +43,9 @@ export class AppSettings extends LitElement {
         phone: data.contact || null,
         address: data.address || null,
       });
-      this.userInfo = res.user || { ...this.userInfo, name, phone: data.contact, address: data.address };
+      const updated = res.user || { ...this.userInfo, name, phone: data.contact, address: data.address };
+      this.userInfo = { ...updated };
+      localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
       toast.success('Profile updated successfully!');
     } catch (err) {
       console.error('Profile update failed:', err);
