@@ -47,6 +47,19 @@ export class PersonalInfoForm extends LitElement {
     }
     .address { grid-column: 1 / -1; }
     .btn-row { grid-column: 1 / -1; display: flex; gap: 8px; }
+    .save-btn {
+      padding: 8px 24px;
+      background: #d6150b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #b51209; }
+    .save-btn:disabled { background: #ccc; cursor: not-allowed; }
     input, select, textarea {
       padding: 8px;
       border-radius: 4px;
@@ -137,9 +150,9 @@ export class PersonalInfoForm extends LitElement {
 
           ${this.editing ? html`
             <div class="btn-row">
-              <app-button type="primary" ?disabled=${this.isLoading}>
+              <button type="submit" class="save-btn" ?disabled=${this.isLoading}>
                 ${this.isLoading ? 'Saving...' : 'Save'}
-              </app-button>
+              </button>
             </div>
           ` : ''}
         </form>
