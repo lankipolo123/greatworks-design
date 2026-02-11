@@ -84,9 +84,14 @@ export class PersonalInfoForm extends LitElement {
     e.preventDefault();
     this.isLoading = true;
 
-    const data = Object.fromEntries(
-      new FormData(e.target).entries()
-    );
+    const form = e.target;
+    const data = {
+      firstName: form.querySelector('[name="firstName"]')?.value || '',
+      lastName: form.querySelector('[name="lastName"]')?.value || '',
+      email: form.querySelector('[name="email"]')?.value || '',
+      contact: form.querySelector('[name="contact"]')?.value || '',
+      address: form.querySelector('[name="address"]')?.value || '',
+    };
 
     this.dispatchEvent(new CustomEvent('personal-info-update', {
       detail: data,

@@ -38,12 +38,13 @@ export class AppSettings extends LitElement {
     try {
       const data = e.detail;
       const name = [data.firstName, data.lastName].filter(Boolean).join(' ');
-      const res = await auth.updateProfile({
-        name: name || undefined,
-        phone: data.contact || null,
-        address: data.address || null,
-      });
-      const updated = res.user || { ...this.userInfo, name, phone: data.contact, address: data.address };
+      const payload = {};
+      if (name) payload.name = name;
+      payload.phone = data.contact || '';
+      payload.address = data.address || '';
+
+      const res = await auth.updateProfile(payload);
+      const updated = res.user || { ...this.userInfo, ...payload };
       this.userInfo = { ...updated };
       localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
       toast.success('Profile updated successfully!');
