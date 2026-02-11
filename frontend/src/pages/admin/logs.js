@@ -160,6 +160,7 @@ class AdminLogs extends LitElement {
           @table-action=${this.handleTableAction}>
         </data-table>
 
+        ${this.totalPages > 1 ? html`
         <pagination-wrapper>
           <pagination-component
             .currentPage=${this.currentPage}
@@ -167,6 +168,7 @@ class AdminLogs extends LitElement {
             @pagination-change=${this.handlePageChange}>
           </pagination-component>
         </pagination-wrapper>
+        ` : ''}
       </content-card>
 
       <app-dialog

@@ -500,6 +500,7 @@ class AdminReservation extends LitElement {
           @table-action=${this.handleTableAction}>
         </data-table>
 
+        ${this.totalPages > 1 ? html`
         <pagination-wrapper>
           <pagination-component
             .currentPage=${this.currentPage}
@@ -507,6 +508,7 @@ class AdminReservation extends LitElement {
             @pagination-change=${this.handlePageChange}>
           </pagination-component>
         </pagination-wrapper>
+        ` : ''}
       </content-card>
 
       <!-- Add Reservation Dialog -->

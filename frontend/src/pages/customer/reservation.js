@@ -272,6 +272,7 @@ class CustomerReservation extends LitElement {
           @table-action=${this.handleTableAction}>
         </data-table>
 
+        ${this.totalPages > 1 ? html`
         <pagination-wrapper>
           <pagination-component
             .currentPage=${this.currentPage}
@@ -279,6 +280,7 @@ class CustomerReservation extends LitElement {
             @pagination-change=${this.handlePageChange}>
           </pagination-component>
         </pagination-wrapper>
+        ` : ''}
       </content-card>
 
       <!-- Reservation Details Dialog (read-only for customer) -->
