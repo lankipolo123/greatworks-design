@@ -17,7 +17,8 @@ class AdminDashboard extends LitElement {
     users: { type: Array },
     reservations: { type: Array },
     recentTickets: { type: Array },
-    stats: { type: Object }
+    stats: { type: Object },
+    _loaded: { type: Boolean, state: true }
   };
 
   static styles = css`
@@ -47,6 +48,7 @@ class AdminDashboard extends LitElement {
       totalTickets: 0,
       pendingTickets: 0
     };
+    this._loaded = false;
   }
 
   connectedCallback() {
@@ -65,8 +67,10 @@ class AdminDashboard extends LitElement {
       this.users = userRes.data || userRes;
       this.reservations = bookingRes.data || bookingRes;
       this.updateDashboard();
+      this._loaded = true;
     } catch (e) {
       console.error('Failed to fetch dashboard data:', e);
+      this._loaded = true;
     }
   }
 
@@ -120,7 +124,7 @@ class AdminDashboard extends LitElement {
             slot="one"
             title="Monthly Users"
             textColor="#811a0a"
-            .value=${this.stats.monthlyUsers}
+            .value=${this._loaded ? this.stats.monthlyUsers : '--'}
             .icon=${ICONS.users}
           ></stat-card>
 
@@ -128,7 +132,7 @@ class AdminDashboard extends LitElement {
             slot="two"
             title="Total Users"
             textColor="#580460"
-            .value=${this.stats.totalUsers}
+            .value=${this._loaded ? this.stats.totalUsers : '--'}
             .icon=${ICONS.userSingle}
           ></stat-card>
 
@@ -136,7 +140,7 @@ class AdminDashboard extends LitElement {
             slot="three"
             title="Total Tickets"
             textColor="#67ab07"
-            .value=${this.stats.totalTickets}
+            .value=${this._loaded ? this.stats.totalTickets : '--'}
             .icon=${ICONS.ticketInbox}
           ></stat-card>
 
@@ -144,7 +148,7 @@ class AdminDashboard extends LitElement {
             slot="four"
             title="Pending Tickets"
             textColor="#ffac05"
-            .value=${this.stats.pendingTickets}
+            .value=${this._loaded ? this.stats.pendingTickets : '--'}
             .icon=${ICONS.clock}
           ></stat-card>
 

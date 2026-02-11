@@ -18,6 +18,7 @@ class CustomerDashboard extends LitElement {
     reservationsList: { type: Array },
     recentTickets: { type: Array },
     userName: { type: String },
+    _loaded: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -73,6 +74,7 @@ class CustomerDashboard extends LitElement {
     this.reservationsList = [];
     this.recentTickets = [];
     this.userName = '';
+    this._loaded = false;
   }
 
   connectedCallback() {
@@ -105,8 +107,10 @@ class CustomerDashboard extends LitElement {
       this.recentTickets = [...this.tickets]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 5);
+      this._loaded = true;
     } catch (e) {
       console.error('Failed to fetch dashboard data:', e);
+      this._loaded = true;
     }
   }
 
@@ -139,7 +143,7 @@ class CustomerDashboard extends LitElement {
             slot="one"
             title="My Reservations"
             textColor="#811a0a"
-            .value=${this.reservationsList.length}
+            .value=${this._loaded ? this.reservationsList.length : '--'}
             .icon=${ICONS.booking}
           ></stat-card>
 
@@ -147,7 +151,7 @@ class CustomerDashboard extends LitElement {
             slot="two"
             title="My Tickets"
             textColor="#580460"
-            .value=${this.tickets.length}
+            .value=${this._loaded ? this.tickets.length : '--'}
             .icon=${ICONS.ticketInbox}
           ></stat-card>
 
@@ -155,7 +159,7 @@ class CustomerDashboard extends LitElement {
             slot="three"
             title="Overall Payments"
             textColor="#67ab07"
-            .value=${this.payments.length}
+            .value=${this._loaded ? this.payments.length : '--'}
             .icon=${ICONS.payments}
           ></stat-card>
 
@@ -163,7 +167,7 @@ class CustomerDashboard extends LitElement {
             slot="four"
             title="No. of Bookings"
             textColor="#ffac05"
-            .value=${this.bookingsList.length}
+            .value=${this._loaded ? this.bookingsList.length : '--'}
             .icon=${ICONS.clock}
           ></stat-card>
 
