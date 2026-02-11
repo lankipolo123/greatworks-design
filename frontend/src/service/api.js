@@ -28,6 +28,36 @@ const isAdmin = () => hasRole('admin');
 const isModerator = () => hasRole('moderator');
 const isCustomer = () => hasRole('customer');
 
+// ─── Data Cache ─────────────────────────────────────────────
+// Caches GET responses so switching tabs doesn't re-fetch.
+// Write operations (create/update/delete) invalidate the relevant cache.
+const _cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function _cacheGet(key) {
+  const entry = _cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.time > CACHE_TTL) {
+    _cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function _cacheSet(key, data) {
+  _cache.set(key, { data, time: Date.now() });
+}
+
+function _cacheInvalidate(prefix) {
+  for (const key of _cache.keys()) {
+    if (key.startsWith(prefix)) _cache.delete(key);
+  }
+}
+
+function _cacheInvalidateAll() {
+  _cache.clear();
+}
+
 // API request helper
 const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
@@ -99,6 +129,7 @@ const auth = {
     } finally {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
+      _cacheInvalidateAll();
     }
   },
 
@@ -159,8 +190,12 @@ const auth = {
 // Rooms API
 const rooms = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/rooms${query ? `?${query}` : ''}`);
+    const key = `rooms:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/rooms${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -168,29 +203,33 @@ const rooms = {
   },
 
   async create(roomData) {
-    return apiRequest('/rooms', {
-      method: 'POST',
-      body: JSON.stringify(roomData),
-    });
+    const res = await apiRequest('/rooms', { method: 'POST', body: JSON.stringify(roomData) });
+    _cacheInvalidate('rooms:');
+    return res;
   },
 
   async update(id, roomData) {
-    return apiRequest(`/rooms/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(roomData),
-    });
+    const res = await apiRequest(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(roomData) });
+    _cacheInvalidate('rooms:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/rooms/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/rooms/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('rooms:');
+    return res;
   },
 };
 
 // Bookings API
 const bookings = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/bookings${query ? `?${query}` : ''}`);
+    const key = `bookings:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/bookings${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -198,26 +237,30 @@ const bookings = {
   },
 
   async create(bookingData) {
-    return apiRequest('/bookings', {
-      method: 'POST',
-      body: JSON.stringify(bookingData),
-    });
+    const res = await apiRequest('/bookings', { method: 'POST', body: JSON.stringify(bookingData) });
+    _cacheInvalidate('bookings:');
+    return res;
   },
 
   async update(id, bookingData) {
-    return apiRequest(`/bookings/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(bookingData),
-    });
+    const res = await apiRequest(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(bookingData) });
+    _cacheInvalidate('bookings:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/bookings/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/bookings/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('bookings:');
+    return res;
   },
 
   async getCalendar(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/bookings/calendar${query ? `?${query}` : ''}`);
+    const key = `bookings-cal:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/bookings/calendar${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async getAvailability(params = {}) {
@@ -229,8 +272,12 @@ const bookings = {
 // Reservations API
 const reservations = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/reservations${query ? `?${query}` : ''}`);
+    const key = `reservations:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/reservations${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -238,29 +285,33 @@ const reservations = {
   },
 
   async create(reservationData) {
-    return apiRequest('/reservations', {
-      method: 'POST',
-      body: JSON.stringify(reservationData),
-    });
+    const res = await apiRequest('/reservations', { method: 'POST', body: JSON.stringify(reservationData) });
+    _cacheInvalidate('reservations:');
+    return res;
   },
 
   async update(id, reservationData) {
-    return apiRequest(`/reservations/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(reservationData),
-    });
+    const res = await apiRequest(`/reservations/${id}`, { method: 'PUT', body: JSON.stringify(reservationData) });
+    _cacheInvalidate('reservations:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/reservations/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/reservations/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('reservations:');
+    return res;
   },
 };
 
 // Tickets API
 const tickets = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/tickets${query ? `?${query}` : ''}`);
+    const key = `tickets:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/tickets${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -268,29 +319,33 @@ const tickets = {
   },
 
   async create(ticketData) {
-    return apiRequest('/tickets', {
-      method: 'POST',
-      body: JSON.stringify(ticketData),
-    });
+    const res = await apiRequest('/tickets', { method: 'POST', body: JSON.stringify(ticketData) });
+    _cacheInvalidate('tickets:');
+    return res;
   },
 
   async update(id, ticketData) {
-    return apiRequest(`/tickets/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(ticketData),
-    });
+    const res = await apiRequest(`/tickets/${id}`, { method: 'PUT', body: JSON.stringify(ticketData) });
+    _cacheInvalidate('tickets:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/tickets/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/tickets/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('tickets:');
+    return res;
   },
 };
 
 // Payments API
 const payments = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/payments${query ? `?${query}` : ''}`);
+    const key = `payments:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/payments${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -298,29 +353,33 @@ const payments = {
   },
 
   async create(paymentData) {
-    return apiRequest('/payments', {
-      method: 'POST',
-      body: JSON.stringify(paymentData),
-    });
+    const res = await apiRequest('/payments', { method: 'POST', body: JSON.stringify(paymentData) });
+    _cacheInvalidate('payments:');
+    return res;
   },
 
   async update(id, paymentData) {
-    return apiRequest(`/payments/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(paymentData),
-    });
+    const res = await apiRequest(`/payments/${id}`, { method: 'PUT', body: JSON.stringify(paymentData) });
+    _cacheInvalidate('payments:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/payments/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/payments/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('payments:');
+    return res;
   },
 };
 
 // Users API (Admin only)
 const users = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/users${query ? `?${query}` : ''}`);
+    const key = `users:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/users${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -328,29 +387,33 @@ const users = {
   },
 
   async create(userData) {
-    return apiRequest('/users', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    const res = await apiRequest('/users', { method: 'POST', body: JSON.stringify(userData) });
+    _cacheInvalidate('users:');
+    return res;
   },
 
   async update(id, userData) {
-    return apiRequest(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
+    const res = await apiRequest(`/users/${id}`, { method: 'PUT', body: JSON.stringify(userData) });
+    _cacheInvalidate('users:');
+    return res;
   },
 
   async delete(id) {
-    return apiRequest(`/users/${id}`, { method: 'DELETE' });
+    const res = await apiRequest(`/users/${id}`, { method: 'DELETE' });
+    _cacheInvalidate('users:');
+    return res;
   },
 };
 
 // Activity Logs API (Admin only)
 const activityLogs = {
   async getAll(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/activity-logs${query ? `?${query}` : ''}`);
+    const key = `logs:${JSON.stringify(params)}`;
+    const cached = _cacheGet(key);
+    if (cached) return cached;
+    const data = await apiRequest(`/activity-logs${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`);
+    _cacheSet(key, data);
+    return data;
   },
 
   async get(id) {
@@ -376,4 +439,6 @@ export {
   payments,
   users,
   activityLogs,
+  _cacheInvalidate as invalidateCache,
+  _cacheInvalidateAll as invalidateAllCache,
 };
