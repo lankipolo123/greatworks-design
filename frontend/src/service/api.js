@@ -134,8 +134,12 @@ const auth = {
   },
 
   async getUser() {
+    const key = 'auth-user';
+    const cached = _cacheGet(key);
+    if (cached) return cached;
     const data = await apiRequest('/user');
     localStorage.setItem('auth_user', JSON.stringify(data));
+    _cacheSet(key, data);
     return data;
   },
 

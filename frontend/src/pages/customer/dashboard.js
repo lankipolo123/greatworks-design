@@ -8,7 +8,7 @@ import '/src/layouts/dashboard-page-layout.js';
 import '/src/components/welcome-banner.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { ticketsTableConfig } from '/src/configs/tickets-config.js';
-import { auth, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
+import { getUser, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
 
 class CustomerDashboard extends LitElement {
   static properties = {
@@ -79,17 +79,9 @@ class CustomerDashboard extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    const user = getUser();
+    if (user) this.userName = user.name || user.email || '';
     this.fetchData();
-    this._loadUserName();
-  }
-
-  async _loadUserName() {
-    try {
-      const user = await auth.getUser();
-      this.userName = user.name || user.email || '';
-    } catch (e) {
-      this.userName = '';
-    }
   }
 
   async fetchData() {

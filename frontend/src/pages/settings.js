@@ -5,7 +5,7 @@ import '/src/components/profile-header.js';
 import '/src/components/personal-info-form.js';
 import '/src/components/manage-account-card.js';
 import { toast } from '/src/service/toast-widget.js';
-import { auth } from '/src/service/api.js';
+import { auth, getUser } from '/src/service/api.js';
 
 export class AppSettings extends LitElement {
   static properties = {
@@ -30,16 +30,8 @@ export class AppSettings extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.loadUser();
-  }
-
-  async loadUser() {
-    try {
-      const user = await auth.getUser();
-      this.userInfo = user;
-    } catch (e) {
-      console.error('Failed to load user:', e);
-    }
+    const cached = getUser();
+    if (cached) this.userInfo = cached;
   }
 
   async handlePersonalInfoUpdate(e) {
