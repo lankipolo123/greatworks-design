@@ -9,6 +9,7 @@ import '/src/components/welcome-banner.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { ticketsTableConfig } from '/src/configs/tickets-config.js';
 import { getUser, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 class CustomerDashboard extends LitElement {
   static properties = {
@@ -82,6 +83,16 @@ class CustomerDashboard extends LitElement {
     const user = getUser();
     if (user) this.userName = user.name || user.email || '';
     this.fetchData();
+    this._unsubData = appState.on('data-changed', () => this.fetchData());
+    this._unsubUser = appState.on('user-updated', (u) => {
+      if (u) this.userName = u.name || u.email || '';
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsubData) this._unsubData();
+    if (this._unsubUser) this._unsubUser();
   }
 
   async fetchData() {

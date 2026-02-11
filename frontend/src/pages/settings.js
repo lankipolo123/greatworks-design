@@ -6,6 +6,7 @@ import '/src/components/personal-info-form.js';
 import '/src/components/manage-account-card.js';
 import { toast } from '/src/service/toast-widget.js';
 import { auth, getUser } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 export class AppSettings extends LitElement {
   static properties = {
@@ -47,6 +48,7 @@ export class AppSettings extends LitElement {
       const updated = res.user || { ...this.userInfo, ...payload };
       this.userInfo = { ...updated };
       localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
+      appState.notify('user-updated', this.userInfo);
       toast.success('Profile updated successfully!');
     } catch (err) {
       console.error('Profile update failed:', err);
@@ -68,6 +70,8 @@ export class AppSettings extends LitElement {
     try {
       const res = await auth.changeEmail(e.detail.newEmail, e.detail.password);
       this.userInfo = res.user || { ...this.userInfo, email: e.detail.newEmail };
+      localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
+      appState.notify('user-updated', this.userInfo);
       toast.success('Email updated successfully!');
     } catch (err) {
       console.error('Email change failed:', err);

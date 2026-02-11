@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
 import { clockUtility } from '/src/utility/clock-utility.js';
+import { appState } from '/src/utility/app-state.js';
 
 class PageHeader extends LitElement {
   static properties = {
@@ -119,11 +120,13 @@ class PageHeader extends LitElement {
     super.connectedCallback();
     this.startClock();
     this.loadUser();
+    this._unsubState = appState.on('user-updated', () => this.loadUser());
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this.unsubscribeClock) this.unsubscribeClock();
+    if (this._unsubState) this._unsubState();
   }
 
   startClock() {

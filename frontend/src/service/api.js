@@ -2,6 +2,8 @@
  * API Service for connecting to Laravel Backend
  */
 
+import { appState } from '/src/utility/app-state.js';
+
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // Get stored token
@@ -52,6 +54,9 @@ function _cacheInvalidate(prefix) {
   for (const key of _cache.keys()) {
     if (key.startsWith(prefix)) _cache.delete(key);
   }
+  // Notify subscribers that data changed (extract resource name from prefix)
+  const resource = prefix.replace(':', '');
+  appState.notify('data-changed', { resource });
 }
 
 function _cacheInvalidateAll() {

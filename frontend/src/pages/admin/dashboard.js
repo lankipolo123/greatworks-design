@@ -10,6 +10,7 @@ import { ICONS } from '/src/components/dashboard-icons.js';
 import { ticketsTableConfig } from '/src/configs/tickets-config.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
 import { tickets as ticketsApi, users as usersApi, bookings as bookingsApi } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 class AdminDashboard extends LitElement {
   static properties = {
@@ -54,6 +55,12 @@ class AdminDashboard extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchData();
+    this._unsubData = appState.on('data-changed', () => this.fetchData());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsubData) this._unsubData();
   }
 
   async fetchData() {
