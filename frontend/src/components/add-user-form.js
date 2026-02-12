@@ -3,7 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
 
 class AddUserForm extends LitElement {
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
     }
@@ -61,46 +61,64 @@ class AddUserForm extends LitElement {
     }
   `;
 
-    render() {
-        return html`
+  render() {
+    return html`
       <form id="user-form">
         <div class="form-grid">
+          <div class="form-row">
+            <input-field
+              label="First Name"
+              type="text"
+              name="firstName"
+              placeholder="First Name"
+              variant="compact"
+              ?required=${true}>
+            </input-field>
+
+            <input-field
+              label="Last Name"
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              variant="compact"
+              ?required=${true}>
+            </input-field>
+          </div>
+
           <input-field
-            label="First Name"
-            type="text"
-            name="firstName"
-            placeholder="First Name"
+            label="Email"
+            type="email"
+            name="email"
+            placeholder="Email address"
             variant="compact"
             ?required=${true}>
           </input-field>
 
           <input-field
-            label="Last Name"
-            type="text"
-            name="lastName"
-            placeholder="Last Name"
+            label="Password"
+            type="password"
+            name="password"
+            placeholder="Min 8 characters"
             variant="compact"
             ?required=${true}>
           </input-field>
 
           <div class="form-row">
-            <div class="form-group">
-              <label>Location</label>
-              <select name="location" required>
-                <option value="">Location - (select location)</option>
-                <option value="branch1">Branch 1</option>
-                <option value="branch2">Branch 2</option>
-                <option value="branch3">Branch 3</option>
-              </select>
-            </div>
+            <input-field
+              label="Phone"
+              type="text"
+              name="phone"
+              placeholder="Contact number"
+              variant="compact">
+            </input-field>
 
             <div class="form-group">
               <label>Role</label>
               <select name="role" required>
-                <option value="">Role - (select role)</option>
+                <option value="">Select role</option>
+                <option value="customer">Customer</option>
+                <option value="moderator">Moderator</option>
                 <option value="admin">Admin</option>
-                <option value="user">User</option>
-                <option value="manager">Manager</option>
               </select>
             </div>
           </div>
@@ -111,7 +129,7 @@ class AddUserForm extends LitElement {
         </div>
       </form>
     `;
-    }
+  }
 }
 
 customElements.define('add-user-form', AddUserForm);

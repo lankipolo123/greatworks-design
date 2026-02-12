@@ -43,7 +43,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,admin',
+            'role' => 'required|in:customer,moderator,admin',
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
@@ -69,7 +69,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'role' => 'sometimes|in:customer,admin',
+            'role' => 'sometimes|in:customer,moderator,admin',
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 

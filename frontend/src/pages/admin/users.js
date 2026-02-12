@@ -174,33 +174,46 @@ class AdminUser extends LitElement {
     this.selectedUser = null;
   }
 
-  handleAddUserSubmit(e) {
-    e.preventDefault();
+  async handleAddUserSubmit() {
     this.userLoading = true;
 
-    const formData = new FormData(e.target);
-    const data = {
-      firstName: formData.get('firstName'),
-      lastName: formData.get('lastName'),
-      location: formData.get('location'),
-      role: formData.get('role')
-    };
+    try {
+      const formRoot = this.shadowRoot.querySelector('add-user-form').shadowRoot;
+      const form = formRoot.getElementById('user-form');
 
-    console.log('Create user data:', data);
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        this.userLoading = false;
+        return;
+      }
 
-    // TODO: Call API to create user
-    // Example: await fetch('/api/users', { method: 'POST', body: JSON.stringify(data) })
+      const getValue = (name) => {
+        const el = formRoot.querySelector(`[name="${name}"]`);
+        return el?.value || '';
+      };
 
-    setTimeout(() => {
-      this.userLoading = false;
+      const firstName = getValue('firstName');
+      const lastName = getValue('lastName');
+      const name = [firstName, lastName].filter(Boolean).join(' ');
+
+      await usersApi.create({
+        name,
+        email: getValue('email'),
+        password: getValue('password'),
+        phone: getValue('phone') || null,
+        role: getValue('role'),
+      });
+
       toast.success('User created successfully!');
       this.showAddDialog = false;
-
-      // Optionally add to local array for immediate UI update
-      // const newUser = { id: `U${Date.now()}`, name: `${data.firstName} ${data.lastName}`, ...data };
-      // this.users = [...this.users, newUser];
-      // this.updatePagination();
-    }, 1000);
+      this.fetchUsers();
+    } catch (err) {
+      console.error('Create user failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to create user'));
+    } finally {
+      this.userLoading = false;
+    }
   }
 
   handleCancelDialog() {
@@ -281,19 +294,11 @@ class AdminUser extends LitElement {
             ?disabled=${this.userLoading}>
             Cancel
           </app-button>
-          <app-button 
-            slot="actions" 
-            type="primary" 
-            size="medium" 
-            @click=${(e) => {
-        const form = this.shadowRoot.querySelector('add-user-form').shadowRoot.getElementById('user-form');
-        if (form.checkValidity()) {
-          this.handleAddUserSubmit(new Event('submit', { cancelable: true, target: form }));
-          e.preventDefault();
-        } else {
-          form.reportValidity();
-        }
-      }} 
+          <app-button
+            slot="actions"
+            type="primary"
+            size="medium"
+            @click=${() => this.handleAddUserSubmit()}
             ?disabled=${this.userLoading}>
             ${this.userLoading ? 'Saving...' : 'Save changes'}
           </app-button>
