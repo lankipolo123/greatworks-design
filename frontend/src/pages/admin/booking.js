@@ -358,17 +358,17 @@ class AdminBooking extends LitElement {
     localStorage.setItem('booking-selected-date', date);
     localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
 
+    if (!this.sidebarOpen) {
+      this.sidebarOpen = true;
+      localStorage.setItem('booking-sidebar-open', 'true');
+    }
+
     if (this.selectedBookings.length === 0) {
       toastSpamProtection.handleToast(
         date,
         () => toast.info('No bookings on this date'),
         () => toast.warning('Please don\'t spam! Wait a moment before clicking again.', 6000)
       );
-    } else {
-      if (!this.sidebarOpen) {
-        this.sidebarOpen = true;
-        localStorage.setItem('booking-sidebar-open', 'true');
-      }
     }
   }
 
