@@ -40,6 +40,7 @@ class AdminBooking extends LitElement {
     showDeleteDialog: { type: Boolean },
     selectedBooking: { type: Object },
     roomImagePreview: { type: String },
+    selectedRoomImage: { type: Object },
     bookLoading: { type: Boolean },
     roomLoading: { type: Boolean },
     editLoading: { type: Boolean },
@@ -215,6 +216,7 @@ class AdminBooking extends LitElement {
     this.showDeleteDialog = false;
     this.selectedBooking = null;
     this.roomImagePreview = null;
+    this.selectedRoomImage = null;
     this.bookLoading = false;
     this.roomLoading = false;
     this.editLoading = false;
@@ -412,15 +414,13 @@ class AdminBooking extends LitElement {
     this.showExportDialog = false;
   }
 
-  handleRoomImageUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        this.roomImagePreview = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
+  handleRoomImageSelected(e) {
+    this.selectedRoomImage = e.detail.file;
+    // Preview is already set by the create-room-form component
+  }
+
+  handleRoomImageRemoved() {
+    this.selectedRoomImage = null;
   }
 
   async handleBookSomeoneSubmit(e) {
@@ -489,10 +489,25 @@ class AdminBooking extends LitElement {
     };
 
     try {
-      await rooms.create(data);
-      toast.success('Room created successfully!');
+      const res = await rooms.create(data);
+      const createdRoom = res.room;
+
+      // Upload image if selected
+      if (this.selectedRoomImage && createdRoom?.id) {
+        try {
+          await rooms.uploadImage(createdRoom.id, this.selectedRoomImage);
+          toast.success('Room created with image successfully!');
+        } catch (imgErr) {
+          toast.warning('Room created but image upload failed');
+          console.error('Image upload error:', imgErr);
+        }
+      } else {
+        toast.success('Room created successfully!');
+      }
+
       this.showRoomDialog = false;
       this.roomImagePreview = null;
+      this.selectedRoomImage = null;
       await this._loadRooms();
     } catch (err) {
       toast.error(err.message || 'Failed to create room');
@@ -658,6 +673,7 @@ class AdminBooking extends LitElement {
     this.showEditDialog = false;
     this.showDeleteDialog = false;
     this.roomImagePreview = null;
+    this.selectedRoomImage = null;
     this.slotInfo = null;
   }
 
@@ -670,6 +686,7 @@ class AdminBooking extends LitElement {
     this.showEditDialog = false;
     this.showDeleteDialog = false;
     this.roomImagePreview = null;
+    this.selectedRoomImage = null;
     this.slotInfo = null;
   }
 
@@ -855,10 +872,10 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <create-room-form @change=${(e) => {
-        if (e.target.name === 'roomImage') this.handleRoomImageUpload(e);
-      }}>
-          ${this.roomImagePreview ? html`<img slot="image-preview" src="${this.roomImagePreview}" style="margin-top: 12px; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover;" alt="Room preview" />` : ''}
+        <create-room-form
+          @image-selected=${this.handleRoomImageSelected}
+          @image-removed=${this.handleRoomImageRemoved}
+        >
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.roomLoading}>
             Cancel
           </app-button>

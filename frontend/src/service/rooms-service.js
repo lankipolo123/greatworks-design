@@ -31,4 +31,23 @@ export const rooms = {
     cacheInvalidate('rooms:');
     return res;
   },
+
+  async uploadImage(roomId, file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await apiRequest(`/rooms/${roomId}/image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    cacheInvalidate('rooms:');
+    return res;
+  },
+
+  async deleteImage(roomId) {
+    const res = await apiRequest(`/rooms/${roomId}/image`, { method: 'DELETE' });
+    cacheInvalidate('rooms:');
+    return res;
+  },
 };

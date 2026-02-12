@@ -85,6 +85,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/rooms/{room}', [RoomController::class, 'update']);
         Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
+        // Room image management
+        Route::post('/rooms/{room}/image', [RoomController::class, 'uploadImage']);
+        Route::delete('/rooms/{room}/image', [RoomController::class, 'deleteImage']);
+
         // Booking management
         Route::put('/bookings/{booking}', [BookingController::class, 'update']);
         Route::delete('/bookings/{booking}', [BookingController::class, 'destroy']);

@@ -5,6 +5,17 @@ import '/src/components/app-button.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 
 class CreateRoomForm extends LitElement {
+  static properties = {
+    selectedImage: { type: Object },
+    imagePreview: { type: String },
+  };
+
+  constructor() {
+    super();
+    this.selectedImage = null;
+    this.imagePreview = null;
+  }
+
   static styles = css`
     :host {
       display: block;
@@ -95,6 +106,43 @@ class CreateRoomForm extends LitElement {
       color: #666;
     }
 
+    .image-preview {
+      margin-top: 8px;
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .remove-image {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      line-height: 1;
+      transition: background 0.2s;
+    }
+
+    .remove-image:hover {
+      background: rgba(255, 0, 0, 1);
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -104,6 +152,57 @@ class CreateRoomForm extends LitElement {
       border-top: 1px solid #e0e0e0;
     }
   `;
+
+  handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+        return;
+      }
+
+      this.selectedImage = file;
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        this.imagePreview = event.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Dispatch event to parent
+      this.dispatchEvent(new CustomEvent('image-selected', {
+        detail: { file },
+        bubbles: true,
+        composed: true
+      }));
+    }
+  }
+
+  removeImage() {
+    this.selectedImage = null;
+    this.imagePreview = null;
+
+    // Clear the file input
+    const fileInput = this.shadowRoot.querySelector('#room-image');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+
+    // Dispatch event to parent
+    this.dispatchEvent(new CustomEvent('image-removed', {
+      bubbles: true,
+      composed: true
+    }));
+  }
 
   render() {
     return html`
@@ -162,11 +261,12 @@ class CreateRoomForm extends LitElement {
           <div class="form-group full">
             <label>Room Image</label>
             <div class="image-upload">
-              <input 
-                type="file" 
-                id="room-image" 
+              <input
+                type="file"
+                id="room-image"
                 name="roomImage"
                 accept="image/*"
+                @change=${this.handleImageSelect}
               />
               <label for="room-image" class="upload-label">
                 <div class="upload-icon">
@@ -175,9 +275,20 @@ class CreateRoomForm extends LitElement {
                     <circle cx="12" cy="13" r="4"/>
                   </svg>
                 </div>
-                <div class="upload-text">Upload</div>
+                <div class="upload-text">${this.imagePreview ? 'Change Image' : 'Upload Image'}</div>
               </label>
-              <slot name="image-preview"></slot>
+
+              ${this.imagePreview ? html`
+                <div class="image-preview">
+                  <img src="${this.imagePreview}" alt="Room preview" />
+                  <button
+                    type="button"
+                    class="remove-image"
+                    @click=${this.removeImage}
+                    title="Remove image"
+                  >×</button>
+                </div>
+              ` : ''}
             </div>
           </div>
 

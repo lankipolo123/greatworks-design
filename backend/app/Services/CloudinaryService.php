@@ -87,6 +87,50 @@ class CloudinaryService
     }
 
     /**
+     * Upload a room image
+     *
+     * @param UploadedFile $file
+     * @param int $roomId
+     * @return array|null
+     */
+    public function uploadRoomImage(UploadedFile $file, int $roomId): ?array
+    {
+        $folder = config('cloudinary.folders.room_images');
+
+        return $this->uploadImage($file, $folder, [
+            'public_id' => "room_{$roomId}_" . time(),
+            'transformation' => [
+                'width' => 1200,
+                'height' => 800,
+                'crop' => 'fill',
+                'quality' => 'auto',
+            ],
+        ]);
+    }
+
+    /**
+     * Upload a location image
+     *
+     * @param UploadedFile $file
+     * @param int $locationId
+     * @return array|null
+     */
+    public function uploadLocationImage(UploadedFile $file, int $locationId): ?array
+    {
+        $folder = config('cloudinary.folders.location_images');
+
+        return $this->uploadImage($file, $folder, [
+            'public_id' => "location_{$locationId}_" . time(),
+            'transformation' => [
+                'width' => 1200,
+                'height' => 800,
+                'crop' => 'fill',
+                'quality' => 'auto',
+            ],
+        ]);
+    }
+
+    /**
      * Delete an image from Cloudinary
      *
      * @param string $publicId

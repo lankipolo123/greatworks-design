@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Room;
+use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -102,6 +103,60 @@ class RoomController extends Controller
 
         return response()->json([
             'message' => 'Room deleted successfully',
+        ]);
+    }
+
+    /**
+     * Upload or update room image
+     */
+    public function uploadImage(Request $request, Room $room, CloudinaryService $cloudinaryService): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:10240', // Max 10MB
+        ]);
+
+        $uploadedFile = $request->file('image');
+
+        // Upload to Cloudinary
+        $result = $cloudinaryService->uploadRoomImage($uploadedFile, $room->id);
+
+        if (!$result) {
+            return response()->json([
+                'message' => 'Failed to upload room image',
+            ], 500);
+        }
+
+        // Update room image
+        $room->update([
+            'image' => $result['secure_url'],
+        ]);
+
+        return response()->json([
+            'message' => 'Room image uploaded successfully',
+            'image_url' => $result['secure_url'],
+            'room' => $room,
+        ]);
+    }
+
+    /**
+     * Delete room image
+     */
+    public function deleteImage(Room $room): JsonResponse
+    {
+        if (!$room->image) {
+            return response()->json([
+                'message' => 'No room image to delete',
+            ], 404);
+        }
+
+        // Update room image to null
+        $room->update([
+            'image' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Room image deleted successfully',
+            'room' => $room,
         ]);
     }
 }
