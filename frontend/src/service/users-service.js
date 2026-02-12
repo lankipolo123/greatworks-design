@@ -31,4 +31,25 @@ export const users = {
     cacheInvalidate('users:');
     return res;
   },
+
+  async uploadProfilePhoto(userId, file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const res = await apiRequest(`/users/${userId}/profile-photo`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    cacheInvalidate('users:');
+    cacheInvalidate('auth-user');
+    return res;
+  },
+
+  async deleteProfilePhoto(userId) {
+    const res = await apiRequest(`/users/${userId}/profile-photo`, { method: 'DELETE' });
+    cacheInvalidate('users:');
+    cacheInvalidate('auth-user');
+    return res;
+  },
 };
