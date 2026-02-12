@@ -10,6 +10,7 @@ import '/src/components/app-dialog.js';
 import '/src/components/app-button.js';
 import '/src/components/book-someone-form.js';
 import '/src/components/create-room-form.js';
+import '/src/components/create-location-form.js';
 import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
@@ -17,7 +18,7 @@ import { bookingFabOptions } from '/src/configs/fab-options-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
-import { bookings, rooms } from '/src/service/api.js';
+import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class AdminBooking extends LitElement {
@@ -47,6 +48,8 @@ class AdminBooking extends LitElement {
     slotInfo: { type: Object },
     slotLoading: { type: Boolean },
     roomsList: { type: Array },
+    showLocationDialog: { type: Boolean },
+    locationLoading: { type: Boolean },
   };
 
   static styles = css`
@@ -236,6 +239,9 @@ class AdminBooking extends LitElement {
     this.editLoading = false;
     this.deleteLoading = false;
 
+    this.showLocationDialog = false;
+    this.locationLoading = false;
+
     // Slot info
     this.slotInfo = null;
     this.slotLoading = false;
@@ -396,6 +402,9 @@ class AdminBooking extends LitElement {
     } else if (action === 'create-room') {
       this.showRoomDialog = true;
       toast.success('Opening room creation form...');
+    } else if (action === 'create-location') {
+      this.showLocationDialog = true;
+      toast.success('Opening location form...');
     }
   }
 
@@ -492,6 +501,37 @@ class AdminBooking extends LitElement {
       toast.error(err.message || 'Failed to create room');
     } finally {
       this.roomLoading = false;
+    }
+  }
+
+  async handleCreateLocationSubmit(e) {
+    e.preventDefault();
+    this.locationLoading = true;
+
+    const form = this.shadowRoot.querySelector('#location-dialog create-location-form')?.shadowRoot?.getElementById('location-form')
+      || e.target;
+
+    const formData = new FormData(form);
+    const data = {
+      name: formData.get('name'),
+      address: formData.get('address') || null,
+      city: formData.get('city') || null,
+      state: formData.get('state') || null,
+      zip_code: formData.get('zip_code') || null,
+      country: formData.get('country') || null,
+      phone: formData.get('phone') || null,
+      email: formData.get('email') || null,
+      description: formData.get('description') || null,
+    };
+
+    try {
+      await locations.create(data);
+      toast.success('Location created successfully!');
+      this.showLocationDialog = false;
+    } catch (err) {
+      toast.error(err.message || 'Failed to create location');
+    } finally {
+      this.locationLoading = false;
     }
   }
 
@@ -616,6 +656,7 @@ class AdminBooking extends LitElement {
   handleCancelDialog() {
     this.showBookDialog = false;
     this.showRoomDialog = false;
+    this.showLocationDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
     this.roomImagePreview = null;
@@ -625,6 +666,7 @@ class AdminBooking extends LitElement {
   handleDialogClose() {
     this.showBookDialog = false;
     this.showRoomDialog = false;
+    this.showLocationDialog = false;
     this.showExportDialog = false;
     this.showDetailsDialog = false;
     this.showEditDialog = false;
@@ -841,6 +883,35 @@ class AdminBooking extends LitElement {
             ${this.roomLoading ? 'Creating...' : 'Create Room'}
           </app-button>
         </create-room-form>
+      </app-dialog>
+
+      <!-- Create Location Dialog -->
+      <app-dialog
+        id="location-dialog"
+        .isOpen=${this.showLocationDialog}
+        title="New Location"
+        description="Enter location details"
+        size="large"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <create-location-form>
+          <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.locationLoading}>
+            Cancel
+          </app-button>
+          <app-button slot="actions" type="primary" size="medium" @click=${(e) => {
+        const form = this.shadowRoot.querySelector('#location-dialog create-location-form')?.shadowRoot?.getElementById('location-form');
+        if (form && form.checkValidity()) {
+          this.handleCreateLocationSubmit(new Event('submit', { cancelable: true, target: form }));
+          e.preventDefault();
+        } else if (form) {
+          form.reportValidity();
+        }
+      }} ?disabled=${this.locationLoading}>
+            ${this.locationLoading ? 'Creating...' : 'Create Location'}
+          </app-button>
+        </create-location-form>
       </app-dialog>
 
       <!-- Export Dialog -->

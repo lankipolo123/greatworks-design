@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Room extends Model
@@ -17,6 +18,7 @@ class Room extends Model
         'price_per_hour',
         'floor',
         'location',
+        'location_id',
         'image',
         'amenities',
         'description',
@@ -29,6 +31,11 @@ class Room extends Model
             'amenities' => 'array',
             'price_per_hour' => 'decimal:2',
         ];
+    }
+
+    public function locationRelation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function bookings(): HasMany

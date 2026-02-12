@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RoomController;
@@ -22,6 +23,10 @@ Route::post('/login', [AuthController::class, 'login']);
 // Public room listing
 Route::get('/rooms', [RoomController::class, 'index']);
 Route::get('/rooms/{room}', [RoomController::class, 'show']);
+
+// Public location listing
+Route::get('/locations', [LocationController::class, 'index']);
+Route::get('/locations/{location}', [LocationController::class, 'show']);
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +71,11 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin,moderator')->group(function () {
+        // Location management
+        Route::post('/locations', [LocationController::class, 'store']);
+        Route::put('/locations/{location}', [LocationController::class, 'update']);
+        Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
+
         // Room management
         Route::post('/rooms', [RoomController::class, 'store']);
         Route::put('/rooms/{room}', [RoomController::class, 'update']);

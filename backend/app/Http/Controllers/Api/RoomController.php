@@ -11,7 +11,7 @@ class RoomController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Room::query();
+        $query = Room::with('locationRelation');
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -33,6 +33,10 @@ class RoomController extends Controller
             $query->where('capacity', '>=', $request->min_capacity);
         }
 
+        if ($request->has('location_id')) {
+            $query->where('location_id', $request->location_id);
+        }
+
         $rooms = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 10);
 
@@ -48,6 +52,7 @@ class RoomController extends Controller
             'price_per_hour' => 'required|numeric|min:0',
             'floor' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
+            'location_id' => 'nullable|exists:locations,id',
             'image' => 'nullable|string',
             'amenities' => 'nullable|array',
             'description' => 'nullable|string',
@@ -76,6 +81,7 @@ class RoomController extends Controller
             'price_per_hour' => 'sometimes|numeric|min:0',
             'floor' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
+            'location_id' => 'nullable|exists:locations,id',
             'image' => 'nullable|string',
             'amenities' => 'nullable|array',
             'description' => 'nullable|string',
