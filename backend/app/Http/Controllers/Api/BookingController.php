@@ -48,7 +48,7 @@ class BookingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'sometimes|exists:users,id',
             'room_id' => 'required|exists:rooms,id',
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
@@ -57,6 +57,11 @@ class BookingController extends Controller
             'status' => 'sometimes|in:pending,confirmed,cancelled,completed',
             'notes' => 'nullable|string',
         ]);
+
+        // Default user_id to authenticated user if not provided
+        if (!isset($validated['user_id'])) {
+            $validated['user_id'] = $request->user()->id;
+        }
 
         // Slot availability check
         $room = Room::findOrFail($validated['room_id']);

@@ -6,13 +6,14 @@ import '/src/components/today-btn.js';
 import '/src/components/content-card.js';
 import '/src/components/pagination.js';
 import '/src/components/app-dialog.js';
+import '/src/components/app-button.js';
 import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
-import { bookings } from '/src/service/api.js';
+import { bookings, rooms } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class CustomerBooking extends LitElement {
@@ -26,7 +27,12 @@ class CustomerBooking extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     showDetailsDialog: { type: Boolean },
-    selectedBooking: { type: Object }
+    selectedBooking: { type: Object },
+    showBookDialog: { type: Boolean },
+    bookLoading: { type: Boolean },
+    roomsList: { type: Array },
+    slotInfo: { type: Object },
+    slotLoading: { type: Boolean },
   };
 
   static styles = css`
@@ -62,6 +68,24 @@ class CustomerBooking extends LitElement {
       transform: translateY(-1px);
     }
 
+    .book-now-btn {
+      background: #d6150b;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      width: 100%;
+      margin-top: 0.75rem;
+    }
+
+    .book-now-btn:hover {
+      background: #b51209;
+    }
+
     .details-content {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -92,6 +116,109 @@ class CustomerBooking extends LitElement {
       color: #1a1a1a;
     }
 
+    .book-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .book-form .full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 6px 8px;
+      border: 1.5px solid #2d2b2b45;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #d6150b;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 50px;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .submit-btn {
+      padding: 8px 20px;
+      background: #d6150b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover { background: #b51209; }
+    .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .cancel-btn {
+      padding: 8px 20px;
+      background: #f0f0f0;
+      color: #333;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .cancel-btn:hover { background: #ddd; }
+
+    .slot-info {
+      grid-column: 1 / -1;
+      background: #f8f9fa;
+      border: 1.5px solid #2d2b2b25;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .slot-info .slot-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+
+    .slot-info .slot-row:last-child { margin-bottom: 0; }
+    .slot-info .slot-label { font-weight: 500; color: #555; }
+    .slot-info .slot-value { font-weight: 700; }
+    .slot-info .slot-value.available { color: #155724; }
+    .slot-info .slot-value.full { color: #721c24; }
+    .slot-info .slot-loading { text-align: center; color: #888; font-style: italic; }
+
     @media (max-width: 1024px) {
       content-card {
         flex-direction: column;
@@ -119,12 +246,22 @@ class CustomerBooking extends LitElement {
     this.showDetailsDialog = false;
     this.selectedBooking = null;
 
+    this.showBookDialog = false;
+    this.bookLoading = false;
+    this.roomsList = [];
+    this.slotInfo = null;
+    this.slotLoading = false;
+
     this._loadBookings();
+    this._loadRooms();
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._unsub = appState.on('data-changed', () => this._loadBookings());
+    this._unsub = appState.on('data-changed', () => {
+      this._loadBookings();
+      this._loadRooms();
+    });
   }
 
   disconnectedCallback() {
@@ -145,6 +282,16 @@ class CustomerBooking extends LitElement {
     } catch (e) {
       console.error('Failed to load bookings:', e.message || e);
       this.allBookings = [];
+    }
+  }
+
+  async _loadRooms() {
+    try {
+      const response = await rooms.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.roomsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.roomsList = [];
     }
   }
 
@@ -170,9 +317,7 @@ class CustomerBooking extends LitElement {
   }
 
   get filteredBookings() {
-    if (this.selectedRoomType === 'all') {
-      return this.selectedBookings;
-    }
+    if (this.selectedRoomType === 'all') return this.selectedBookings;
     return this.selectedBookings.filter(b => b.roomType === this.selectedRoomType);
   }
 
@@ -182,11 +327,9 @@ class CustomerBooking extends LitElement {
   }
 
   handleDayClick(e) {
-    const { date, bookings: dayBookings } = e.detail;
+    const { date } = e.detail;
     this.selectedDate = date;
-
     this.selectedBookings = this.allBookings.filter(b => b.date === date);
-
     this.currentPage = 1;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
@@ -208,14 +351,15 @@ class CustomerBooking extends LitElement {
   }
 
   handleBookingSelect(e) {
-    const { booking } = e.detail;
-    this.selectedBooking = booking;
+    this.selectedBooking = e.detail.booking;
     this.showDetailsDialog = true;
   }
 
   handleDialogClose() {
     this.showDetailsDialog = false;
+    this.showBookDialog = false;
     this.selectedBooking = null;
+    this.slotInfo = null;
   }
 
   handleRoomTypeChange(e) {
@@ -235,6 +379,85 @@ class CustomerBooking extends LitElement {
       calendar.month = now.getMonth();
       calendar.year = now.getFullYear();
     }
+  }
+
+  // ── Book Now ──
+  handleBookNow() {
+    this.slotInfo = null;
+    this.showBookDialog = true;
+  }
+
+  async checkAvailability(roomId, date, startTime, durationHours) {
+    if (!roomId || !date || !startTime || !durationHours) {
+      this.slotInfo = null;
+      return;
+    }
+    this.slotLoading = true;
+    try {
+      this.slotInfo = await bookings.getAvailability({
+        room_id: roomId, date, start_time: startTime, duration_hours: durationHours
+      });
+    } catch { this.slotInfo = null; }
+    finally { this.slotLoading = false; }
+  }
+
+  async handleBookSubmit() {
+    const form = this.shadowRoot.getElementById('customer-book-form');
+    if (!form || !form.checkValidity()) {
+      form?.reportValidity();
+      return;
+    }
+
+    this.bookLoading = true;
+    const getValue = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
+
+    try {
+      await bookings.create({
+        room_id: parseInt(getValue('room_id')),
+        date: getValue('date'),
+        start_time: getValue('time'),
+        duration_hours: parseInt(getValue('duration') || '1'),
+        guests: parseInt(getValue('guests') || '1'),
+        notes: getValue('notes'),
+      });
+
+      toast.success('Booking created successfully!');
+      this.showBookDialog = false;
+      this.slotInfo = null;
+      await this._loadBookings();
+    } catch (err) {
+      if (err.status === 422 && err.message?.includes('slots')) {
+        toast.error(`Not enough slots! Available: ${err.available_slots || 0}`);
+      } else {
+        toast.error(err.message || 'Failed to create booking');
+      }
+    } finally {
+      this.bookLoading = false;
+    }
+  }
+
+  _renderSlotInfo() {
+    if (this.slotLoading) {
+      return html`<div class="slot-info"><div class="slot-loading">Checking availability...</div></div>`;
+    }
+    if (!this.slotInfo) return '';
+    const isAvailable = this.slotInfo.available_slots > 0;
+    return html`
+      <div class="slot-info">
+        <div class="slot-row">
+          <span class="slot-label">Room Capacity</span>
+          <span class="slot-value">${this.slotInfo.total_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Currently Booked</span>
+          <span class="slot-value">${this.slotInfo.booked_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Available Slots</span>
+          <span class="slot-value ${isAvailable ? 'available' : 'full'}">${this.slotInfo.available_slots}</span>
+        </div>
+      </div>
+    `;
   }
 
   _renderDetailsDialog() {
@@ -281,6 +504,72 @@ class CustomerBooking extends LitElement {
     `;
   }
 
+  _renderBookForm() {
+    const today = new Date().toISOString().split('T')[0];
+
+    return html`
+      <form id="customer-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
+        <div class="form-group">
+          <label>Room *</label>
+          <select name="room_id" required @change=${() => this._onBookFormChange()}>
+            <option value="">Select room</option>
+            ${this.roomsList.map(r => html`
+              <option value="${r.id}">${r.name} (cap: ${r.capacity})</option>
+            `)}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" name="date" min="${today}" value="${this.selectedDate || today}" required
+            @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Time *</label>
+          <input type="time" name="time" required @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Duration (hrs) *</label>
+          <input type="number" name="duration" value="1" min="1" max="12" required
+            @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Guests *</label>
+          <input type="number" name="guests" value="1" min="1" required />
+        </div>
+
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Any special requests..."></textarea>
+        </div>
+
+        ${this._renderSlotInfo()}
+
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" @click=${this.handleDialogClose} ?disabled=${this.bookLoading}>
+            Cancel
+          </button>
+          <button type="button" class="submit-btn" @click=${() => this.handleBookSubmit()} ?disabled=${this.bookLoading}>
+            ${this.bookLoading ? 'Creating...' : 'Create Booking'}
+          </button>
+        </div>
+      </form>
+    `;
+  }
+
+  _onBookFormChange() {
+    const form = this.shadowRoot.getElementById('customer-book-form');
+    if (!form) return;
+    const roomId = form.querySelector('[name="room_id"]')?.value;
+    const date = form.querySelector('[name="date"]')?.value;
+    const time = form.querySelector('[name="time"]')?.value;
+    const duration = form.querySelector('[name="duration"]')?.value;
+    this.checkAvailability(roomId, date, time, duration);
+  }
+
   render() {
     return html`
       <content-card mode="3">
@@ -318,10 +607,11 @@ class CustomerBooking extends LitElement {
               @pagination-change=${this.handlePageChange}
             ></pagination-component>
           </booking-sidebar>
+          <button class="book-now-btn" @click=${this.handleBookNow}>Book Now</button>
         </sidebar-section>
       </content-card>
 
-      <!-- Booking Details Dialog (read-only for customer) -->
+      <!-- Booking Details Dialog -->
       <app-dialog
         .isOpen=${this.showDetailsDialog}
         title="Booking Details"
@@ -331,6 +621,19 @@ class CustomerBooking extends LitElement {
         .closeOnOverlay=${true}
         @dialog-close=${this.handleDialogClose}>
         ${this._renderDetailsDialog()}
+      </app-dialog>
+
+      <!-- Create Booking Dialog -->
+      <app-dialog
+        .isOpen=${this.showBookDialog}
+        title="Book a Room"
+        description="Select a room, date, and time for your booking"
+        size="medium"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this._renderBookForm()}
       </app-dialog>
     `;
   }
