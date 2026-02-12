@@ -48,8 +48,8 @@ export class AppSettings extends LitElement {
       const updated = res.user || { ...this.userInfo, ...payload };
       this.userInfo = { ...updated };
       localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
-      appState.notify('user-updated', this.userInfo);
       toast.success('Profile updated successfully!');
+      setTimeout(() => appState.reload(), 500);
     } catch (err) {
       console.error('Profile update failed:', err);
       const msg = err.errors ? Object.values(err.errors)[0] : err.message;
@@ -71,8 +71,8 @@ export class AppSettings extends LitElement {
       const res = await auth.changeEmail(e.detail.newEmail, e.detail.password);
       this.userInfo = res.user || { ...this.userInfo, email: e.detail.newEmail };
       localStorage.setItem('auth_user', JSON.stringify(this.userInfo));
-      appState.notify('user-updated', this.userInfo);
       toast.success('Email updated successfully!');
+      setTimeout(() => appState.reload(), 500);
     } catch (err) {
       console.error('Email change failed:', err);
       const msg = err.errors ? Object.values(err.errors)[0] : err.message;
@@ -88,6 +88,7 @@ export class AppSettings extends LitElement {
         e.detail.newPasswordConfirmation
       );
       toast.success('Password changed successfully!');
+      setTimeout(() => appState.reload(), 500);
     } catch (err) {
       console.error('Password change failed:', err);
       const msg = err.errors ? Object.values(err.errors)[0] : err.message;

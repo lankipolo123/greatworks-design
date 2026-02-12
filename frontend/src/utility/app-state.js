@@ -29,6 +29,14 @@ class AppState {
       try { cb(detail); } catch (e) { console.error(`[app-state] ${topic} listener error:`, e); }
     });
   }
+
+  /**
+   * Reload the entire page. Call this after settings/profile changes
+   * so all components pick up the new data.
+   */
+  reload() {
+    window.location.reload();
+  }
 }
 
 export const appState = new AppState();
