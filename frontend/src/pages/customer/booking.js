@@ -69,21 +69,35 @@ class CustomerBooking extends LitElement {
     }
 
     .book-now-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
       background: #d6150b;
       color: #fff;
       border: none;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      padding: 0.75rem 1.5rem;
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-      transition: background 0.2s;
-      width: 100%;
-      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 4px 12px rgba(214, 21, 11, 0.35);
+      z-index: 100;
     }
 
     .book-now-btn:hover {
       background: #b51209;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(214, 21, 11, 0.45);
+    }
+
+    .book-now-icon {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1;
     }
 
     .details-content {
@@ -251,6 +265,7 @@ class CustomerBooking extends LitElement {
     this.roomsList = [];
     this.slotInfo = null;
     this.slotLoading = false;
+    this._lastBookTime = 0;
 
     this._loadBookings();
     this._loadRooms();
@@ -383,6 +398,17 @@ class CustomerBooking extends LitElement {
 
   // ── Book Now ──
   handleBookNow() {
+    // Anti-spam: 10s cooldown after last successful booking
+    const now = Date.now();
+    if (now - this._lastBookTime < 10000) {
+      const remaining = Math.ceil((10000 - (now - this._lastBookTime)) / 1000);
+      toastSpamProtection.handleToast(
+        'book-now-cooldown',
+        () => toast.warning(`Please wait ${remaining}s before booking again.`),
+        () => toast.warning('Stop spamming! Please wait before booking again.', 6000)
+      );
+      return;
+    }
     this.slotInfo = null;
     this.showBookDialog = true;
   }
@@ -408,6 +434,15 @@ class CustomerBooking extends LitElement {
       return;
     }
 
+    // Anti-spam: prevent rapid booking submissions (10s cooldown)
+    const now = Date.now();
+    const cooldown = 10000;
+    if (now - this._lastBookTime < cooldown) {
+      const remaining = Math.ceil((cooldown - (now - this._lastBookTime)) / 1000);
+      toast.warning(`Please wait ${remaining}s before creating another booking.`);
+      return;
+    }
+
     this.bookLoading = true;
     const getValue = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
 
@@ -421,6 +456,7 @@ class CustomerBooking extends LitElement {
         notes: getValue('notes'),
       });
 
+      this._lastBookTime = Date.now();
       toast.success('Booking created successfully!');
       this.showBookDialog = false;
       this.slotInfo = null;
@@ -607,9 +643,12 @@ class CustomerBooking extends LitElement {
               @pagination-change=${this.handlePageChange}
             ></pagination-component>
           </booking-sidebar>
-          <button class="book-now-btn" @click=${this.handleBookNow}>Book Now</button>
         </sidebar-section>
       </content-card>
+
+      <button class="book-now-btn" @click=${this.handleBookNow}>
+        <span class="book-now-icon">+</span> Book Now
+      </button>
 
       <!-- Booking Details Dialog -->
       <app-dialog

@@ -239,6 +239,7 @@ class AdminBooking extends LitElement {
     // Slot info
     this.slotInfo = null;
     this.slotLoading = false;
+    this._lastBookTime = 0;
 
     // Rooms list for dropdowns
     this.roomsList = [];
@@ -418,6 +419,15 @@ class AdminBooking extends LitElement {
 
   async handleBookSomeoneSubmit(e) {
     e.preventDefault();
+
+    // Anti-spam: 10s cooldown after last successful booking
+    const now = Date.now();
+    if (now - this._lastBookTime < 10000) {
+      const remaining = Math.ceil((10000 - (now - this._lastBookTime)) / 1000);
+      toast.warning(`Please wait ${remaining}s before creating another booking.`);
+      return;
+    }
+
     this.bookLoading = true;
 
     const form = this.shadowRoot.querySelector('#book-dialog book-someone-form')?.shadowRoot?.getElementById('book-form')
@@ -435,7 +445,8 @@ class AdminBooking extends LitElement {
     };
 
     try {
-      const result = await bookings.create(data);
+      await bookings.create(data);
+      this._lastBookTime = Date.now();
       toast.success('Booking created successfully!');
       this.showBookDialog = false;
       await this._loadBookings();
