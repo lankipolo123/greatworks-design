@@ -26,8 +26,8 @@ class CustomerBooking extends LitElement {
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
     showDetailsDialog: { type: Boolean },
-    selectedBooking: { type: Object },
     showBookDialog: { type: Boolean },
+    selectedBooking: { type: Object },
     bookLoading: { type: Boolean },
     roomsList: { type: Array },
     slotInfo: { type: Object },
@@ -47,38 +47,6 @@ class CustomerBooking extends LitElement {
 
     content-card {
       gap: 1.5rem;
-    }
-
-    .book-now-btn {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      background: #d6150b;
-      color: #fff;
-      border: none;
-      border-radius: 50px;
-      padding: 0.75rem 1.5rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 700;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      box-shadow: 0 4px 12px rgba(214, 21, 11, 0.35);
-      z-index: 100;
-    }
-
-    .book-now-btn:hover {
-      background: #b51209;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(214, 21, 11, 0.45);
-    }
-
-    .book-now-icon {
-      font-size: 1.2rem;
-      font-weight: 700;
-      line-height: 1;
     }
 
     .details-content {
@@ -111,108 +79,138 @@ class CustomerBooking extends LitElement {
       color: #1a1a1a;
     }
 
-    .book-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .book-form .full {
-      grid-column: 1 / -1;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .form-group label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      padding: 6px 8px;
-      border: 1.5px solid #2d2b2b45;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-family: inherit;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #d6150b;
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 50px;
-    }
-
-    .form-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #e0e0e0;
-    }
-
-    .submit-btn {
-      padding: 8px 20px;
-      background: #d6150b;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .submit-btn:hover { background: #b51209; }
-    .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-
-    .cancel-btn {
-      padding: 8px 20px;
-      background: #f0f0f0;
-      color: #333;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .cancel-btn:hover { background: #ddd; }
-
     .slot-info {
-      grid-column: 1 / -1;
       background: #f8f9fa;
       border: 1.5px solid #2d2b2b25;
       border-radius: 8px;
-      padding: 0.5rem 0.75rem;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
       font-size: 0.8rem;
     }
 
     .slot-info .slot-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 0.25rem;
+      align-items: center;
+      margin-bottom: 0.35rem;
     }
 
-    .slot-info .slot-row:last-child { margin-bottom: 0; }
-    .slot-info .slot-label { font-weight: 500; color: #555; }
-    .slot-info .slot-value { font-weight: 700; }
-    .slot-info .slot-value.available { color: #155724; }
-    .slot-info .slot-value.full { color: #721c24; }
-    .slot-info .slot-loading { text-align: center; color: #888; font-style: italic; }
+    .slot-info .slot-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .slot-info .slot-label {
+      font-weight: 500;
+      color: #555;
+    }
+
+    .slot-info .slot-value {
+      font-weight: 700;
+    }
+
+    .slot-info .slot-value.available {
+      color: #155724;
+    }
+
+    .slot-info .slot-value.full {
+      color: #721c24;
+    }
+
+    .slot-info .slot-loading {
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    }
+
+    .book-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .book-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .book-form .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .book-form label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .book-form input,
+    .book-form select,
+    .book-form textarea {
+      padding: 0.5rem;
+      border: 1.5px solid #2d2b2b25;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .book-form input:focus,
+    .book-form select:focus,
+    .book-form textarea:focus {
+      border-color: #ffb300;
+    }
+
+    .book-form textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .submit-btn {
+      background: #ffb300;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: #ffa000;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .cancel-btn {
+      background: #f5f5f5;
+      color: #333;
+      border: 1.5px solid #2d2b2b25;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .cancel-btn:hover {
+      background: #eee;
+    }
 
     @media (max-width: 1024px) {
       content-card {
@@ -232,7 +230,7 @@ class CustomerBooking extends LitElement {
     this.selectedBookings = savedBookings ? JSON.parse(savedBookings) : [];
 
     const savedState = localStorage.getItem('booking-sidebar-open');
-    this.sidebarOpen = savedState === 'true';
+    this.sidebarOpen = savedState !== 'false';
 
     this.selectedRoomType = 'all';
     this.currentPage = 1;
@@ -241,14 +239,15 @@ class CustomerBooking extends LitElement {
     this.showDetailsDialog = false;
     this.selectedBooking = null;
 
+    this.locationsList = [];
+    this.selectedLocation = 'all';
+
     this.showBookDialog = false;
     this.bookLoading = false;
     this.roomsList = [];
     this.slotInfo = null;
     this.slotLoading = false;
     this._lastBookTime = 0;
-    this.locationsList = [];
-    this.selectedLocation = 'all';
 
     this._loadBookings();
     this._loadRooms();
@@ -622,9 +621,11 @@ class CustomerBooking extends LitElement {
             .selectedDate=${this.selectedDate}
             .bookings=${this.paginatedBookings}
             .selectedRoomType=${this.selectedRoomType}
+            .showBookNow=${true}
             @booking-select=${this.handleBookingSelect}
             @room-type-change=${this.handleRoomTypeChange}
-            @sidebar-close=${this.handleSidebarClose}>
+            @sidebar-close=${this.handleSidebarClose}
+            @book-now=${this.handleBookNow}>
             <pagination-component
               slot="pagination"
               .currentPage=${this.currentPage}
@@ -635,10 +636,6 @@ class CustomerBooking extends LitElement {
           </booking-sidebar>
         </sidebar-section>
       </content-card>
-
-      <button class="book-now-btn" @click=${this.handleBookNow}>
-        <span class="book-now-icon">+</span> Book Now
-      </button>
 
       <!-- Booking Details Dialog -->
       <app-dialog

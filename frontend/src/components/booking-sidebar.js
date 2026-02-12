@@ -7,7 +7,8 @@ class BookingSidebar extends LitElement {
   static properties = {
     selectedDate: { type: String },
     bookings: { type: Array },
-    selectedRoomType: { type: String }
+    selectedRoomType: { type: String },
+    showBookNow: { type: Boolean },
   };
 
   static styles = css`
@@ -120,6 +121,34 @@ class BookingSidebar extends LitElement {
       margin-top: 1rem;
       padding-top: 0.75rem;
     }
+
+    .book-now-btn {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      margin-top: 0.75rem;
+      background: #ffb300;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .book-now-btn:hover {
+      background: #ffa000;
+    }
+
+    .book-now-btn svg {
+      width: 16px;
+      height: 16px;
+    }
   `;
 
   constructor() {
@@ -127,6 +156,14 @@ class BookingSidebar extends LitElement {
     this.selectedDate = null;
     this.bookings = [];
     this.selectedRoomType = 'all';
+    this.showBookNow = false;
+  }
+
+  _handleBookNow() {
+    this.dispatchEvent(new CustomEvent('book-now', {
+      bubbles: true,
+      composed: true
+    }));
   }
 
   _formatDate(dateStr) {
@@ -192,6 +229,15 @@ class BookingSidebar extends LitElement {
           <div class="empty-state">
             <div>Select a date to view bookings</div>
           </div>
+          ${this.showBookNow ? html`
+            <button class="book-now-btn" @click=${this._handleBookNow}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Book Now
+            </button>
+          ` : ''}
         </div>
       `;
     }
@@ -231,6 +277,16 @@ class BookingSidebar extends LitElement {
         <div class="pagination-wrapper">
           <slot name="pagination"></slot>
         </div>
+
+        ${this.showBookNow ? html`
+          <button class="book-now-btn" @click=${this._handleBookNow}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Book Now
+          </button>
+        ` : ''}
       </div>
     `;
   }

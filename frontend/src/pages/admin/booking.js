@@ -193,7 +193,7 @@ class AdminBooking extends LitElement {
     this.selectedBookings = savedBookings ? JSON.parse(savedBookings) : [];
 
     const savedState = localStorage.getItem('booking-sidebar-open');
-    this.sidebarOpen = savedState === 'true' ? true : false;
+    this.sidebarOpen = savedState !== 'false';
 
     this.selectedRoomType = 'all';
     this.currentPage = 1;
