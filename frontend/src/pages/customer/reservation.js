@@ -14,6 +14,7 @@ import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { reservations } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 // Customer only sees view action, no edit/delete
 const customerTableConfig = {
@@ -101,6 +102,16 @@ class CustomerReservation extends LitElement {
     this.handleTableAction = this.handleTableAction.bind(this);
 
     this._loadReservations();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._unsub = appState.on('data-changed', () => this._loadReservations());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async _loadReservations() {

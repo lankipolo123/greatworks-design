@@ -18,6 +18,7 @@ import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { toast } from '/src/service/toast-widget.js';
 import { reservations } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -143,6 +144,16 @@ class AdminReservation extends LitElement {
     this.handleTableAction = this.handleTableAction.bind(this);
 
     this._loadReservations();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._unsub = appState.on('data-changed', () => this._loadReservations());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async _loadReservations() {

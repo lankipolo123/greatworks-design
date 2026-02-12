@@ -13,6 +13,7 @@ import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { bookings } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 
 class CustomerBooking extends LitElement {
   static properties = {
@@ -119,6 +120,16 @@ class CustomerBooking extends LitElement {
     this.selectedBooking = null;
 
     this._loadBookings();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._unsub = appState.on('data-changed', () => this._loadBookings());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async _loadBookings() {

@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import { logsTableConfig } from '@/configs/logs-config.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { activityLogs } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 import '@/components/data-table.js';
 import '@/components/search-bar.js';
 import '@/components/app-button.js';
@@ -56,6 +57,12 @@ class AdminLogs extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchLogs();
+    this._unsub = appState.on('data-changed', () => this.fetchLogs());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async fetchLogs() {

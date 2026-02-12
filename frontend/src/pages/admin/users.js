@@ -2,6 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import { usersTableConfig } from '/src/configs/users-config';
 import { users as usersApi } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import '@/components/data-table.js';
@@ -71,6 +72,12 @@ class AdminUser extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchUsers();
+    this._unsub = appState.on('data-changed', () => this.fetchUsers());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async fetchUsers() {

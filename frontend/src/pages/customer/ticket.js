@@ -2,6 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import { ticketsTableConfig } from '/src/configs/tickets-config';
 import { tickets as ticketsApi } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
@@ -64,6 +65,12 @@ class CustomerTicket extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchTickets();
+    this._unsub = appState.on('data-changed', () => this.fetchTickets());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async fetchTickets() {

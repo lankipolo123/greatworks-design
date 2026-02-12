@@ -2,6 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import { paymentsTableConfig } from '/src/configs/payments-config.js';
 import { payments as paymentsApi } from '/src/service/api.js';
+import { appState } from '/src/utility/app-state.js';
 import '/src/components/pagination.js';
 import '/src/components/search-bar.js';
 import '/src/components/app-dialog.js';
@@ -51,6 +52,12 @@ class CustomerPayments extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchPayments();
+    this._unsub = appState.on('data-changed', () => this.fetchPayments());
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsub) this._unsub();
   }
 
   async fetchPayments() {
