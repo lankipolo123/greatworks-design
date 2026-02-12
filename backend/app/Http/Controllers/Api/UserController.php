@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -87,6 +88,66 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User deleted successfully',
+        ]);
+    }
+
+    /**
+     * Upload or update user profile photo
+     */
+    public function uploadProfilePhoto(Request $request, User $user, CloudinaryService $cloudinaryService): JsonResponse
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:5120', // Max 5MB
+        ]);
+
+        $uploadedFile = $request->file('photo');
+
+        // Upload to Cloudinary
+        $result = $cloudinaryService->uploadProfilePhoto($uploadedFile, $user->id);
+
+        if (!$result) {
+            return response()->json([
+                'message' => 'Failed to upload profile photo',
+            ], 500);
+        }
+
+        // Delete old photo from Cloudinary if it exists
+        if ($user->profile_photo) {
+            // Extract public_id from the old photo URL if needed
+            // $cloudinaryService->deleteImage($oldPublicId);
+        }
+
+        // Update user profile photo
+        $user->update([
+            'profile_photo' => $result['secure_url'],
+        ]);
+
+        return response()->json([
+            'message' => 'Profile photo uploaded successfully',
+            'photo_url' => $result['secure_url'],
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Delete user profile photo
+     */
+    public function deleteProfilePhoto(User $user): JsonResponse
+    {
+        if (!$user->profile_photo) {
+            return response()->json([
+                'message' => 'No profile photo to delete',
+            ], 404);
+        }
+
+        // Update user profile photo to null
+        $user->update([
+            'profile_photo' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Profile photo deleted successfully',
+            'user' => $user,
         ]);
     }
 }

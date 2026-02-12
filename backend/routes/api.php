@@ -44,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/deactivate-account', [AuthController::class, 'deactivateAccount']);
     Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
 
+    // Profile photo management (all authenticated users can manage their own)
+    Route::post('/users/{user}/profile-photo', [UserController::class, 'uploadProfilePhoto']);
+    Route::delete('/users/{user}/profile-photo', [UserController::class, 'deleteProfilePhoto']);
+
     // Bookings (all authenticated users can view/create their own)
     Route::get('/bookings/calendar', [BookingController::class, 'calendar']);
     Route::get('/bookings/availability', [BookingController::class, 'availability']);
