@@ -46,6 +46,29 @@ class BookingSidebar extends LitElement {
       color: #ffb300;
     }
 
+    .close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      color: #d6150b;
+      background: #fff0f0;
+    }
+
+    .close-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
     .date {
       font-size: 0.8rem;
       color: #171717;
@@ -140,13 +163,30 @@ class BookingSidebar extends LitElement {
     }));
   }
 
+  _handleClose() {
+    this.dispatchEvent(new CustomEvent('sidebar-close', {
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   render() {
+    const closeBtn = html`
+      <button class="close-btn" @click=${this._handleClose} title="Close sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    `;
+
     if (!this.selectedDate || this.bookings.length === 0) {
       return html`
         <div class="sidebar-container">
           <div class="header">
             <div class="header-top">
               <div class="title">Booking Details</div>
+              ${closeBtn}
             </div>
           </div>
           <div class="empty-state">
@@ -163,6 +203,7 @@ class BookingSidebar extends LitElement {
         <div class="header">
           <div class="header-top">
             <div class="title">Booking Details</div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
             <app-dropdown
               variant="dark"
               size="small"
@@ -172,6 +213,8 @@ class BookingSidebar extends LitElement {
               .value=${this.selectedRoomType}
               @change=${this._handleRoomTypeChange}
             ></app-dropdown>
+            ${closeBtn}
+            </div>
           </div>
           <div class="date">${this._formatDate(this.selectedDate)}</div>
         </div>

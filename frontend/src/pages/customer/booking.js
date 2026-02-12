@@ -2,7 +2,6 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/calendar-component.js';
 import '/src/components/booking-sidebar.js';
-import '/src/components/today-btn.js';
 import '/src/components/content-card.js';
 import '/src/components/pagination.js';
 import '/src/components/app-dialog.js';
@@ -13,7 +12,7 @@ import '/src/layouts/calendar-sidebar-section.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
-import { bookings, rooms } from '/src/service/api.js';
+import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class CustomerBooking extends LitElement {
@@ -33,6 +32,8 @@ class CustomerBooking extends LitElement {
     roomsList: { type: Array },
     slotInfo: { type: Object },
     slotLoading: { type: Boolean },
+    locationsList: { type: Array },
+    selectedLocation: { type: String },
   };
 
   static styles = css`
@@ -46,26 +47,6 @@ class CustomerBooking extends LitElement {
 
     content-card {
       gap: 1.5rem;
-    }
-
-    .toggle-btn {
-      background: #302d30;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .toggle-btn:hover {
-      text-decoration: underline;
-      background: #383438;
-      color: #ffffff;
-      transform: translateY(-1px);
     }
 
     .book-now-btn {
@@ -266,9 +247,12 @@ class CustomerBooking extends LitElement {
     this.slotInfo = null;
     this.slotLoading = false;
     this._lastBookTime = 0;
+    this.locationsList = [];
+    this.selectedLocation = 'all';
 
     this._loadBookings();
     this._loadRooms();
+    this._loadLocations();
   }
 
   connectedCallback() {
@@ -276,6 +260,7 @@ class CustomerBooking extends LitElement {
     this._unsub = appState.on('data-changed', () => {
       this._loadBookings();
       this._loadRooms();
+      this._loadLocations();
     });
   }
 
@@ -310,6 +295,23 @@ class CustomerBooking extends LitElement {
     }
   }
 
+  async _loadLocations() {
+    try {
+      const response = await locations.getAll({ per_page: 100, status: 'active' });
+      const data = response.data || response;
+      this.locationsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.locationsList = [];
+    }
+  }
+
+  get _locationDropdownOptions() {
+    return [
+      { value: 'all', label: 'All Locations' },
+      ...this.locationsList.map(l => ({ value: String(l.id), label: l.name }))
+    ];
+  }
+
   _mapApiBooking(b) {
     return {
       id: b.id,
@@ -336,9 +338,13 @@ class CustomerBooking extends LitElement {
     return this.selectedBookings.filter(b => b.roomType === this.selectedRoomType);
   }
 
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-    localStorage.setItem('booking-sidebar-open', this.sidebarOpen.toString());
+  handleSidebarClose() {
+    this.sidebarOpen = false;
+    localStorage.setItem('booking-sidebar-open', 'false');
+  }
+
+  handleLocationChange(e) {
+    this.selectedLocation = e.detail.location;
   }
 
   handleDayClick(e) {
@@ -385,15 +391,6 @@ class CustomerBooking extends LitElement {
 
   handlePageChange(e) {
     this.currentPage = e.detail.page;
-  }
-
-  handleTodayClick() {
-    const calendar = this.shadowRoot.querySelector('booking-calendar');
-    if (calendar) {
-      const now = new Date();
-      calendar.month = now.getMonth();
-      calendar.year = now.getFullYear();
-    }
   }
 
   // ── Book Now ──
@@ -613,18 +610,10 @@ class CustomerBooking extends LitElement {
           <booking-calendar
             .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
             .selectedDate=${this.selectedDate}
-            @day-click=${this.handleDayClick}>
-
-            <today-button
-              slot="today-btn"
-              @today-click=${this.handleTodayClick}>
-            </today-button>
-            <button
-              slot="controls"
-              class="toggle-btn"
-              @click=${this.toggleSidebar}>
-              ${this.sidebarOpen ? 'X' : 'Details'}
-            </button>
+            .locations=${this._locationDropdownOptions}
+            .selectedLocation=${this.selectedLocation}
+            @day-click=${this.handleDayClick}
+            @location-change=${this.handleLocationChange}>
           </booking-calendar>
         </calendar-section>
 
@@ -634,7 +623,8 @@ class CustomerBooking extends LitElement {
             .bookings=${this.paginatedBookings}
             .selectedRoomType=${this.selectedRoomType}
             @booking-select=${this.handleBookingSelect}
-            @room-type-change=${this.handleRoomTypeChange}>
+            @room-type-change=${this.handleRoomTypeChange}
+            @sidebar-close=${this.handleSidebarClose}>
             <pagination-component
               slot="pagination"
               .currentPage=${this.currentPage}

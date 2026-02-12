@@ -2,7 +2,6 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/calendar-component.js';
 import '/src/components/booking-sidebar.js';
-import '/src/components/today-btn.js';
 import '/src/components/content-card.js';
 import '/src/components/pagination.js';
 import '/src/components/floating-action-button.js';
@@ -50,6 +49,8 @@ class AdminBooking extends LitElement {
     roomsList: { type: Array },
     showLocationDialog: { type: Boolean },
     locationLoading: { type: Boolean },
+    locationsList: { type: Array },
+    selectedLocation: { type: String },
   };
 
   static styles = css`
@@ -63,26 +64,6 @@ class AdminBooking extends LitElement {
 
     content-card {
       gap: 1.5rem;
-    }
-
-    .toggle-btn {
-      background: #302d30;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .toggle-btn:hover {
-      text-decoration: underline;
-      background: #383438;
-      color: #ffffff;
-      transform: translateY(-1px);
     }
 
     floating-action-button {
@@ -249,9 +230,12 @@ class AdminBooking extends LitElement {
 
     // Rooms list for dropdowns
     this.roomsList = [];
+    this.locationsList = [];
+    this.selectedLocation = 'all';
 
     this._loadBookings();
     this._loadRooms();
+    this._loadLocations();
   }
 
   connectedCallback() {
@@ -259,6 +243,7 @@ class AdminBooking extends LitElement {
     this._unsub = appState.on('data-changed', () => {
       this._loadBookings();
       this._loadRooms();
+      this._loadLocations();
     });
   }
 
@@ -296,6 +281,23 @@ class AdminBooking extends LitElement {
     }
   }
 
+  async _loadLocations() {
+    try {
+      const response = await locations.getAll({ per_page: 100, status: 'active' });
+      const data = response.data || response;
+      this.locationsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.locationsList = [];
+    }
+  }
+
+  get _locationDropdownOptions() {
+    return [
+      { value: 'all', label: 'All Locations' },
+      ...this.locationsList.map(l => ({ value: String(l.id), label: l.name }))
+    ];
+  }
+
   _mapApiBooking(b) {
     return {
       id: b.id,
@@ -330,13 +332,17 @@ class AdminBooking extends LitElement {
     return this.selectedBookings.filter(b => b.roomType === this.selectedRoomType);
   }
 
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-    localStorage.setItem('booking-sidebar-open', this.sidebarOpen.toString());
+  handleSidebarClose() {
+    this.sidebarOpen = false;
+    localStorage.setItem('booking-sidebar-open', 'false');
   }
 
   handleBranchChange(e) {
     this.selectedBranch = e.detail.branch;
+  }
+
+  handleLocationChange(e) {
+    this.selectedLocation = e.detail.location;
   }
 
   handleDayClick(e) {
@@ -381,15 +387,6 @@ class AdminBooking extends LitElement {
 
   handlePageChange(e) {
     this.currentPage = e.detail.page;
-  }
-
-  handleTodayClick() {
-    const calendar = this.shadowRoot.querySelector('booking-calendar');
-    if (calendar) {
-      const now = new Date();
-      calendar.month = now.getMonth();
-      calendar.year = now.getFullYear();
-    }
   }
 
   handleFabAction(e) {
@@ -528,6 +525,7 @@ class AdminBooking extends LitElement {
       await locations.create(data);
       toast.success('Location created successfully!');
       this.showLocationDialog = false;
+      await this._loadLocations();
     } catch (err) {
       toast.error(err.message || 'Failed to create location');
     } finally {
@@ -784,19 +782,11 @@ class AdminBooking extends LitElement {
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
+            .locations=${this._locationDropdownOptions}
+            .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
-            @branch-change=${this.handleBranchChange}>
-
-            <today-button
-              slot="today-btn"
-              @today-click=${this.handleTodayClick}>
-            </today-button>
-            <button
-              slot="controls"
-              class="toggle-btn"
-              @click=${this.toggleSidebar}>
-              ${this.sidebarOpen ? 'X' : 'Details'}
-            </button>
+            @branch-change=${this.handleBranchChange}
+            @location-change=${this.handleLocationChange}>
           </booking-calendar>
         </calendar-section>
 
@@ -806,7 +796,8 @@ class AdminBooking extends LitElement {
             .bookings=${this.paginatedBookings}
             .selectedRoomType=${this.selectedRoomType}
             @booking-select=${this.handleBookingSelect}
-            @room-type-change=${this.handleRoomTypeChange}>
+            @room-type-change=${this.handleRoomTypeChange}
+            @sidebar-close=${this.handleSidebarClose}>
             <pagination-component
               slot="pagination"
               .currentPage=${this.currentPage}

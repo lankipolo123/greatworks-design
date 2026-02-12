@@ -10,7 +10,9 @@ class BookingCalendar extends LitElement {
     reservations: { type: Array },
     selectedDate: { type: String },
     branches: { type: Array },
-    selectedBranch: { type: String }
+    selectedBranch: { type: String },
+    locations: { type: Array },
+    selectedLocation: { type: String }
   };
 
   static styles = css`
@@ -231,6 +233,8 @@ class BookingCalendar extends LitElement {
     this.selectedDate = null;
     this.branches = [];
     this.selectedBranch = 'all';
+    this.locations = [];
+    this.selectedLocation = 'all';
   }
 
   updated(changedProperties) {
@@ -270,6 +274,14 @@ class BookingCalendar extends LitElement {
   handleBranchChange(e) {
     this.dispatchEvent(new CustomEvent('branch-change', {
       detail: { branch: e.detail.value },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  handleLocationChange(e) {
+    this.dispatchEvent(new CustomEvent('location-change', {
+      detail: { location: e.detail.value },
       bubbles: true,
       composed: true
     }));
@@ -339,6 +351,15 @@ class BookingCalendar extends LitElement {
           </div>
 
           <div class="header-right">
+            ${this.locations.length > 0 ? html`
+              <app-dropdown
+                variant="primary"
+                size="small"
+                .options=${this.locations}
+                .value=${this.selectedLocation}
+                @change=${this.handleLocationChange}
+              ></app-dropdown>
+            ` : ''}
             <app-dropdown
               variant="light"
               size="small"
@@ -346,7 +367,6 @@ class BookingCalendar extends LitElement {
               .value=${this.selectedBranch}
               @change=${this.handleBranchChange}
             ></app-dropdown>
-            <slot name="today-btn"></slot>
             <slot name="controls"></slot>
           </div>
         </div>
