@@ -225,9 +225,10 @@ class BookingSidebar extends LitElement {
               <div class="title">Booking Details</div>
               ${closeBtn}
             </div>
+            ${this.selectedDate ? html`<div class="date">${this._formatDate(this.selectedDate)}</div>` : ''}
           </div>
           <div class="empty-state">
-            <div>Select a date to view bookings</div>
+            <div>${this.selectedDate ? 'No bookings on this date' : 'Select a date to view bookings'}</div>
           </div>
           ${this.showBookNow ? html`
             <button class="book-now-btn" @click=${this._handleBookNow}>
