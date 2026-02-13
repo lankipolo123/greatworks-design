@@ -249,22 +249,6 @@ class CreateLocationForm extends LitElement {
             variant="compact">
           </input-field>
 
-          <input-field
-            label="Zip Code"
-            type="text"
-            name="zip_code"
-            placeholder="Zip/Postal code"
-            variant="compact">
-          </input-field>
-
-          <input-field
-            label="Country"
-            type="text"
-            name="country"
-            placeholder="Country"
-            variant="compact">
-          </input-field>
-
           <div class="form-group full">
             <input-field
               label="Email"
