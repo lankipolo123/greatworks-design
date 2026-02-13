@@ -38,6 +38,18 @@ class CloudinaryService
     public function uploadImage(UploadedFile $file, string $folder = 'default', array $options = []): ?array
     {
         try {
+            Log::info('=== CLOUDINARY UPLOAD DEBUG ===');
+            Log::info('Cloudinary config:', [
+                'cloud_name' => config('cloudinary.cloud_name'),
+                'api_key' => config('cloudinary.api_key'),
+                'api_secret_set' => !empty(config('cloudinary.api_secret')),
+                'secure' => config('cloudinary.secure'),
+            ]);
+
+            Log::info('File path: ' . $file->getRealPath());
+            Log::info('File exists: ' . (file_exists($file->getRealPath()) ? 'YES' : 'NO'));
+            Log::info('Folder: ' . $folder);
+
             $uploadOptions = array_merge([
                 'folder' => $folder,
                 'resource_type' => 'image',
@@ -45,10 +57,15 @@ class CloudinaryService
                 'invalidate' => true,
             ], $options);
 
+            Log::info('Upload options:', $uploadOptions);
+
+            Log::info('Calling Cloudinary uploadApi()->upload()...');
             $result = $this->cloudinary->uploadApi()->upload(
                 $file->getRealPath(),
                 $uploadOptions
             );
+
+            Log::info('Cloudinary response:', $result);
 
             return [
                 'public_id' => $result['public_id'],
@@ -59,7 +76,11 @@ class CloudinaryService
                 'resource_type' => $result['resource_type'],
             ];
         } catch (\Exception $e) {
-            Log::error('Cloudinary upload failed: ' . $e->getMessage());
+            Log::error('=== CLOUDINARY UPLOAD EXCEPTION ===');
+            Log::error('Exception class: ' . get_class($e));
+            Log::error('Exception message: ' . $e->getMessage());
+            Log::error('Exception code: ' . $e->getCode());
+            Log::error('Exception trace: ' . $e->getTraceAsString());
             return null;
         }
     }
