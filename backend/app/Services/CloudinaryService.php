@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +12,8 @@ class CloudinaryService
 
     public function __construct()
     {
-        Configuration::instance([
+        // Initialize Cloudinary with configuration array (v2+ method)
+        $this->cloudinary = new Cloudinary([
             'cloud' => [
                 'cloud_name' => config('cloudinary.cloud_name'),
                 'api_key' => config('cloudinary.api_key'),
@@ -23,8 +23,6 @@ class CloudinaryService
                 'secure' => config('cloudinary.secure'),
             ],
         ]);
-
-        $this->cloudinary = new Cloudinary();
     }
 
     /**
