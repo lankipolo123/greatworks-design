@@ -534,7 +534,13 @@ class AdminBooking extends LitElement {
     const form = this.shadowRoot.querySelector('#location-dialog create-location-form')?.shadowRoot?.getElementById('location-form')
       || e.target;
 
+    console.log('=== LOCATION FORM DEBUG ===');
+    console.log('Form element:', form);
+    console.log('Form tag name:', form?.tagName);
+
     const formData = new FormData(form);
+    console.log('FormData entries:', Array.from(formData.entries()));
+
     const data = {
       name: formData.get('name'),
       address: formData.get('address') || null,
@@ -546,6 +552,9 @@ class AdminBooking extends LitElement {
       email: formData.get('email') || null,
       description: formData.get('description') || null,
     };
+
+    console.log('Data being sent to API:', data);
+    console.log('=== END DEBUG ===');
 
     try {
       const res = await locations.create(data);
