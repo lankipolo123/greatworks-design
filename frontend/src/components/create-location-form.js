@@ -206,22 +206,16 @@ class CreateLocationForm extends LitElement {
     return html`
       <form id="location-form">
         <div class="form-grid">
-          <input-field
-            label="Location Name"
-            type="text"
-            name="name"
-            placeholder="Enter location name"
-            variant="compact"
-            ?required=${true}>
-          </input-field>
-
-          <input-field
-            label="Phone"
-            type="tel"
-            name="phone"
-            placeholder="Phone number"
-            variant="compact">
-          </input-field>
+          <div class="form-group full">
+            <input-field
+              label="Location Name"
+              type="text"
+              name="name"
+              placeholder="Enter location name"
+              variant="compact"
+              ?required=${true}>
+            </input-field>
+          </div>
 
           <div class="form-group full">
             <input-field
