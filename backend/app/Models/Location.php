@@ -19,6 +19,7 @@ class Location extends Model
         'country',
         'phone',
         'email',
+        'image',
         'description',
         'status',
     ];

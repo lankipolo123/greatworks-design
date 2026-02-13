@@ -80,6 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/locations/{location}', [LocationController::class, 'update']);
         Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
 
+        // Location image management
+        Route::post('/locations/{location}/image', [LocationController::class, 'uploadImage']);
+        Route::delete('/locations/{location}/image', [LocationController::class, 'deleteImage']);
+
         // Room management
         Route::post('/rooms', [RoomController::class, 'store']);
         Route::put('/rooms/{room}', [RoomController::class, 'update']);
