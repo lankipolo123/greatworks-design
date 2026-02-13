@@ -1,6 +1,5 @@
 // src/components/create-location-form.js
 import { LitElement, html, css } from 'lit';
-import '/src/components/input-field.js';
 
 class CreateLocationForm extends LitElement {
   static properties = {
@@ -41,6 +40,7 @@ class CreateLocationForm extends LitElement {
       margin-bottom: 3px;
     }
 
+    input,
     select,
     textarea {
       padding: 5px 8px;
@@ -48,8 +48,11 @@ class CreateLocationForm extends LitElement {
       border-radius: 4px;
       font-size: 0.8rem;
       font-family: inherit;
+      width: 100%;
+      box-sizing: border-box;
     }
 
+    input:focus,
     select:focus,
     textarea:focus {
       outline: none;
@@ -207,41 +210,41 @@ class CreateLocationForm extends LitElement {
       <form id="location-form">
         <div class="form-grid">
           <div class="form-group full">
-            <input-field
-              label="Location Name"
+            <label>Location Name *</label>
+            <input
               type="text"
               name="name"
               placeholder="Enter location name"
-              variant="compact"
-              ?required=${true}>
-            </input-field>
+              required
+            />
           </div>
 
           <div class="form-group full">
-            <input-field
-              label="Address"
+            <label>Address</label>
+            <input
               type="text"
               name="address"
               placeholder="Street address"
-              variant="compact">
-            </input-field>
+            />
           </div>
 
-          <input-field
-            label="City"
-            type="text"
-            name="city"
-            placeholder="City"
-            variant="compact">
-          </input-field>
+          <div class="form-group">
+            <label>City</label>
+            <input
+              type="text"
+              name="city"
+              placeholder="City"
+            />
+          </div>
 
-          <input-field
-            label="State"
-            type="text"
-            name="state"
-            placeholder="State/Province"
-            variant="compact">
-          </input-field>
+          <div class="form-group">
+            <label>State</label>
+            <input
+              type="text"
+              name="state"
+              placeholder="State/Province"
+            />
+          </div>
 
           <div class="form-group full">
             <label>Location Image</label>
