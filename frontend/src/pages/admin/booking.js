@@ -52,6 +52,7 @@ class AdminBooking extends LitElement {
     locationLoading: { type: Boolean },
     locationsList: { type: Array },
     selectedLocation: { type: String },
+    selectedLocationImage: { type: Object },
   };
 
   static styles = css`
@@ -224,6 +225,7 @@ class AdminBooking extends LitElement {
 
     this.showLocationDialog = false;
     this.locationLoading = false;
+    this.selectedLocationImage = null;
 
     // Slot info
     this.slotInfo = null;
@@ -423,6 +425,15 @@ class AdminBooking extends LitElement {
     this.selectedRoomImage = null;
   }
 
+  handleLocationImageSelected(e) {
+    this.selectedLocationImage = e.detail.file;
+    // Preview is already set by the create-location-form component
+  }
+
+  handleLocationImageRemoved() {
+    this.selectedLocationImage = null;
+  }
+
   async handleBookSomeoneSubmit(e) {
     e.preventDefault();
 
@@ -537,9 +548,24 @@ class AdminBooking extends LitElement {
     };
 
     try {
-      await locations.create(data);
-      toast.success('Location created successfully!');
+      const res = await locations.create(data);
+      const createdLocation = res.location;
+
+      // Upload image if selected
+      if (this.selectedLocationImage && createdLocation?.id) {
+        try {
+          await locations.uploadImage(createdLocation.id, this.selectedLocationImage);
+          toast.success('Location created with image successfully!');
+        } catch (imgErr) {
+          console.warn('Image upload failed:', imgErr);
+          toast.warning('Location created but image upload failed');
+        }
+      } else {
+        toast.success('Location created successfully!');
+      }
+
       this.showLocationDialog = false;
+      this.selectedLocationImage = null;
       await this._loadLocations();
     } catch (err) {
       toast.error(err.message || 'Failed to create location');
@@ -904,7 +930,10 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <create-location-form>
+        <create-location-form
+          @image-selected=${this.handleLocationImageSelected}
+          @image-removed=${this.handleLocationImageRemoved}
+        >
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.locationLoading}>
             Cancel
           </app-button>

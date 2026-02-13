@@ -31,4 +31,23 @@ export const locations = {
     cacheInvalidate('locations:');
     return res;
   },
+
+  async uploadImage(locationId, file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await apiRequest(`/locations/${locationId}/image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    cacheInvalidate('locations:');
+    return res;
+  },
+
+  async deleteImage(locationId) {
+    const res = await apiRequest(`/locations/${locationId}/image`, { method: 'DELETE' });
+    cacheInvalidate('locations:');
+    return res;
+  },
 };
