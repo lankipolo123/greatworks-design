@@ -63,7 +63,7 @@ class CloudinaryService
                 $uploadOptions
             );
 
-            Log::info('Cloudinary response:', $result);
+            Log::info('Cloudinary response received successfully');
 
             return [
                 'public_id' => $result['public_id'],
