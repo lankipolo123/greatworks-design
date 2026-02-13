@@ -9,8 +9,8 @@ class BookingCalendar extends LitElement {
     year: { type: Number },
     reservations: { type: Array },
     selectedDate: { type: String },
-    branches: { type: Array },
-    selectedBranch: { type: String },
+    roomTypes: { type: Array },
+    selectedRoomType: { type: String },
     locations: { type: Array },
     selectedLocation: { type: String }
   };
@@ -231,8 +231,8 @@ class BookingCalendar extends LitElement {
     this.year = now.getFullYear();
     this.reservations = [];
     this.selectedDate = null;
-    this.branches = [];
-    this.selectedBranch = 'all';
+    this.roomTypes = [];
+    this.selectedRoomType = 'all';
     this.locations = [];
     this.selectedLocation = 'all';
   }
@@ -271,9 +271,9 @@ class BookingCalendar extends LitElement {
     }));
   }
 
-  handleBranchChange(e) {
-    this.dispatchEvent(new CustomEvent('branch-change', {
-      detail: { branch: e.detail.value },
+  handleRoomTypeChange(e) {
+    this.dispatchEvent(new CustomEvent('room-type-change', {
+      detail: { roomType: e.detail.value },
       bubbles: true,
       composed: true
     }));
@@ -363,9 +363,9 @@ class BookingCalendar extends LitElement {
             <app-dropdown
               variant="light"
               size="small"
-              .options=${this.branches}
-              .value=${this.selectedBranch}
-              @change=${this.handleBranchChange}
+              .options=${this.roomTypes}
+              .value=${this.selectedRoomType}
+              @change=${this.handleRoomTypeChange}
             ></app-dropdown>
             <slot name="controls"></slot>
           </div>

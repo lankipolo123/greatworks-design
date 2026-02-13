@@ -30,8 +30,8 @@ class AdminBooking extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
-    branches: { type: Array },
-    selectedBranch: { type: String },
+    roomTypes: { type: Array },
+    selectedRoomType: { type: String },
     showBookDialog: { type: Boolean },
     showRoomDialog: { type: Boolean },
     showExportDialog: { type: Boolean },
@@ -202,11 +202,11 @@ class AdminBooking extends LitElement {
     this.itemsPerPage = 5;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
-    this.branches = [
-      { value: 'all', label: 'All Branches' },
-      { value: 'branch1', label: 'Branch 1' },
+    this.roomTypes = [
+      { value: 'all', label: 'All Room Types' },
+      { value: 'type1', label: 'Room Type 1' },
     ];
-    this.selectedBranch = 'all';
+    this.selectedRoomType = 'all';
 
     // Dialog states
     this.showBookDialog = false;
@@ -341,8 +341,8 @@ class AdminBooking extends LitElement {
     localStorage.setItem('booking-sidebar-open', 'false');
   }
 
-  handleBranchChange(e) {
-    this.selectedBranch = e.detail.branch;
+  handleRoomTypeChange(e) {
+    this.selectedRoomType = e.detail.roomType;
   }
 
   handleLocationChange(e) {
@@ -840,12 +840,12 @@ class AdminBooking extends LitElement {
           <booking-calendar
             .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
             .selectedDate=${this.selectedDate}
-            .branches=${this.branches}
-            .selectedBranch=${this.selectedBranch}
+            .roomTypes=${this.roomTypes}
+            .selectedRoomType=${this.selectedRoomType}
             .locations=${this._locationDropdownOptions}
             .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
-            @branch-change=${this.handleBranchChange}
+            @room-type-change=${this.handleRoomTypeChange}
             @location-change=${this.handleLocationChange}>
           </booking-calendar>
         </calendar-section>
