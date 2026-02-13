@@ -112,7 +112,7 @@ class UserController extends Controller
             }
 
             $validated = $request->validate([
-                'photo' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:5120', // Max 5MB
+                'photo' => 'required|image|mimes:jpeg,jpg,png,gif,webp,avif|max:5120', // Max 5MB
             ]);
             \Log::info('Validation passed');
 

@@ -120,7 +120,7 @@ class LocationController extends Controller
             }
 
             $validated = $request->validate([
-                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:10240', // Max 10MB
+                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp,avif|max:10240', // Max 10MB
             ]);
             \Log::info('Validation passed');
 

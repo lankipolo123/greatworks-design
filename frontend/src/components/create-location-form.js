@@ -161,9 +161,9 @@ class CreateLocationForm extends LitElement {
       }
 
       // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
       if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+        alert('Please upload a valid image file (JPEG, PNG, GIF, WebP, or AVIF)');
         return;
       }
 
