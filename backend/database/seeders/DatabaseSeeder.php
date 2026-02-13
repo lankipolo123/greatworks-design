@@ -22,32 +22,66 @@ class DatabaseSeeder extends Seeder
     {
         $this->command->info('🌱 Starting database seeding...');
 
-        // Create Admin User
-        $this->command->info('👤 Creating admin user...');
-        $admin = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@greatworks.com',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
-        ]);
-        $this->command->info("✅ Admin created: {$admin->email} / password");
+        // Create Admin User (only if doesn't exist)
+        $this->command->info('👤 Checking admin user...');
+        $admin = User::where('email', 'admin@greatworks.com')->first();
 
-        // Create Regular Users
-        $this->command->info('👥 Creating 100 regular users...');
-        $users = User::factory(100)->create();
-        $this->command->info('✅ Users created');
+        if (!$admin) {
+            $admin = User::factory()->create([
+                'name' => 'Admin User',
+                'email' => 'admin@greatworks.com',
+                'password' => bcrypt('password'),
+                'role' => 'admin',
+            ]);
+            $this->command->info("✅ Admin created: {$admin->email} / password");
+        } else {
+            $this->command->info("ℹ️  Admin already exists: {$admin->email}");
+        }
 
-        // Create Locations
-        $this->command->info('🏢 Creating 12 locations...');
-        $locations = Location::factory(12)->create();
-        $this->command->info('✅ Locations created');
+        // Create Regular Users (only if less than target)
+        $currentUserCount = User::where('role', '!=', 'admin')->count();
+        $targetUsers = 100;
 
-        // Create Rooms for each location
-        $this->command->info('🚪 Creating rooms for each location...');
+        if ($currentUserCount < $targetUsers) {
+            $usersToCreate = $targetUsers - $currentUserCount;
+            $this->command->info("👥 Creating {$usersToCreate} regular users...");
+            $newUsers = User::factory($usersToCreate)->create();
+            $this->command->info('✅ Users created');
+        } else {
+            $this->command->info("ℹ️  Already have {$currentUserCount} users (target: {$targetUsers})");
+        }
+
+        $users = User::where('role', '!=', 'admin')->get();
+
+        // Create Locations (only if less than target)
+        $currentLocationCount = Location::count();
+        $targetLocations = 12;
+
+        if ($currentLocationCount < $targetLocations) {
+            $locationsToCreate = $targetLocations - $currentLocationCount;
+            $this->command->info("🏢 Creating {$locationsToCreate} locations...");
+            Location::factory($locationsToCreate)->create();
+            $this->command->info('✅ Locations created');
+        } else {
+            $this->command->info("ℹ️  Already have {$currentLocationCount} locations (target: {$targetLocations})");
+        }
+
+        $locations = Location::all();
+
+        // Create Rooms for each location (only if they don't have rooms yet)
+        $this->command->info('🚪 Checking rooms for each location...');
         $allRooms = collect();
 
         foreach ($locations as $location) {
-            $this->command->info("  📍 {$location->name}");
+            $existingRoomCount = $location->rooms()->count();
+
+            if ($existingRoomCount > 0) {
+                $this->command->info("  📍 {$location->name} - Already has {$existingRoomCount} rooms");
+                $allRooms = $allRooms->merge($location->rooms);
+                continue;
+            }
+
+            $this->command->info("  📍 {$location->name} - Creating rooms...");
 
             // Create different types of rooms per location
             $coworkingRooms = Room::factory(5)
@@ -81,78 +115,104 @@ class DatabaseSeeder extends Seeder
                                  ->merge($virtualOffices)
                                  ->merge($eventSpaces);
         }
-        $this->command->info("✅ Total rooms created: {$allRooms->count()}");
+        $this->command->info("✅ Total rooms available: {$allRooms->count()}");
 
-        // Create Bookings
-        $this->command->info('📅 Creating 1000 bookings with various statuses...');
+        // Create Bookings (only if less than target)
+        $currentBookingCount = Booking::count();
+        $targetBookings = 1000;
 
-        // Past bookings (completed) - 2 months ago to yesterday
-        $pastBookings = Booking::factory(300)
-            ->recycle($users->push($admin))
-            ->recycle($allRooms)
-            ->completed()
-            ->create([
-                'date' => fake()->dateTimeBetween('-60 days', '-1 day'),
-            ]);
+        if ($currentBookingCount < $targetBookings) {
+            $this->command->info("📅 Creating bookings (current: {$currentBookingCount}, target: {$targetBookings})...");
 
-        // Current/upcoming bookings (confirmed) - today to 2 months ahead
-        $confirmedBookings = Booking::factory(400)
-            ->recycle($users->push($admin))
-            ->recycle($allRooms)
-            ->confirmed()
-            ->create([
-                'date' => fake()->dateTimeBetween('now', '+60 days'),
-            ]);
+            $allUsers = $users->push($admin);
 
-        // Pending bookings
-        $pendingBookings = Booking::factory(150)
-            ->recycle($users->push($admin))
-            ->recycle($allRooms)
-            ->pending()
-            ->create([
-                'date' => fake()->dateTimeBetween('now', '+60 days'),
-            ]);
+            // Calculate how many of each type to create proportionally
+            $remaining = $targetBookings - $currentBookingCount;
+            $pastCount = (int) ($remaining * 0.3);      // 30%
+            $confirmedCount = (int) ($remaining * 0.4); // 40%
+            $pendingCount = (int) ($remaining * 0.15);  // 15%
+            $cancelledCount = $remaining - $pastCount - $confirmedCount - $pendingCount; // rest
 
-        // Cancelled bookings
-        $cancelledBookings = Booking::factory(150)
-            ->recycle($users->push($admin))
-            ->recycle($allRooms)
-            ->cancelled()
-            ->create([
-                'date' => fake()->dateTimeBetween('-30 days', '+30 days'),
-            ]);
-
-        $allBookings = $pastBookings
-            ->merge($confirmedBookings)
-            ->merge($pendingBookings)
-            ->merge($cancelledBookings);
-
-        $this->command->info('✅ Bookings created');
-
-        // Create Payments for confirmed and completed bookings
-        $this->command->info('💳 Creating payments...');
-        $bookingsWithPayments = $allBookings->filter(fn($booking) =>
-            in_array($booking->status, ['confirmed', 'completed'])
-        );
-
-        foreach ($bookingsWithPayments as $booking) {
-            Payment::factory()
-                ->forBooking($booking)
+            // Past bookings (completed)
+            $pastBookings = Booking::factory($pastCount)
+                ->recycle($allUsers)
+                ->recycle($allRooms)
                 ->completed()
                 ->create([
-                    'amount' => $booking->room->price_per_hour * $booking->duration_hours,
+                    'date' => fake()->dateTimeBetween('-60 days', '-1 day'),
                 ]);
-        }
-        $this->command->info("✅ Payments created: {$bookingsWithPayments->count()}");
 
-        // Create some Reservations
-        $this->command->info('🔄 Creating 100 reservations...');
-        Reservation::factory(100)
-            ->recycle($users)
-            ->recycle($allRooms)
-            ->confirmed()
-            ->create();
-        $this->command->info('✅ Reservations created');
+            // Current/upcoming bookings (confirmed)
+            $confirmedBookings = Booking::factory($confirmedCount)
+                ->recycle($allUsers)
+                ->recycle($allRooms)
+                ->confirmed()
+                ->create([
+                    'date' => fake()->dateTimeBetween('now', '+60 days'),
+                ]);
+
+            // Pending bookings
+            $pendingBookings = Booking::factory($pendingCount)
+                ->recycle($allUsers)
+                ->recycle($allRooms)
+                ->pending()
+                ->create([
+                    'date' => fake()->dateTimeBetween('now', '+60 days'),
+                ]);
+
+            // Cancelled bookings
+            $cancelledBookings = Booking::factory($cancelledCount)
+                ->recycle($allUsers)
+                ->recycle($allRooms)
+                ->cancelled()
+                ->create([
+                    'date' => fake()->dateTimeBetween('-30 days', '+30 days'),
+                ]);
+
+            $this->command->info('✅ Bookings created');
+        } else {
+            $this->command->info("ℹ️  Already have {$currentBookingCount} bookings (target: {$targetBookings})");
+        }
+
+        $allBookings = Booking::all();
+
+        // Create Payments for confirmed and completed bookings (only if missing)
+        $this->command->info('💳 Checking payments...');
+        $bookingsNeedingPayments = $allBookings->filter(function($booking) {
+            return in_array($booking->status, ['confirmed', 'completed'])
+                && !$booking->payments()->exists();
+        });
+
+        if ($bookingsNeedingPayments->count() > 0) {
+            foreach ($bookingsNeedingPayments as $booking) {
+                Payment::factory()
+                    ->forBooking($booking)
+                    ->completed()
+                    ->create([
+                        'amount' => $booking->room->price_per_hour * $booking->duration_hours,
+                    ]);
+            }
+            $this->command->info("✅ Payments created: {$bookingsNeedingPayments->count()}");
+        } else {
+            $this->command->info("ℹ️  All eligible bookings already have payments");
+        }
+
+        // Create some Reservations (only if less than target)
+        $currentReservationCount = Reservation::count();
+        $targetReservations = 100;
+
+        if ($currentReservationCount < $targetReservations) {
+            $reservationsToCreate = $targetReservations - $currentReservationCount;
+            $this->command->info("🔄 Creating {$reservationsToCreate} reservations...");
+            Reservation::factory($reservationsToCreate)
+                ->recycle($users)
+                ->recycle($allRooms)
+                ->confirmed()
+                ->create();
+            $this->command->info('✅ Reservations created');
+        } else {
+            $this->command->info("ℹ️  Already have {$currentReservationCount} reservations (target: {$targetReservations})");
+        }
 
         // Summary
         $this->command->newLine();
