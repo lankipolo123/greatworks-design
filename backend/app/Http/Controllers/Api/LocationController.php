@@ -48,6 +48,7 @@ class LocationController extends Controller
             'country' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+            'image' => 'nullable|string',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:active,inactive',
         ]);
@@ -76,6 +77,7 @@ class LocationController extends Controller
             'country' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+            'image' => 'nullable|string',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:active,inactive',
         ]);
