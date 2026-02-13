@@ -2,13 +2,13 @@
 import { LitElement, html, css } from 'lit';
 
 class BadgeComponent extends LitElement {
-    static properties = {
-        variant: { type: String },
-        size: { type: String },
-        label: { type: String }
-    };
+  static properties = {
+    variant: { type: String },
+    size: { type: String },
+    label: { type: String }
+  };
 
-    static styles = css`
+  static styles = css`
     :host {
       display: inline-block;
     }
@@ -59,8 +59,8 @@ class BadgeComponent extends LitElement {
     .badge.completed,
     .badge.success,
     .badge.active {
-      background: #d1e7dd;
-      color: #0f5132;
+      background: #12eb03df;
+      color: #ffffff;
     }
 
     .badge.cancelled,
@@ -89,8 +89,8 @@ class BadgeComponent extends LitElement {
 
     /* Category Variants */
     .badge.technical {
-      background: #e3f2fd;
-      color: #1976d2;
+      background: #1976d2;
+      color: #e3f2fd;
     }
 
     .badge.billing {
@@ -188,20 +188,20 @@ class BadgeComponent extends LitElement {
     }
   `;
 
-    constructor() {
-        super();
-        this.variant = 'primary';
-        this.size = 'medium';
-        this.label = '';
-    }
+  constructor() {
+    super();
+    this.variant = 'primary';
+    this.size = 'medium';
+    this.label = '';
+  }
 
-    render() {
-        return html`
+  render() {
+    return html`
       <span class="badge ${this.variant} ${this.size}">
         <slot>${this.label}</slot>
       </span>
     `;
-    }
+  }
 }
 
 customElements.define('badge-component', BadgeComponent);

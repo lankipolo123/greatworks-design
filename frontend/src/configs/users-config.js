@@ -20,9 +20,9 @@ export const usersTableConfig = {
             key: 'role',
             label: 'Role',
             render: (value) => {
-                const variant = value?.toLowerCase() === 'admin' ? 'primary' :
-                    value?.toLowerCase() === 'manager' ? 'info' :
-                        value?.toLowerCase() === 'user' ? 'secondary' : 'primary';
+                const variant = value?.toLowerCase() === 'admin' ? 'danger' :
+                    value?.toLowerCase() === 'moderator' ? 'info' :
+                        value?.toLowerCase() === 'customer' ? 'technical' : 'technical';
                 return html`
                     <badge-component variant="${variant}" size="small">
                         ${value}
@@ -34,7 +34,7 @@ export const usersTableConfig = {
             key: 'status',
             label: 'Status',
             render: (value) => {
-                const variant = value?.toLowerCase() === 'active' ? 'active' :
+                const variant = value?.toLowerCase() === 'active' ? 'success' :
                     value?.toLowerCase() === 'inactive' ? 'inactive' :
                         value?.toLowerCase() === 'archived' ? 'archived' :
                             value?.toLowerCase() === 'pending' ? 'pending' : 'primary';
