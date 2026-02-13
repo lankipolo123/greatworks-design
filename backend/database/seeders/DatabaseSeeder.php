@@ -33,13 +33,13 @@ class DatabaseSeeder extends Seeder
         $this->command->info("✅ Admin created: {$admin->email} / password");
 
         // Create Regular Users
-        $this->command->info('👥 Creating 20 regular users...');
-        $users = User::factory(20)->create();
+        $this->command->info('👥 Creating 100 regular users...');
+        $users = User::factory(100)->create();
         $this->command->info('✅ Users created');
 
         // Create Locations
-        $this->command->info('🏢 Creating 5 locations...');
-        $locations = Location::factory(5)->create();
+        $this->command->info('🏢 Creating 12 locations...');
+        $locations = Location::factory(12)->create();
         $this->command->info('✅ Locations created');
 
         // Create Rooms for each location
@@ -50,27 +50,27 @@ class DatabaseSeeder extends Seeder
             $this->command->info("  📍 {$location->name}");
 
             // Create different types of rooms per location
-            $coworkingRooms = Room::factory(3)
+            $coworkingRooms = Room::factory(5)
                 ->forLocation($location)
                 ->ofType('Co-Working Space')
                 ->create();
 
-            $meetingRooms = Room::factory(5)
+            $meetingRooms = Room::factory(8)
                 ->forLocation($location)
                 ->ofType('Meeting Rooms')
                 ->create();
 
-            $privateOffices = Room::factory(4)
+            $privateOffices = Room::factory(6)
                 ->forLocation($location)
                 ->ofType('Private Offices')
                 ->create();
 
-            $virtualOffices = Room::factory(2)
+            $virtualOffices = Room::factory(3)
                 ->forLocation($location)
                 ->ofType('Virtual Offices')
                 ->create();
 
-            $eventSpaces = Room::factory(1)
+            $eventSpaces = Room::factory(2)
                 ->forLocation($location)
                 ->ofType('Event Spaces')
                 ->create();
@@ -84,42 +84,42 @@ class DatabaseSeeder extends Seeder
         $this->command->info("✅ Total rooms created: {$allRooms->count()}");
 
         // Create Bookings
-        $this->command->info('📅 Creating 100 bookings with various statuses...');
+        $this->command->info('📅 Creating 1000 bookings with various statuses...');
 
-        // Past bookings (completed)
-        $pastBookings = Booking::factory(30)
+        // Past bookings (completed) - 2 months ago to yesterday
+        $pastBookings = Booking::factory(300)
             ->recycle($users->push($admin))
             ->recycle($allRooms)
             ->completed()
             ->create([
-                'date' => fake()->dateTimeBetween('-30 days', '-1 day'),
+                'date' => fake()->dateTimeBetween('-60 days', '-1 day'),
             ]);
 
-        // Current/upcoming bookings (confirmed)
-        $confirmedBookings = Booking::factory(40)
+        // Current/upcoming bookings (confirmed) - today to 2 months ahead
+        $confirmedBookings = Booking::factory(400)
             ->recycle($users->push($admin))
             ->recycle($allRooms)
             ->confirmed()
             ->create([
-                'date' => fake()->dateTimeBetween('now', '+30 days'),
+                'date' => fake()->dateTimeBetween('now', '+60 days'),
             ]);
 
         // Pending bookings
-        $pendingBookings = Booking::factory(15)
+        $pendingBookings = Booking::factory(150)
             ->recycle($users->push($admin))
             ->recycle($allRooms)
             ->pending()
             ->create([
-                'date' => fake()->dateTimeBetween('now', '+30 days'),
+                'date' => fake()->dateTimeBetween('now', '+60 days'),
             ]);
 
         // Cancelled bookings
-        $cancelledBookings = Booking::factory(15)
+        $cancelledBookings = Booking::factory(150)
             ->recycle($users->push($admin))
             ->recycle($allRooms)
             ->cancelled()
             ->create([
-                'date' => fake()->dateTimeBetween('-15 days', '+15 days'),
+                'date' => fake()->dateTimeBetween('-30 days', '+30 days'),
             ]);
 
         $allBookings = $pastBookings
@@ -146,8 +146,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info("✅ Payments created: {$bookingsWithPayments->count()}");
 
         // Create some Reservations
-        $this->command->info('🔄 Creating 20 reservations...');
-        Reservation::factory(20)
+        $this->command->info('🔄 Creating 100 reservations...');
+        Reservation::factory(100)
             ->recycle($users)
             ->recycle($allRooms)
             ->confirmed()
