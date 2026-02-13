@@ -26,6 +26,17 @@ class DatabaseSeeder extends Seeder
             'address' => '123 Admin St',
         ]);
 
+        // Create moderator user
+        User::create([
+            'name' => 'Moderator User',
+            'email' => 'moderator@greatworks.com',
+            'password' => bcrypt('moderator123'),
+            'role' => 'moderator',
+            'status' => 'active',
+            'phone' => '+1122334455',
+            'address' => '789 Moderator Blvd',
+        ]);
+
         // Create test customer
         User::create([
             'name' => 'John Doe',
