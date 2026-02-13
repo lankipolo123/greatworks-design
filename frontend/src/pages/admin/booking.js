@@ -30,8 +30,8 @@ class AdminBooking extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
-    roomTypes: { type: Array },
-    selectedRoomType: { type: String },
+    branches: { type: Array },
+    selectedBranch: { type: String },
     showBookDialog: { type: Boolean },
     showRoomDialog: { type: Boolean },
     showExportDialog: { type: Boolean },
@@ -202,11 +202,14 @@ class AdminBooking extends LitElement {
     this.itemsPerPage = 5;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
-    this.roomTypes = [
+    this.branches = [
       { value: 'all', label: 'All Room Types' },
-      { value: 'type1', label: 'Room Type 1' },
+      { value: 'Co-Working', label: 'Co-Working' },
+      { value: 'Virtual Offices', label: 'Virtual Offices' },
+      { value: 'Private Offices', label: 'Private Offices' },
+      { value: 'Events & Meeting Room', label: 'Events & Meeting Room' },
     ];
-    this.selectedRoomType = 'all';
+    this.selectedBranch = 'all';
 
     // Dialog states
     this.showBookDialog = false;
@@ -330,10 +333,10 @@ class AdminBooking extends LitElement {
   }
 
   get filteredBookings() {
-    if (this.selectedRoomType === 'all') {
+    if (this.selectedBranch === 'all') {
       return this.selectedBookings;
     }
-    return this.selectedBookings.filter(b => b.roomType === this.selectedRoomType);
+    return this.selectedBookings.filter(b => b.roomType === this.selectedBranch);
   }
 
   handleSidebarClose() {
@@ -341,8 +344,8 @@ class AdminBooking extends LitElement {
     localStorage.setItem('booking-sidebar-open', 'false');
   }
 
-  handleRoomTypeChange(e) {
-    this.selectedRoomType = e.detail.roomType;
+  handleBranchChange(e) {
+    this.selectedBranch = e.detail.branch;
   }
 
   handleLocationChange(e) {
@@ -840,12 +843,12 @@ class AdminBooking extends LitElement {
           <booking-calendar
             .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
             .selectedDate=${this.selectedDate}
-            .roomTypes=${this.roomTypes}
-            .selectedRoomType=${this.selectedRoomType}
+            .branches=${this.branches}
+            .selectedBranch=${this.selectedBranch}
             .locations=${this._locationDropdownOptions}
             .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
-            @room-type-change=${this.handleRoomTypeChange}
+            @branch-change=${this.handleBranchChange}
             @location-change=${this.handleLocationChange}>
           </booking-calendar>
         </calendar-section>
