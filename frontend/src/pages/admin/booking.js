@@ -562,11 +562,19 @@ class AdminBooking extends LitElement {
 
       // Upload image if selected
       if (this.selectedLocationImage && createdLocation?.id) {
+        console.log('=== IMAGE UPLOAD DEBUG ===');
+        console.log('Selected image:', this.selectedLocationImage);
+        console.log('Image type:', typeof this.selectedLocationImage);
+        console.log('Is File?', this.selectedLocationImage instanceof File);
+        console.log('Is Blob?', this.selectedLocationImage instanceof Blob);
+        console.log('Image name:', this.selectedLocationImage?.name);
+        console.log('Image size:', this.selectedLocationImage?.size);
+        console.log('=== END IMAGE DEBUG ===');
         try {
           await locations.uploadImage(createdLocation.id, this.selectedLocationImage);
           toast.success('Location created with image successfully!');
         } catch (imgErr) {
-          console.warn('Image upload failed:', imgErr);
+          console.error('Image upload failed:', imgErr);
           toast.warning('Location created but image upload failed');
         }
       } else {
