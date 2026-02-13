@@ -8,15 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->text('address')->nullable()->after('phone');
-        });
+        // Address column already exists in create_users_table migration
+        // This migration is kept for historical reference only
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('address');
-        });
+        // No changes needed
     }
 };

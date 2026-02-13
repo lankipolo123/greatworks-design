@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -10,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('customer', 'admin', 'moderator') DEFAULT 'customer'");
+        // SQLite compatible: role is already string-based enum in Laravel
+        // No changes needed, moderator can be used as a value
     }
 
     /**
@@ -18,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('customer', 'admin') DEFAULT 'customer'");
+        // No changes needed
     }
 };
