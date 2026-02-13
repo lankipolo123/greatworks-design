@@ -250,16 +250,6 @@ class CreateLocationForm extends LitElement {
           </input-field>
 
           <div class="form-group full">
-            <input-field
-              label="Email"
-              type="email"
-              name="email"
-              placeholder="Contact email"
-              variant="compact">
-            </input-field>
-          </div>
-
-          <div class="form-group full">
             <label>Location Image</label>
             <div class="image-upload">
               <input
