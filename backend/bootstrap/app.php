@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+        // API routes should return JSON for unauthenticated requests
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->is('api/*')) {
+                abort(401, 'Unauthenticated');
+            }
+            return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
