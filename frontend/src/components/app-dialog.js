@@ -57,12 +57,14 @@ export class AppDialog extends LitElement {
       } else {
         this.removeAttribute('open');
         document.body.style.overflow = '';
-        // Reset upload state when closing
-        this.selectedFile = null;
-        this.previewUrl = '';
-        this.cameraActive = false;
-        this.uploadMethod = '';
         this.stopCamera();
+        // Reset upload state when closing (use setTimeout to avoid update during update)
+        setTimeout(() => {
+          this.selectedFile = null;
+          this.previewUrl = '';
+          this.cameraActive = false;
+          this.uploadMethod = '';
+        }, 0);
       }
     }
     if (changedProperties.has('hideFooter')) {
