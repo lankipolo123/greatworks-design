@@ -180,7 +180,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('💳 Checking payments...');
         $bookingsNeedingPayments = $allBookings->filter(function($booking) {
             return in_array($booking->status, ['confirmed', 'completed'])
-                && !$booking->payments()->exists();
+                && !$booking->payment()->exists();
         });
 
         if ($bookingsNeedingPayments->count() > 0) {
