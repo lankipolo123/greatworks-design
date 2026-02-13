@@ -61,7 +61,7 @@ class AuthLayout extends LitElement {
     .footer {
       background: #1a1a1a;
       color: white;
-      padding: 1.5rem 2rem;
+      padding: 3rem;
       text-align: center;
       font-size: 0.9rem;
     }
@@ -71,14 +71,14 @@ class AuthLayout extends LitElement {
       justify-content: flex-end;
       padding-right: 5rem;
       border-right: 45px solid #da0d0dd7;
-    padding-top: 11.5rem;
+    padding-top: 12rem;
     }
 
     /* Register mode: card on left, red line on left, logo above card */
     :host([mode="register"]) .auth-form-section {
       justify-content: flex-start;
       padding-left: 5rem;
-      padding-top: 8rem;
+      padding-top: 10rem;
       border-left: 45px solid #da0d0dd7;
     }
 

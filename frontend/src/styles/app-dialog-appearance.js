@@ -61,7 +61,7 @@ export const dialogAppearance = css`
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      color: #666;
+      color: #f90505;
       padding: 0;
       width: 32px;
       height: 32px;
@@ -74,10 +74,10 @@ export const dialogAppearance = css`
 
     .close-btn:hover {
       background: #f5f5f5;
-      color: #333;
+      color: #d30101d6;
     }
 
-    /* DEFAULT STYLE - Logout/Confirm */
+    /* DEFAULT STYLE - Logout/Confi */
     .dialog-header {
       padding: 20px 24px 16px;
       border-bottom: 1px solid #2d2b2b45;
@@ -187,12 +187,13 @@ export const dialogAppearance = css`
 
     .cancel-button {
       background: white;
-      color: #333;
+      color: #ff0000;
       border: 1px solid #e0e0e0;
     }
 
     .cancel-button:hover {
-      background: #f5f5f5;
+      background: #c10505;
+      color: #ffffff;
     }
 
     .confirm-button {
