@@ -211,7 +211,8 @@ class BookingCalendar extends LitElement {
       align-items: center;
       justify-content: center;
       z-index: 10;
-      pointer-events: none;
+      pointer-events: all;
+      cursor: default;
     }
 
     .location-overlay-text {
