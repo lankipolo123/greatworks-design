@@ -358,7 +358,7 @@ export class ProfileHeader extends LitElement {
             <input
               type="checkbox"
               ?checked=${this.twoFactorEnabled}
-              @change=${this.handle2FAToggle}
+              @click=${this.handle2FAToggle}
             >
             <span class="slider"></span>
           </label>
