@@ -293,7 +293,7 @@ class AdminBooking extends LitElement {
 
   get _locationDropdownOptions() {
     return [
-      { value: 'all', label: 'All Locations' },
+      { value: 'all', label: 'Select Location' },
       ...this.locationsList.map(l => ({ value: String(l.id), label: l.name }))
     ];
   }
@@ -313,7 +313,7 @@ class AdminBooking extends LitElement {
   }
 
   get branches() {
-    return [{ value: 'all', label: 'All Types' }, ...this._roomTypeOptions];
+    return [{ value: 'all', label: 'Select Room Type' }, ...this._roomTypeOptions];
   }
 
   _mapApiBooking(b) {
