@@ -45,6 +45,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:customer,moderator,admin',
+            'location_id' => 'nullable|exists:locations,id',
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 

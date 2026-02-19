@@ -19,6 +19,7 @@ class User extends Authenticatable
         'address',
         'password',
         'role',
+        'location_id',
         'status',
         'profile_photo',
     ];

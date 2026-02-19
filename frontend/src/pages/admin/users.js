@@ -199,12 +199,14 @@ class AdminUser extends LitElement {
       const lastName = getValue('lastName');
       const name = [firstName, lastName].filter(Boolean).join(' ');
 
+      const role = getValue('role');
       await usersApi.create({
         name,
         email: getValue('email'),
         password: getValue('password'),
         phone: getValue('phone') || null,
-        role: getValue('role'),
+        role,
+        location_id: role === 'moderator' ? (getValue('location_id') || null) : null,
       });
 
       toast.success('User created successfully!');
