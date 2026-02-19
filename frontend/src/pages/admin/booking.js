@@ -308,15 +308,12 @@ class AdminBooking extends LitElement {
   }
 
   get _roomTypeOptions() {
-    const seen = new Set();
-    const types = [];
-    this.roomsList.forEach(r => {
-      if (r.type && !seen.has(r.type)) {
-        seen.add(r.type);
-        types.push({ value: r.type, label: this._formatRoomType(r.type) });
-      }
-    });
-    return types;
+    return [
+      { value: 'co_working', label: 'Co-Working' },
+      { value: 'virtual_offices', label: 'Virtual Offices' },
+      { value: 'private_offices', label: 'Private Offices' },
+      { value: 'events_meeting_room', label: 'Events & Meeting' },
+    ];
   }
 
   get branches() {
