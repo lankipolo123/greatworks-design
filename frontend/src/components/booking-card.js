@@ -108,11 +108,31 @@ class BookingCard extends LitElement {
       background: #f8d7da;
       color: #721c24;
     }
+
+    .room-type {
+      background: #f0f4ff;
+      color: #3451b2;
+      padding: 0.1rem 0.3rem;
+      border-radius: 2px;
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
   `;
 
   constructor() {
     super();
     this.booking = {};
+  }
+
+  _formatRoomType(type) {
+    const labels = {
+      co_working: 'Co-Working',
+      virtual_offices: 'Virtual Offices',
+      private_offices: 'Private Offices',
+      events_meeting_room: 'Events & Meeting'
+    };
+    return labels[type] || type;
   }
 
   _formatTime(time) {
@@ -132,7 +152,7 @@ class BookingCard extends LitElement {
   }
 
   render() {
-    const { userId, time, guests, status, id, avatar, gender } = this.booking;
+    const { userId, time, guests, status, id, avatar, gender, roomType } = this.booking;
 
     return html`
       <div class="card status-${status}" @click=${this._handleClick}>
@@ -155,6 +175,7 @@ class BookingCard extends LitElement {
         <div class="meta">
           <span>${id}</span>
           <span>•</span>
+          ${roomType ? html`<span class="room-type">${this._formatRoomType(roomType)}</span><span>•</span>` : ''}
           <span class="status ${status}">${status}</span>
         </div>
       </div>
