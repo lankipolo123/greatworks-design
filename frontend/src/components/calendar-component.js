@@ -363,6 +363,7 @@ class BookingCalendar extends LitElement {
             <app-dropdown
               variant="light"
               size="small"
+              placeholder="Room Type"
               .options=${this.branches}
               .value=${this.selectedBranch}
               @change=${this.handleBranchChange}
