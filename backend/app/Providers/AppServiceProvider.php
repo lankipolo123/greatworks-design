@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Booking;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Observers\BookingObserver;
 use App\Observers\ReservationObserver;
 use App\Observers\RoomObserver;
 use App\Observers\TicketObserver;
@@ -25,5 +27,6 @@ class AppServiceProvider extends ServiceProvider
         Ticket::observe(TicketObserver::class);
         Room::observe(RoomObserver::class);
         Reservation::observe(ReservationObserver::class);
+        Booking::observe(BookingObserver::class);
     }
 }
