@@ -52,20 +52,20 @@ export class AppDropdown extends LitElement {
     /* ===== SIZES ===== */
     .small {
       font-size: 0.75rem;
-      padding: 0.4rem 0.6rem;
-      min-width: 100px;
+      padding: 0.4rem 2rem 0.4rem 0.6rem;
+      min-width: 120px;
     }
 
     .medium {
       font-size: 0.875rem;
-      padding: 0.5rem 0.75rem;
-      min-width: 120px;
+      padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+      min-width: 150px;
     }
 
     .large {
       font-size: 1rem;
-      padding: 0.625rem 1rem;
-      min-width: 150px;
+      padding: 0.625rem 2.5rem 0.625rem 1rem;
+      min-width: 180px;
     }
 
     /* ===== VARIANTS ===== */
