@@ -1,8 +1,14 @@
 // src/components/add-user-form.js
 import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
+import { locations as locationsApi } from '/src/service/api.js';
 
 class AddUserForm extends LitElement {
+  static properties = {
+    selectedRole: { type: String },
+    locations: { type: Array },
+  };
+
   static styles = css`
     :host {
       display: block;
@@ -61,6 +67,26 @@ class AddUserForm extends LitElement {
     }
   `;
 
+  constructor() {
+    super();
+    this.selectedRole = '';
+    this.locations = [];
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    try {
+      const data = await locationsApi.getAll();
+      this.locations = data.data || data;
+    } catch (e) {
+      this.locations = [];
+    }
+  }
+
+  handleRoleChange(e) {
+    this.selectedRole = e.target.value;
+  }
+
   render() {
     return html`
       <form id="user-form">
@@ -114,7 +140,7 @@ class AddUserForm extends LitElement {
 
             <div class="form-group">
               <label>Role</label>
-              <select name="role" required>
+              <select name="role" required @change=${this.handleRoleChange}>
                 <option value="">Select role</option>
                 <option value="customer">Customer</option>
                 <option value="moderator">Moderator</option>
@@ -122,6 +148,18 @@ class AddUserForm extends LitElement {
               </select>
             </div>
           </div>
+
+          ${this.selectedRole === 'moderator' ? html`
+            <div class="form-group">
+              <label>Location</label>
+              <select name="location_id" required>
+                <option value="">Select location</option>
+                ${this.locations.map(loc => html`
+                  <option value="${loc.id}">${loc.name}</option>
+                `)}
+              </select>
+            </div>
+          ` : ''}
         </div>
 
         <div class="form-actions">
