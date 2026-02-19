@@ -360,14 +360,7 @@ class BookingCalendar extends LitElement {
                 @change=${this.handleLocationChange}
               ></app-dropdown>
             ` : ''}
-            <app-dropdown
-              variant="light"
-              size="small"
-              .options=${this.branches}
-              .value=${this.selectedBranch}
-              @change=${this.handleBranchChange}
-            ></app-dropdown>
-            <slot name="controls"></slot>
+<slot name="controls"></slot>
           </div>
         </div>
         <div class="calendar">
