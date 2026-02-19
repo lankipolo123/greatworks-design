@@ -12,9 +12,9 @@ class DatabaseSeeder extends Seeder
     {
         // Locations
         DB::table('locations')->insert([
-            ['name' => 'GreatWork Mega Tower', 'address' => '123 Ayala Ave', 'city' => 'Makati', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'GreatWork Business Campus', 'address' => '456 BGC Blvd', 'city' => 'Taguig', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'GreatWork Studio', 'address' => '789 Ortigas Ave', 'city' => 'Pasig', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'GreatWork Mega Tower', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'GreatWork Business Campus', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'GreatWork Studio', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         // Users
