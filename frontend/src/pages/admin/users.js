@@ -62,6 +62,7 @@ class AdminUser extends LitElement {
     this.userLoading = false;
     this.tabs = [
       { id: 'all', label: 'All Users' },
+      { id: 'moderator', label: 'Moderator' },
       { id: 'admin', label: 'Admin' },
       { id: 'archived', label: 'Archived' }
     ];
@@ -93,7 +94,9 @@ class AdminUser extends LitElement {
   get filteredUsers() {
     let filtered = this.users;
 
-    if (this.activeTab === 'admin') {
+    if (this.activeTab === 'moderator') {
+      filtered = filtered.filter(u => u.role === 'moderator');
+    } else if (this.activeTab === 'admin') {
       filtered = filtered.filter(u => u.role === 'admin');
     } else if (this.activeTab === 'archived') {
       filtered = filtered.filter(u => u.status === 'archived' || u.status === 'inactive');
