@@ -30,7 +30,6 @@ class AdminBooking extends LitElement {
     currentPage: { type: Number },
     itemsPerPage: { type: Number },
     totalPages: { type: Number },
-    branches: { type: Array },
     selectedBranch: { type: String },
     showBookDialog: { type: Boolean },
     showRoomDialog: { type: Boolean },
@@ -201,10 +200,6 @@ class AdminBooking extends LitElement {
     this.itemsPerPage = 5;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
 
-    this.branches = [
-      { value: 'all', label: 'All Branches' },
-      { value: 'branch1', label: 'Branch 1' },
-    ];
     this.selectedBranch = 'all';
 
     // Dialog states
@@ -298,6 +293,32 @@ class AdminBooking extends LitElement {
       { value: 'all', label: 'All Locations' },
       ...this.locationsList.map(l => ({ value: String(l.id), label: l.name }))
     ];
+  }
+
+  _formatRoomType(type) {
+    const labels = {
+      co_working: 'Co-Working',
+      virtual_offices: 'Virtual Offices',
+      private_offices: 'Private Offices',
+      events_meeting_room: 'Events & Meeting'
+    };
+    return labels[type] || type;
+  }
+
+  get _roomTypeOptions() {
+    const seen = new Set();
+    const types = [];
+    this.roomsList.forEach(r => {
+      if (r.type && !seen.has(r.type)) {
+        seen.add(r.type);
+        types.push({ value: r.type, label: this._formatRoomType(r.type) });
+      }
+    });
+    return types;
+  }
+
+  get branches() {
+    return [{ value: 'all', label: 'All Types' }, ...this._roomTypeOptions];
   }
 
   _mapApiBooking(b) {
@@ -795,7 +816,9 @@ class AdminBooking extends LitElement {
       <content-card mode="3">
         <calendar-section>
           <booking-calendar
-            .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
+            .reservations=${this.allBookings
+              .filter(b => b.status === 'confirmed' || b.status === 'pending')
+              .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
@@ -812,6 +835,7 @@ class AdminBooking extends LitElement {
             .selectedDate=${this.selectedDate}
             .bookings=${this.paginatedBookings}
             .selectedRoomType=${this.selectedRoomType}
+            .roomTypes=${this._roomTypeOptions}
             @booking-select=${this.handleBookingSelect}
             @room-type-change=${this.handleRoomTypeChange}
             @sidebar-close=${this.handleSidebarClose}>
@@ -842,7 +866,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form>
+        <book-someone-form .roomTypes=${this._roomTypeOptions}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
             Cancel
@@ -958,7 +982,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form>
+        <book-someone-form .roomTypes=${this._roomTypeOptions}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel

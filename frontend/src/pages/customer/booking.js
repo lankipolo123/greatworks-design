@@ -34,6 +34,7 @@ class CustomerBooking extends LitElement {
     slotLoading: { type: Boolean },
     locationsList: { type: Array },
     selectedLocation: { type: String },
+    selectedBranch: { type: String },
   };
 
   static styles = css`
@@ -241,6 +242,7 @@ class CustomerBooking extends LitElement {
 
     this.locationsList = [];
     this.selectedLocation = 'all';
+    this.selectedBranch = 'all';
 
     this.showBookDialog = false;
     this.bookLoading = false;
@@ -311,12 +313,43 @@ class CustomerBooking extends LitElement {
     ];
   }
 
+  _formatRoomType(type) {
+    const labels = {
+      co_working: 'Co-Working',
+      virtual_offices: 'Virtual Offices',
+      private_offices: 'Private Offices',
+      events_meeting_room: 'Events & Meeting'
+    };
+    return labels[type] || type;
+  }
+
+  get _roomTypeOptions() {
+    const seen = new Set();
+    const types = [];
+    this.roomsList.forEach(r => {
+      if (r.type && !seen.has(r.type)) {
+        seen.add(r.type);
+        types.push({ value: r.type, label: this._formatRoomType(r.type) });
+      }
+    });
+    return types;
+  }
+
+  get branches() {
+    return [{ value: 'all', label: 'All Types' }, ...this._roomTypeOptions];
+  }
+
+  handleBranchChange(e) {
+    this.selectedBranch = e.detail.branch;
+  }
+
   _mapApiBooking(b) {
     return {
       id: b.id,
       userId: b.user?.name || b.user?.email || `User #${b.user_id}`,
       userName: b.user?.name || '',
       roomName: b.room?.name || `Room #${b.room_id}`,
+      roomType: b.room?.type || '',
       date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
       startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
       time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
@@ -607,11 +640,16 @@ class CustomerBooking extends LitElement {
       <content-card mode="3">
         <calendar-section>
           <booking-calendar
-            .reservations=${this.allBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')}
+            .reservations=${this.allBookings
+              .filter(b => b.status === 'confirmed' || b.status === 'pending')
+              .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)}
             .selectedDate=${this.selectedDate}
+            .branches=${this.branches}
+            .selectedBranch=${this.selectedBranch}
             .locations=${this._locationDropdownOptions}
             .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
+            @branch-change=${this.handleBranchChange}
             @location-change=${this.handleLocationChange}>
           </booking-calendar>
         </calendar-section>
@@ -621,6 +659,7 @@ class CustomerBooking extends LitElement {
             .selectedDate=${this.selectedDate}
             .bookings=${this.paginatedBookings}
             .selectedRoomType=${this.selectedRoomType}
+            .roomTypes=${this._roomTypeOptions}
             .showBookNow=${true}
             @booking-select=${this.handleBookingSelect}
             @room-type-change=${this.handleRoomTypeChange}

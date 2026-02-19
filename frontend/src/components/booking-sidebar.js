@@ -9,6 +9,7 @@ class BookingSidebar extends LitElement {
     bookings: { type: Array },
     selectedRoomType: { type: String },
     showBookNow: { type: Boolean },
+    roomTypes: { type: Array },
   };
 
   static styles = css`
@@ -157,6 +158,7 @@ class BookingSidebar extends LitElement {
     this.bookings = [];
     this.selectedRoomType = 'all';
     this.showBookNow = false;
+    this.roomTypes = [];
   }
 
   _handleBookNow() {
@@ -254,9 +256,7 @@ class BookingSidebar extends LitElement {
             <app-dropdown
               variant="dark"
               size="small"
-              .options=${[
-        { value: 'all', label: 'All Rooms' }
-      ]}
+              .options=${[{ value: 'all', label: 'All Types' }, ...this.roomTypes]}
               .value=${this.selectedRoomType}
               @change=${this._handleRoomTypeChange}
             ></app-dropdown>

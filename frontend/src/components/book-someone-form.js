@@ -4,6 +4,15 @@ import '/src/components/input-field.js';
 import '/src/components/app-button.js';
 
 class BookSomeoneForm extends LitElement {
+  static properties = {
+    roomTypes: { type: Array }
+  };
+
+  constructor() {
+    super();
+    this.roomTypes = [];
+  }
+
   static styles = css`
     :host {
       display: block;
@@ -121,6 +130,9 @@ class BookSomeoneForm extends LitElement {
             <label>Room Type *</label>
             <select name="roomType" required>
               <option value="">Select type</option>
+              ${this.roomTypes.map(rt => html`
+                <option value="${rt.value}">${rt.label}</option>
+              `)}
             </select>
           </div>
 
