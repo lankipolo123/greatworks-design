@@ -198,6 +198,31 @@ class BookingCalendar extends LitElement {
       opacity: 0.4;
     }
 
+    .calendar-wrapper {
+      position: relative;
+    }
+
+    .location-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .location-overlay-text {
+      color: #ffffff;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
     @media (max-width: 768px) {
       .calendar {
         gap: 4px;
@@ -371,9 +396,16 @@ class BookingCalendar extends LitElement {
             <slot name="controls"></slot>
           </div>
         </div>
-        <div class="calendar">
-          ${weekdays.map(day => html`<div class="weekday">${day}</div>`)}
-          ${days}
+        <div class="calendar-wrapper">
+          <div class="calendar">
+            ${weekdays.map(day => html`<div class="weekday">${day}</div>`)}
+            ${days}
+          </div>
+          ${this.selectedLocation === 'all' ? html`
+            <div class="location-overlay">
+              <span class="location-overlay-text">Pick Location</span>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
