@@ -163,9 +163,9 @@ class CreateRoomForm extends LitElement {
       }
 
       // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid image file (JPEG, PNG, GIF, WebP, or AVIF)');
+        alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
         return;
       }
 
@@ -221,10 +221,11 @@ class CreateRoomForm extends LitElement {
             <label>Room Type *</label>
             <select name="roomType" required>
               <option value="">Select type</option>
-              <option value="Co-Working">Co-Working</option>
-              <option value="Virtual Offices">Virtual Offices</option>
-              <option value="Private Offices">Private Offices</option>
-              <option value="Events & Meeting Room">Events & Meeting Room</option>
+              <option value="conference">Conference</option>
+              <option value="meeting">Meeting</option>
+              <option value="private_office">Private Office</option>
+              <option value="hot_desk">Hot Desk</option>
+              <option value="event_space">Event Space</option>
             </select>
           </div>
 
