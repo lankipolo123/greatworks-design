@@ -13,7 +13,9 @@ export class ProfileHeader extends LitElement {
     photoURL: { type: String },
     gender: { type: String },
     isUploading: { type: Boolean },
-    showUploadDialog: { type: Boolean }
+    showUploadDialog: { type: Boolean },
+    show2FADialog: { type: Boolean },
+    twoFactorEnabled: { type: Boolean }
   };
 
   static styles = css`
@@ -129,6 +131,65 @@ export class ProfileHeader extends LitElement {
       z-index: 1;
     }
 
+    .twofa-section {
+      position: absolute;
+      top: 38px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 1;
+    }
+
+    .twofa-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.04em;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #ccc;
+      border-radius: 18px;
+      transition: background-color 0.2s ease;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      left: 3px;
+      top: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .switch input:checked + .slider {
+      background-color: #d6150b;
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(14px);
+    }
+
     .loading-overlay {
       position: absolute;
       top: 0;
@@ -156,7 +217,7 @@ export class ProfileHeader extends LitElement {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-  
+
   `;
 
   constructor() {
@@ -171,6 +232,8 @@ export class ProfileHeader extends LitElement {
     this.gender = '';
     this.isUploading = false;
     this.showUploadDialog = false;
+    this.show2FADialog = false;
+    this.twoFactorEnabled = false;
   }
 
   formatDate(dateString) {
@@ -190,7 +253,6 @@ export class ProfileHeader extends LitElement {
   handleFileUpload(e) {
     const file = e.detail.file;
 
-    // Dispatch event to parent component
     this.dispatchEvent(new CustomEvent('profile-photo-upload', {
       detail: { file },
       bubbles: true,
@@ -204,7 +266,28 @@ export class ProfileHeader extends LitElement {
     this.showUploadDialog = false;
   }
 
+  handle2FAToggle(e) {
+    e.preventDefault();
+    this.show2FADialog = true;
+  }
+
+  handle2FAConfirm() {
+    this.twoFactorEnabled = !this.twoFactorEnabled;
+    this.show2FADialog = false;
+    this.dispatchEvent(new CustomEvent('2fa-toggle', {
+      detail: { enabled: this.twoFactorEnabled },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  handle2FADialogClose() {
+    this.show2FADialog = false;
+  }
+
   render() {
+    const action = this.twoFactorEnabled ? 'Disable' : 'Enable';
+
     return html`
       <app-dialog
         .isOpen=${this.showUploadDialog}
@@ -218,6 +301,21 @@ export class ProfileHeader extends LitElement {
         @file-upload=${this.handleFileUpload}
         @dialog-close=${this.handleDialogClose}
         @dialog-cancel=${this.handleDialogClose}
+      ></app-dialog>
+
+      <app-dialog
+        .isOpen=${this.show2FADialog}
+        title="${action} Two-Factor Authentication"
+        description="${action === 'Enable'
+          ? 'Add an extra layer of security to your account. You will be asked for a verification code each time you log in.'
+          : 'This will remove the extra security layer from your account. Are you sure?'}"
+        confirmText="${action}"
+        confirmColor="${action === 'Enable' ? 'primary' : 'danger'}"
+        cancelText="Cancel"
+        size="medium"
+        @dialog-confirm=${this.handle2FAConfirm}
+        @dialog-close=${this.handle2FADialogClose}
+        @dialog-cancel=${this.handle2FADialogClose}
       ></app-dialog>
 
       <div class="profile-card">
@@ -238,7 +336,7 @@ export class ProfileHeader extends LitElement {
               .src=${this.photoURL}
             ></user-avatar>
 
-            <div class="camera-icon ${this.isUploading ? 'uploading' : ''}" 
+            <div class="camera-icon ${this.isUploading ? 'uploading' : ''}"
                  @click=${this.changeAvatar}>
               add_photo_alternate
             </div>
@@ -253,6 +351,18 @@ export class ProfileHeader extends LitElement {
         </div>
 
         <div class="badge">${this.status}</div>
+
+        <div class="twofa-section">
+          <span class="twofa-label">2FA</span>
+          <label class="switch">
+            <input
+              type="checkbox"
+              ?checked=${this.twoFactorEnabled}
+              @change=${this.handle2FAToggle}
+            >
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
     `;
   }
