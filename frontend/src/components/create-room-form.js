@@ -221,11 +221,10 @@ class CreateRoomForm extends LitElement {
             <label>Room Type *</label>
             <select name="roomType" required>
               <option value="">Select type</option>
-              <option value="conference">Conference</option>
-              <option value="meeting">Meeting</option>
-              <option value="private_office">Private Office</option>
-              <option value="hot_desk">Hot Desk</option>
-              <option value="event_space">Event Space</option>
+              <option value="co_working">Co-Working</option>
+              <option value="virtual_offices">Virtual Offices</option>
+              <option value="private_offices">Private Offices</option>
+              <option value="events_meeting_room">Events & Meeting Room</option>
             </select>
           </div>
 
