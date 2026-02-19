@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
 import '/src/components/app-button.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
+import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 
 class CreateRoomForm extends LitElement {
   static properties = {
@@ -221,10 +222,9 @@ class CreateRoomForm extends LitElement {
             <label>Room Type *</label>
             <select name="roomType" required>
               <option value="">Select type</option>
-              <option value="co_working">Co-Working</option>
-              <option value="virtual_offices">Virtual Offices</option>
-              <option value="private_offices">Private Offices</option>
-              <option value="events_meeting_room">Events & Meeting Room</option>
+              ${ROOM_TYPES.map(rt => html`
+                <option value="${rt.value}">${rt.label}</option>
+              `)}
             </select>
           </div>
 

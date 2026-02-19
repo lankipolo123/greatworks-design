@@ -14,6 +14,7 @@ import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
 import { bookingFabOptions } from '/src/configs/fab-options-config.js';
+import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
@@ -308,12 +309,7 @@ class AdminBooking extends LitElement {
   }
 
   get _roomTypeOptions() {
-    return [
-      { value: 'co_working', label: 'Co-Working' },
-      { value: 'virtual_offices', label: 'Virtual Offices' },
-      { value: 'private_offices', label: 'Private Offices' },
-      { value: 'events_meeting_room', label: 'Events & Meeting' },
-    ];
+    return ROOM_TYPES;
   }
 
   get branches() {
