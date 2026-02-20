@@ -39,48 +39,48 @@ INSERT INTO users (id, name, email, phone, address, password, role, status, emai
 -- LOCATIONS
 -- =============================================================
 INSERT INTO locations (id, name, address, city, state, zip_code, country, phone, email, description, status, created_at, updated_at) VALUES
-(1, 'Greatworks BGC',
-    '5th Ave corner 26th St, Bonifacio Global City',
-    'Taguig', 'Metro Manila', '1634', 'Philippines',
-    '+63 2 8888 1001', 'bgc@greatworks.com',
-    'Our flagship co-working space in the heart of BGC. Modern amenities, high-speed internet, and stunning city views.',
+(1, 'Greatwork Business Campus',
+    '3rd Floor, Main Building, Ben-Lor IT Center, 1184 Quezon Avenue',
+    'Quezon City', 'Metro Manila', '1100', 'Philippines',
+    '+63 2 8888 1001', 'businesscampus@greatwork.com',
+    'Our flagship location at Ben-Lor IT Center in Quezon Avenue, Diliman. Modern co-working floors and private offices for startups and professionals.',
     'active', '2026-01-05 08:00:00', '2026-01-05 08:00:00'),
 
-(2, 'Greatworks Makati',
-    'Ayala Avenue corner Paseo de Roxas',
-    'Makati', 'Metro Manila', '1226', 'Philippines',
-    '+63 2 8888 1002', 'makati@greatworks.com',
-    'Premium co-working and private office space in Makati''s central business district.',
+(2, 'Greatwork Studio',
+    '2nd Floor, ABDC Building, Scout Rallos corner Scout Tuazon',
+    'Quezon City', 'Metro Manila', '1103', 'Philippines',
+    '+63 2 8888 1002', 'studio@greatwork.com',
+    'A creative and intimate workspace at Scout Rallos, Diliman. Perfect for freelancers, creatives, and small teams.',
     'active', '2026-01-05 08:00:00', '2026-01-05 08:00:00'),
 
-(3, 'Greatworks Ortigas',
-    'Emerald Ave, Ortigas Center',
-    'Pasig', 'Metro Manila', '1600', 'Philippines',
-    '+63 2 8888 1003', 'ortigas@greatworks.com',
-    'Flexible workspace solutions at the Ortigas business hub. Ideal for startups and growing teams.',
+(3, 'Greatwork Mega Tower',
+    '24th, 32nd & 34th Floor, SM Mega Tower, Ortigas Avenue',
+    'Mandaluyong', 'Metro Manila', '1550', 'Philippines',
+    '+63 2 8888 1003', 'megatower@greatwork.com',
+    'Premium high-rise offices at SM Mega Tower with panoramic Metro Manila views. Our largest and most prestigious location.',
     'active', '2026-01-10 08:00:00', '2026-01-10 08:00:00');
 
 -- =============================================================
 -- ROOMS
 -- =============================================================
 INSERT INTO rooms (id, location_id, name, type, capacity, price_per_hour, floor, amenities, description, status, created_at, updated_at) VALUES
--- BGC Rooms
-(1,  1, 'The Hub',          'co_working',          20, 150.00, '3F', '["WiFi","Aircon","Lockers","Coffee Bar","Standing Desks"]',    'Open co-working floor with 20 hot desks, natural lighting, and a fully stocked coffee bar.',          'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(2,  1, 'Flex Desk',        'co_working',          10, 100.00, '3F', '["WiFi","Aircon","Whiteboards","Monitor Rental"]',             'Compact co-working pod for focused work sessions. Ideal for solo professionals.',                   'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(3,  1, 'Executive Suite',  'private_offices',      4, 300.00, '4F', '["WiFi","Aircon","Private Phone Line","Mini Fridge","TV Screen"]','Fully enclosed private office for small teams. Includes a dedicated landline and mini fridge.', 'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(4,  1, 'The Arena',        'events_meeting_room', 50, 800.00, '5F', '["WiFi","Aircon","Projector","PA System","Stage","Catering Ready"]','Large event hall for conferences, workshops, and product launches. Seats up to 50 guests.',  'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+-- Business Campus Rooms (3F, Main Building, Ben-Lor IT Center)
+(1,  1, 'The Hub',          'co_working',          20, 150.00, '3F', '["WiFi","Aircon","Lockers","Coffee Bar","Standing Desks"]',      'Open co-working floor with 20 hot desks, natural lighting, and a fully stocked coffee bar.',        'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(2,  1, 'Flex Desk',        'co_working',          10, 100.00, '3F', '["WiFi","Aircon","Whiteboards","Monitor Rental"]',               'Compact co-working pod for focused work sessions. Ideal for solo professionals.',                 'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(3,  1, 'Executive Suite',  'private_offices',      4, 300.00, '3F', '["WiFi","Aircon","Private Phone Line","Mini Fridge","TV Screen"]','Fully enclosed private office for small teams. Includes a dedicated landline and mini fridge.', 'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(4,  1, 'The Arena',        'events_meeting_room', 50, 800.00, '3F', '["WiFi","Aircon","Projector","PA System","Stage","Catering Ready"]','Large event hall for conferences, workshops, and product launches. Seats up to 50 guests.',    'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
 
--- Makati Rooms
-(5,  2, 'Colab Space',      'co_working',          15, 120.00, '8F', '["WiFi","Aircon","Phone Booths","Printer","Lounge Area"]',     'Dynamic co-working environment on the 8th floor with panoramic Makati views.',                     'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(6,  2, 'Virtual Box A',    'virtual_offices',      1,  50.00, '8F', '["WiFi","Aircon","Dedicated Address","Mail Handling"]',        'Virtual office package with a prestigious Makati address and mail handling service.',               'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(7,  2, 'Virtual Box B',    'virtual_offices',      1,  50.00, '8F', '["WiFi","Aircon","Dedicated Address","Mail Handling"]',        'Virtual office package with a prestigious Makati address and mail handling service.',               'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(8,  2, 'Boardroom',        'private_offices',      8, 400.00, '9F', '["WiFi","Aircon","55-inch TV","Whiteboard","Video Conferencing"]','Premium boardroom for executive meetings and client presentations. Fully equipped with AV.',    'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
-(9,  2, 'Conference Hall',  'events_meeting_room', 30, 600.00, '9F', '["WiFi","Aircon","Dual Projectors","Podium","Breakout Tables"]','Professional conference room ideal for seminars and large team meetings.',                         'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+-- Studio Rooms (2F, ABDC Building, Scout Rallos)
+(5,  2, 'Colab Space',      'co_working',          15, 120.00, '2F', '["WiFi","Aircon","Phone Booths","Printer","Lounge Area"]',       'Creative co-working environment at Scout Rallos, Diliman. Ideal for freelancers and small teams.', 'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(6,  2, 'Virtual Box A',    'virtual_offices',      1,  50.00, '2F', '["WiFi","Aircon","Dedicated Address","Mail Handling"]',          'Virtual office with a Quezon City address and mail handling. Perfect for remote professionals.',   'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(7,  2, 'Virtual Box B',    'virtual_offices',      1,  50.00, '2F', '["WiFi","Aircon","Dedicated Address","Mail Handling"]',          'Virtual office with a Quezon City address and mail handling. Perfect for remote professionals.',   'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(8,  2, 'Boardroom',        'private_offices',      8, 400.00, '2F', '["WiFi","Aircon","55-inch TV","Whiteboard","Video Conferencing"]','Premium boardroom for executive meetings and client presentations. Fully equipped with AV.',      'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
+(9,  2, 'Conference Hall',  'events_meeting_room', 30, 600.00, '2F', '["WiFi","Aircon","Dual Projectors","Podium","Breakout Tables"]',  'Professional conference room ideal for seminars and large team meetings.',                       'available', '2026-01-05 09:00:00', '2026-01-05 09:00:00'),
 
--- Ortigas Rooms
-(10, 3, 'Open Deck',        'co_working',          25, 130.00, '6F', '["WiFi","Aircon","Outdoor Terrace","Pantry","Ergonomic Chairs"]','The largest co-working floor in Ortigas. Features an outdoor terrace and modern ergonomic setups.', 'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00'),
-(11, 3, 'Focus Room',       'private_offices',      4, 280.00, '6F', '["WiFi","Aircon","Soundproofing","Dual Monitor Setup","Mini Fridge"]','Soundproof private office built for deep work. Includes dual monitor setup.',                 'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00'),
-(12, 3, 'Meeting Pod',      'events_meeting_room', 12, 250.00, '7F', '["WiFi","Aircon","75-inch TV","Whiteboard","Video Conferencing"]','Mid-size meeting room ideal for team standups, client calls, and small workshops.',               'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00');
+-- Mega Tower Rooms (24F, 32F, 34F — SM Mega Tower, Mandaluyong)
+(10, 3, 'Open Deck',        'co_working',          25, 130.00, '24F','["WiFi","Aircon","City View","Pantry","Ergonomic Chairs"]',       'Expansive co-working floor on the 24th floor with panoramic Metro Manila views.',               'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00'),
+(11, 3, 'Focus Room',       'private_offices',      4, 280.00, '32F','["WiFi","Aircon","Soundproofing","Dual Monitor Setup","Mini Fridge"]','Soundproof private office on the 32nd floor built for deep work and small team meetings.',   'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00'),
+(12, 3, 'Meeting Pod',      'events_meeting_room', 12, 250.00, '34F','["WiFi","Aircon","75-inch TV","Whiteboard","Video Conferencing"]', 'Premium meeting room on the 34th floor. Ideal for client meetings and small workshops.',        'available', '2026-01-10 09:00:00', '2026-01-10 09:00:00');
 
 -- =============================================================
 -- BOOKINGS  (spread across Jan–Feb 2026)
