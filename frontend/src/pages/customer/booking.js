@@ -350,6 +350,7 @@ class CustomerBooking extends LitElement {
       userName: b.user?.name || '',
       roomName: b.room?.name || `Room #${b.room_id}`,
       roomType: b.room?.type || '',
+      locationId: b.room?.location_id ? String(b.room.location_id) : null,
       date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
       startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
       time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
@@ -642,7 +643,8 @@ class CustomerBooking extends LitElement {
           <booking-calendar
             .reservations=${this.allBookings
               .filter(b => b.status === 'confirmed' || b.status === 'pending')
-              .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)}
+              .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
+              .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
