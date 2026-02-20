@@ -177,7 +177,7 @@ class AdminReservation extends LitElement {
       roomId: r.room_id,
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
-      time: typeof r.time === 'string' ? r.time.substring(0, 5) : r.time,
+      time: typeof r.start_time === 'string' ? r.start_time.substring(0, 5) : (typeof r.time === 'string' ? r.time.substring(0, 5) : r.time),
       guests: r.guests,
       status: r.status,
       notes: r.notes || '',

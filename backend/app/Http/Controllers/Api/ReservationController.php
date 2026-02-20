@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Reservation;
+use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,7 +11,7 @@ class ReservationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Reservation::with(['user', 'room']);
+        $query = Booking::with(['user', 'room']);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -34,7 +34,7 @@ class ReservationController extends Controller
         }
 
         $reservations = $query->orderBy('date', 'desc')
-            ->orderBy('time', 'desc')
+            ->orderBy('start_time', 'desc')
             ->paginate($request->per_page ?? 10);
 
         return response()->json($reservations);
@@ -44,7 +44,7 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => 'required|exists:rooms,id',
             'date' => 'required|date|after_or_equal:today',
             'time' => 'required|date_format:H:i',
             'guests' => 'required|integer|min:1',
@@ -52,29 +52,38 @@ class ReservationController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $reservation = Reservation::create($validated);
+        $validated['start_time'] = $validated['time'];
+        unset($validated['time']);
+        $validated['duration_hours'] = 1;
+
+        $booking = Booking::create($validated);
 
         return response()->json([
             'message' => 'Reservation created successfully',
-            'reservation' => $reservation->load(['user', 'room']),
+            'reservation' => $booking->load(['user', 'room']),
         ], 201);
     }
 
-    public function show(Reservation $reservation): JsonResponse
+    public function show(Booking $reservation): JsonResponse
     {
         return response()->json($reservation->load(['user', 'room']));
     }
 
-    public function update(Request $request, Reservation $reservation): JsonResponse
+    public function update(Request $request, Booking $reservation): JsonResponse
     {
         $validated = $request->validate([
-            'room_id' => 'nullable|exists:rooms,id',
+            'room_id' => 'sometimes|exists:rooms,id',
             'date' => 'sometimes|date',
             'time' => 'sometimes|date_format:H:i',
             'guests' => 'sometimes|integer|min:1',
             'status' => 'sometimes|in:pending,confirmed,cancelled,completed',
             'notes' => 'nullable|string',
         ]);
+
+        if (isset($validated['time'])) {
+            $validated['start_time'] = $validated['time'];
+            unset($validated['time']);
+        }
 
         $reservation->update($validated);
 
@@ -84,7 +93,7 @@ class ReservationController extends Controller
         ]);
     }
 
-    public function destroy(Reservation $reservation): JsonResponse
+    public function destroy(Booking $reservation): JsonResponse
     {
         $reservation->delete();
 
