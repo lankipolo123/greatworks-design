@@ -17,7 +17,7 @@ class AuthenticationCard extends LitElement {
     }
 
     :host([mode="register"]) {
-      max-width: 390px;
+      max-width: 560px;
     }
 
     .card {
