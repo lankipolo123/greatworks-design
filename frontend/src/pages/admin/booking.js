@@ -14,6 +14,7 @@ import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
 import { bookingFabOptions } from '/src/configs/fab-options-config.js';
+import { isAdmin } from '/src/service/api-core.js';
 import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
@@ -872,7 +873,7 @@ class AdminBooking extends LitElement {
       </content-card>
 
       <floating-action-button
-        .options=${bookingFabOptions}
+        .options=${isAdmin() ? bookingFabOptions : bookingFabOptions.filter(o => o.action === 'book-someone')}
         @fab-option-click=${this.handleFabAction}>
       </floating-action-button>
 

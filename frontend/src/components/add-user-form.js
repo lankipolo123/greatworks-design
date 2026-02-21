@@ -2,6 +2,7 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
 import { locations as locationsApi } from '/src/service/api.js';
+import { isAdmin } from '/src/service/api-core.js';
 
 class AddUserForm extends LitElement {
   static properties = {
@@ -144,7 +145,7 @@ class AddUserForm extends LitElement {
                 <option value="">Select role</option>
                 <option value="customer">Customer</option>
                 <option value="moderator">Moderator</option>
-                <option value="admin">Admin</option>
+                ${isAdmin() ? html`<option value="admin">Admin</option>` : ''}
               </select>
             </div>
           </div>

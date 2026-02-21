@@ -49,6 +49,13 @@ class UserController extends Controller
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
+        // Moderators can only create moderator and customer users
+        if ($request->user()->isModerator() && $validated['role'] === 'admin') {
+            return response()->json([
+                'message' => 'Moderators cannot create admin users.',
+            ], 403);
+        }
+
         $validated['password'] = Hash::make($validated['password']);
         $validated['status'] = $validated['status'] ?? 'active';
 

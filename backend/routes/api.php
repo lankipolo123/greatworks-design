@@ -75,8 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin,moderator')->group(function () {
-        // Location management
-        Route::post('/locations', [LocationController::class, 'store']);
+        // Location management (update/delete only — creation is admin-only)
         Route::put('/locations/{location}', [LocationController::class, 'update']);
         Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
 
@@ -84,8 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/locations/{location}/image', [LocationController::class, 'uploadImage']);
         Route::delete('/locations/{location}/image', [LocationController::class, 'deleteImage']);
 
-        // Room management
-        Route::post('/rooms', [RoomController::class, 'store']);
+        // Room management (update/delete only — creation is admin-only)
         Route::put('/rooms/{room}', [RoomController::class, 'update']);
         Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
@@ -109,6 +107,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/payments', [PaymentController::class, 'store']);
         Route::put('/payments/{payment}', [PaymentController::class, 'update']);
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
+
+        // User management (admin & moderator — role hierarchy enforced in controller)
+        Route::apiResource('users', UserController::class);
+
+        // Activity Logs (read-only for moderators, store for logging)
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show']);
+        Route::post('/activity-logs', [ActivityLogController::class, 'store']);
     });
 
     /*
@@ -117,12 +123,10 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin')->group(function () {
-        // User management
-        Route::apiResource('users', UserController::class);
+        // Location creation (admin only)
+        Route::post('/locations', [LocationController::class, 'store']);
 
-        // Activity Logs
-        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
-        Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show']);
-        Route::post('/activity-logs', [ActivityLogController::class, 'store']);
+        // Room creation (admin only)
+        Route::post('/rooms', [RoomController::class, 'store']);
     });
 });
