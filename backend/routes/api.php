@@ -108,6 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class)->except(['update']);
         Route::put('/users/{user}', [UserController::class, 'update'])
             ->middleware('prevent-admin-role');
+        Route::post('/users/{user}/send-welcome', [UserController::class, 'sendWelcomeEmail']);
 
         // Activity Logs (read-only for moderators)
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);

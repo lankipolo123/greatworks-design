@@ -14,13 +14,15 @@ class WelcomeMail extends Mailable
     use Queueable, SerializesModels;
 
     public User $user;
+    public ?string $generatedPassword;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user)
+    public function __construct(User $user, ?string $generatedPassword = null)
     {
         $this->user = $user;
+        $this->generatedPassword = $generatedPassword;
     }
 
     /**
@@ -43,6 +45,7 @@ class WelcomeMail extends Mailable
             with: [
                 'userName' => $this->user->name,
                 'userEmail' => $this->user->email,
+                'generatedPassword' => $this->generatedPassword,
             ],
         );
     }

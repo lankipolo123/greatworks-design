@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -42,7 +45,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
             'role' => 'required|in:customer,moderator,admin',
             'location_id' => 'nullable|exists:locations,id',
@@ -56,15 +59,48 @@ class UserController extends Controller
             ], 403);
         }
 
-        $validated['password'] = Hash::make($validated['password']);
+        // For customer role, password is required
+        if ($validated['role'] === 'customer' && empty($validated['password'])) {
+            return response()->json([
+                'message' => 'The password field is required for customer accounts.',
+                'errors' => ['password' => ['The password field is required for customer accounts.']],
+            ], 422);
+        }
+
+        // Auto-generate password for admin/moderator if not provided
+        $generatedPassword = null;
+        if (empty($validated['password']) && in_array($validated['role'], ['admin', 'moderator'])) {
+            $generatedPassword = Str::random(16);
+            $validated['password'] = $generatedPassword;
+        }
+
         $validated['status'] = $validated['status'] ?? 'active';
 
         $user = User::create($validated);
 
-        return response()->json([
+        $response = [
             'message' => 'User created successfully',
             'user' => $user,
-        ], 201);
+        ];
+
+        if ($generatedPassword) {
+            $response['generated_password'] = $generatedPassword;
+        }
+
+        return response()->json($response, 201);
+    }
+
+    public function sendWelcomeEmail(Request $request, User $user): JsonResponse
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        Mail::to($user->email)->send(new WelcomeMail($user, $validated['password']));
+
+        return response()->json([
+            'message' => 'Welcome email sent successfully',
+        ]);
     }
 
     public function show(User $user): JsonResponse

@@ -54,6 +54,15 @@
 
         <p>Your account has been successfully created with the email: <strong>{{ $userEmail }}</strong></p>
 
+        @if(!empty($generatedPassword))
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 16px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #856404;">Your Login Credentials</p>
+            <p style="margin: 0 0 5px 0;"><strong>Email:</strong> {{ $userEmail }}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Temporary Password:</strong> {{ $generatedPassword }}</p>
+            <p style="margin: 0; font-size: 13px; color: #856404;">Please change your password after your first login for security purposes.</p>
+        </div>
+        @endif
+
         <p>You can now:</p>
         <ul>
             <li>Browse available rooms and workspaces</li>

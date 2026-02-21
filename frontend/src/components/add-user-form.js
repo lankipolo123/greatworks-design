@@ -60,6 +60,16 @@ class AddUserForm extends LitElement {
       border-color: #bbb;
     }
 
+    .auto-password-notice {
+      font-size: 0.85rem;
+      color: #888;
+      font-style: italic;
+      padding: 10px 12px;
+      border: 1.5px dashed #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -121,14 +131,20 @@ class AddUserForm extends LitElement {
             ?required=${true}>
           </input-field>
 
-          <input-field
-            label="Password"
-            type="password"
-            name="password"
-            placeholder="Min 8 characters"
-            variant="compact"
-            ?required=${true}>
-          </input-field>
+          ${this.selectedRole === '' || this.selectedRole === 'customer' ? html`
+            <input-field
+              label="Password"
+              type="password"
+              name="password"
+              placeholder="Min 8 characters"
+              variant="compact"
+              ?required=${true}>
+            </input-field>
+          ` : html`
+            <div class="auto-password-notice">
+              A secure password will be auto-generated for this account.
+            </div>
+          `}
 
           <div class="form-row">
             <input-field

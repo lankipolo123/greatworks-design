@@ -32,7 +32,10 @@ class AdminUser extends LitElement {
     showExportDialog: { type: Boolean },
     showDetailsDialog: { type: Boolean },
     selectedUser: { type: Object },
-    userLoading: { type: Boolean }
+    userLoading: { type: Boolean },
+    showCredentialsDialog: { type: Boolean },
+    generatedCredentials: { type: Object },
+    sendingEmail: { type: Boolean }
   };
 
   static styles = css`
@@ -45,6 +48,48 @@ class AdminUser extends LitElement {
 
     content-card {
       display: block;
+    }
+
+    .credentials-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .credentials-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .credentials-field label {
+      font-size: 0.8rem;
+      color: #888;
+      font-weight: 500;
+    }
+
+    .credentials-field .value {
+      font-size: 0.95rem;
+      color: #333;
+      padding: 10px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-family: monospace;
+      user-select: all;
+      word-break: break-all;
+    }
+
+    .credentials-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .credentials-notice {
+      font-size: 0.8rem;
+      color: #888;
+      font-style: italic;
+      margin-top: 4px;
     }
   `;
 
@@ -60,8 +105,12 @@ class AdminUser extends LitElement {
     this.showDetailsDialog = false;
     this.selectedUser = null;
     this.userLoading = false;
+    this.showCredentialsDialog = false;
+    this.generatedCredentials = null;
+    this.sendingEmail = false;
     this.tabs = [
       { id: 'all', label: 'All Users' },
+      { id: 'customer', label: 'Customers' },
       { id: 'moderator', label: 'Moderator' },
       { id: 'admin', label: 'Admin' },
       { id: 'archived', label: 'Archived' }
@@ -94,7 +143,9 @@ class AdminUser extends LitElement {
   get filteredUsers() {
     let filtered = this.users;
 
-    if (this.activeTab === 'moderator') {
+    if (this.activeTab === 'customer') {
+      filtered = filtered.filter(u => u.role === 'customer');
+    } else if (this.activeTab === 'moderator') {
       filtered = filtered.filter(u => u.role === 'moderator');
     } else if (this.activeTab === 'admin') {
       filtered = filtered.filter(u => u.role === 'admin');
@@ -200,18 +251,37 @@ class AdminUser extends LitElement {
       const name = [firstName, lastName].filter(Boolean).join(' ');
 
       const role = getValue('role');
-      await usersApi.create({
+      const email = getValue('email');
+      const password = getValue('password');
+
+      const payload = {
         name,
-        email: getValue('email'),
-        password: getValue('password'),
+        email,
         phone: getValue('phone') || null,
         role,
         location_id: role === 'moderator' ? (getValue('location_id') || null) : null,
-      });
+      };
 
-      toast.success('User created successfully!');
+      if (password) {
+        payload.password = password;
+      }
+
+      const result = await usersApi.create(payload);
+
       this.showAddDialog = false;
       this.fetchUsers();
+
+      if (result.generated_password) {
+        this.generatedCredentials = {
+          userId: result.user?.id,
+          name,
+          email,
+          password: result.generated_password,
+        };
+        this.showCredentialsDialog = true;
+      } else {
+        toast.success('User created successfully!');
+      }
     } catch (err) {
       console.error('Create user failed:', err);
       const msg = err.errors ? Object.values(err.errors)[0] : err.message;
@@ -223,6 +293,34 @@ class AdminUser extends LitElement {
 
   handleCancelDialog() {
     this.showAddDialog = false;
+  }
+
+  async handleCopyPassword() {
+    if (!this.generatedCredentials?.password) return;
+    try {
+      await navigator.clipboard.writeText(this.generatedCredentials.password);
+      toast.success('Password copied to clipboard!');
+    } catch {
+      toast.error('Failed to copy password');
+    }
+  }
+
+  async handleSendEmail() {
+    if (!this.generatedCredentials) return;
+    this.sendingEmail = true;
+    try {
+      await usersApi.sendWelcome(this.generatedCredentials.userId, this.generatedCredentials.password);
+      toast.success('Welcome email sent successfully!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to send email');
+    } finally {
+      this.sendingEmail = false;
+    }
+  }
+
+  handleCredentialsClose() {
+    this.showCredentialsDialog = false;
+    this.generatedCredentials = null;
   }
 
   render() {
@@ -332,6 +430,53 @@ class AdminUser extends LitElement {
         .closeOnOverlay=${true}
         .detailsData=${this.selectedUser}
         @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showCredentialsDialog}
+        title="Account Created"
+        description="Save these credentials before closing"
+        size="small"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleCredentialsClose}>
+        ${this.generatedCredentials ? html`
+          <div class="credentials-content">
+            <div class="credentials-field">
+              <label>Name</label>
+              <div class="value">${this.generatedCredentials.name}</div>
+            </div>
+            <div class="credentials-field">
+              <label>Email</label>
+              <div class="value">${this.generatedCredentials.email}</div>
+            </div>
+            <div class="credentials-field">
+              <label>Generated Password</label>
+              <div class="value">${this.generatedCredentials.password}</div>
+            </div>
+            <div class="credentials-actions">
+              <app-button type="secondary" size="medium" @click=${() => this.handleCopyPassword()}>
+                Copy Password
+              </app-button>
+              <app-button
+                type="primary"
+                size="medium"
+                @click=${() => this.handleSendEmail()}
+                ?disabled=${this.sendingEmail}>
+                ${this.sendingEmail ? 'Sending...' : 'Send to Email'}
+              </app-button>
+            </div>
+            <div class="credentials-notice">
+              This password will not be shown again after closing this dialog.
+            </div>
+            <div class="credentials-actions" style="justify-content: flex-end;">
+              <app-button type="secondary" size="medium" @click=${this.handleCredentialsClose}>
+                Done
+              </app-button>
+            </div>
+          </div>
+        ` : ''}
       </app-dialog>
     `;
   }

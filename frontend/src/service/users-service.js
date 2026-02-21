@@ -32,6 +32,13 @@ export const users = {
     return res;
   },
 
+  async sendWelcome(userId, password) {
+    return apiRequest(`/users/${userId}/send-welcome`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+  },
+
   async uploadProfilePhoto(userId, file) {
     const formData = new FormData();
     formData.append('photo', file);
