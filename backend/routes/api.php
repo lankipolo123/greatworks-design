@@ -108,8 +108,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/payments/{payment}', [PaymentController::class, 'update']);
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
 
-        // User management (admin & moderator — role hierarchy enforced in controller)
-        Route::apiResource('users', UserController::class);
+        // User management (admin & moderator)
+        Route::apiResource('users', UserController::class)->except(['update']);
+        Route::put('/users/{user}', [UserController::class, 'update'])
+            ->middleware('prevent-admin-role');
 
         // Activity Logs (read-only for moderators, store for logging)
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);

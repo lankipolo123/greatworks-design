@@ -82,13 +82,6 @@ class UserController extends Controller
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
-        // Moderators cannot assign the admin role
-        if ($request->user()->isModerator() && isset($validated['role']) && $validated['role'] === 'admin') {
-            return response()->json([
-                'message' => 'Moderators cannot assign the admin role.',
-            ], 403);
-        }
-
         $user->update($validated);
 
         return response()->json([
