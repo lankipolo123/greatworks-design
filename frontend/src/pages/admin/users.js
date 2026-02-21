@@ -5,6 +5,7 @@ import { users as usersApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
+import { isAdmin } from '/src/service/api-core.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
@@ -63,7 +64,7 @@ class AdminUser extends LitElement {
     this.tabs = [
       { id: 'all', label: 'All Users' },
       { id: 'moderator', label: 'Moderator' },
-      { id: 'admin', label: 'Admin' },
+      ...(isAdmin() ? [{ id: 'admin', label: 'Admin' }] : []),
       { id: 'archived', label: 'Archived' }
     ];
 
