@@ -66,7 +66,7 @@ INSERT INTO users (id, name, email, phone, address, password, role, status, loca
 
 
 -- ============================================
--- BOOKINGS (20 bookings)
+-- BOOKINGS (20 bookings, IDs 1-20)
 -- ============================================
 
 INSERT INTO bookings (user_id, room_id, date, start_time, duration_hours, guests, status, notes, created_at, updated_at) VALUES
@@ -93,7 +93,7 @@ INSERT INTO bookings (user_id, room_id, date, start_time, duration_hours, guests
 
 
 -- ============================================
--- TICKETS (12 tickets)
+-- TICKETS (12 tickets, IDs 1-12)
 -- ============================================
 
 INSERT INTO tickets (user_id, location_id, subject, description, status, priority, created_at, updated_at) VALUES
@@ -112,7 +112,7 @@ INSERT INTO tickets (user_id, location_id, subject, description, status, priorit
 
 
 -- ============================================
--- PAYMENTS (20 payments, linked to bookings 1-20)
+-- PAYMENTS (20 payments, linked to bookings 1-20, IDs 1-20)
 -- ============================================
 
 INSERT INTO payments (user_id, booking_id, amount, currency, method, status, reference_number, created_at, updated_at) VALUES
@@ -136,3 +136,88 @@ INSERT INTO payments (user_id, booking_id, amount, currency, method, status, ref
 (6,  18, 2000.00, 'PHP', 'debit_card',    'pending',   NULL,            '2026-02-21 13:30:00', '2026-02-21 13:30:00'),
 (7,  19, 1000.00, 'PHP', 'gcash',         'pending',   NULL,            '2026-02-21 14:30:00', '2026-02-21 14:30:00'),
 (8,  20, 1800.00, 'PHP', 'credit_card',   'pending',   NULL,            '2026-02-21 15:30:00', '2026-02-21 15:30:00');
+
+
+-- ============================================
+-- ADDITIONAL BOOKINGS (15 more, IDs 21-35)
+-- Gives each customer 4-5 total bookings
+-- (Reservations share this table — no separate inserts needed)
+-- ============================================
+
+INSERT INTO bookings (user_id, room_id, date, start_time, duration_hours, guests, status, notes, created_at, updated_at) VALUES
+-- Carlos Garcia (user 5) — now has 5 total
+(5,  11, '2026-01-08', '10:00:00', 2, 3,  'completed',  'Office tour with potential investors',       '2026-01-05 09:00:00', '2026-01-08 12:00:00'),
+(5,  20, '2026-02-14', '13:00:00', 4, 4,  'completed',  'Project kickoff at Mega Tower',             '2026-02-10 10:00:00', '2026-02-14 17:00:00'),
+-- Patricia Lim (user 6) — now has 5 total
+(6,  4,  '2026-01-12', '08:00:00', 6, 4,  'completed',  'Team onboarding at Private Office 102',     '2026-01-09 11:00:00', '2026-01-12 14:00:00'),
+(6,  25, '2026-02-15', '10:00:00', 3, 6,  'completed',  'Client workshop at Ortigas meeting room',   '2026-02-12 08:00:00', '2026-02-15 13:00:00'),
+-- Miguel Torres (user 7) — now has 5 total
+(7,  6,  '2026-01-18', '14:00:00', 2, 6,  'completed',  'Sales pitch in Meeting Room 1',             '2026-01-15 10:00:00', '2026-01-18 16:00:00'),
+(7,  13, '2026-02-18', '09:00:00', 8, 5,  'completed',  'Full day work session at Business Campus',  '2026-02-15 09:00:00', '2026-02-18 17:00:00'),
+-- Sofia Villanueva (user 8) — now has 5 total
+(8,  5,  '2026-01-22', '09:00:00', 3, 2,  'completed',  'Quiet office for proposal writing',         '2026-01-19 14:00:00', '2026-01-22 12:00:00'),
+(8,  15, '2026-03-10', '10:00:00', 4, 10, 'pending',    'Department quarterly review at boardroom',   '2026-02-21 16:00:00', '2026-02-21 16:00:00'),
+-- Rafael Mendoza (user 9) — now has 5 total
+(9,  3,  '2026-01-28', '10:00:00', 2, 2,  'completed',  'Private office for client call',             '2026-01-25 08:00:00', '2026-01-28 12:00:00'),
+(9,  17, '2026-03-08', '14:00:00', 3, 1,  'pending',    'Huddle room for quick team sync',            '2026-02-21 09:30:00', '2026-02-21 09:30:00'),
+-- Isabella Cruz (user 10) — now has 5 total
+(10, 7,  '2026-01-30', '10:00:00', 3, 12, 'completed',  'Conference room for company update',         '2026-01-27 09:00:00', '2026-01-30 13:00:00'),
+(10, 19, '2026-03-12', '09:00:00', 2, 1,  'pending',    'Virtual office pro orientation',             '2026-02-21 10:30:00', '2026-02-21 10:30:00'),
+-- Diego Aquino (user 11) — now has 4 total
+(11, 22, '2026-01-20', '13:00:00', 5, 3,  'completed',  'Day use office at Corner Suite',             '2026-01-17 11:00:00', '2026-01-20 18:00:00'),
+-- Camille Ramos (user 12) — now has 4 total
+(12, 23, '2026-02-06', '14:00:00', 2, 1,  'cancelled',  'Meeting cancelled — rescheduled to March',   '2026-02-03 09:00:00', '2026-02-05 10:00:00'),
+(12, 6,  '2026-03-15', '10:00:00', 2, 4,  'pending',    'Rescheduled client meeting',                 '2026-02-21 12:30:00', '2026-02-21 12:30:00');
+
+
+-- ============================================
+-- ADDITIONAL TICKETS (8 more)
+-- Gives each customer 2-3 total tickets
+-- ============================================
+
+INSERT INTO tickets (user_id, location_id, subject, description, status, priority, created_at, updated_at) VALUES
+(7,  1, 'Printer jammed on 1st floor',       'The shared printer near Private Office 101 keeps jamming on double-sided prints',      'pending',     'medium', '2026-02-19 09:00:00', '2026-02-19 09:00:00'),
+(8,  3, 'Water dispenser empty',              'The water dispenser on the 10th floor has been empty since Monday',                    'open',        'low',    '2026-02-20 08:30:00', '2026-02-20 08:30:00'),
+(11, 2, 'Booking calendar not syncing',       'My bookings at Business Campus dont show in the calendar sometimes',                  'open',        'high',   '2026-02-21 09:00:00', '2026-02-21 09:00:00'),
+(12, 3, 'Rooftop event space inquiry',        'Looking to reserve the rooftop space for a company event — what are the requirements?','closed',      'low',    '2026-02-14 10:00:00', '2026-02-15 11:00:00'),
+(12, 1, 'Guest WiFi password request',        'Need the guest WiFi credentials for client visitors at GreatWork Studio tomorrow',    'closed',      'medium', '2026-02-18 16:00:00', '2026-02-19 08:00:00'),
+(7,  3, 'Conference hall AV setup request',   'Need AV equipment and mic setup for our seminar at Grand Conference Hall next week',   'in_progress', 'high',   '2026-02-20 14:00:00', '2026-02-21 09:00:00'),
+(9,  2, 'Door lock malfunction',              'The electronic lock on Private Office B1 is not responding to key card',              'open',        'high',   '2026-02-21 11:00:00', '2026-02-21 11:00:00'),
+(8,  1, 'Coffee machine broken',              'The coffee machine in the 2nd floor pantry area is not dispensing hot water',         'in_progress', 'low',    '2026-02-19 10:00:00', '2026-02-20 09:00:00');
+
+
+-- ============================================
+-- ADDITIONAL PAYMENTS (15 more, linked to bookings 21-35)
+-- ============================================
+
+INSERT INTO payments (user_id, booking_id, amount, currency, method, status, reference_number, created_at, updated_at) VALUES
+-- Booking 21: Carlos (room 11, 2h, 400/hr = 800)
+(5,  21, 800.00,  'PHP', 'credit_card',   'completed', 'CC-2026010801', '2026-01-05 09:30:00', '2026-01-05 09:33:00'),
+-- Booking 22: Carlos (room 20, 4h, 500/hr = 2000)
+(5,  22, 2000.00, 'PHP', 'gcash',         'completed', 'GC-2026021401', '2026-02-10 10:30:00', '2026-02-10 10:33:00'),
+-- Booking 23: Patricia (room 4, 6h, 500/hr = 3000)
+(6,  23, 3000.00, 'PHP', 'bank_transfer', 'completed', 'BT-2026011201', '2026-01-09 11:30:00', '2026-01-10 09:00:00'),
+-- Booking 24: Patricia (room 25, 3h, 500/hr = 1500)
+(6,  24, 1500.00, 'PHP', 'gcash',         'completed', 'GC-2026021501', '2026-02-12 08:30:00', '2026-02-12 08:33:00'),
+-- Booking 25: Miguel (room 6, 2h, 400/hr = 800)
+(7,  25, 800.00,  'PHP', 'debit_card',    'completed', 'DC-2026011801', '2026-01-15 10:30:00', '2026-01-15 10:33:00'),
+-- Booking 26: Miguel (room 13, 8h, 700/hr = 5600)
+(7,  26, 5600.00, 'PHP', 'bank_transfer', 'completed', 'BT-2026021801', '2026-02-15 09:30:00', '2026-02-16 10:00:00'),
+-- Booking 27: Sofia (room 5, 3h, 250/hr = 750)
+(8,  27, 750.00,  'PHP', 'cash',          'completed', 'CA-2026012201', '2026-01-19 14:30:00', '2026-01-22 09:00:00'),
+-- Booking 28: Sofia (room 15, 4h, 600/hr = 2400)
+(8,  28, 2400.00, 'PHP', 'credit_card',   'pending',   NULL,            '2026-02-21 16:30:00', '2026-02-21 16:30:00'),
+-- Booking 29: Rafael (room 3, 2h, 350/hr = 700)
+(9,  29, 700.00,  'PHP', 'gcash',         'completed', 'GC-2026012801', '2026-01-25 08:30:00', '2026-01-25 08:33:00'),
+-- Booking 30: Rafael (room 17, 3h, 300/hr = 900)
+(9,  30, 900.00,  'PHP', 'debit_card',    'pending',   NULL,            '2026-02-21 09:45:00', '2026-02-21 09:45:00'),
+-- Booking 31: Isabella (room 7, 3h, 800/hr = 2400)
+(10, 31, 2400.00, 'PHP', 'bank_transfer', 'completed', 'BT-2026013001', '2026-01-27 09:30:00', '2026-01-28 11:00:00'),
+-- Booking 32: Isabella (room 19, 2h, 1000/hr = 2000)
+(10, 32, 2000.00, 'PHP', 'gcash',         'pending',   NULL,            '2026-02-21 10:45:00', '2026-02-21 10:45:00'),
+-- Booking 33: Diego (room 22, 5h, 550/hr = 2750)
+(11, 33, 2750.00, 'PHP', 'credit_card',   'completed', 'CC-2026012001', '2026-01-17 11:30:00', '2026-01-17 11:33:00'),
+-- Booking 34: Camille (room 23, 2h, 1500/hr = 3000) — cancelled/refunded
+(12, 34, 3000.00, 'PHP', 'gcash',         'refunded',  'GC-2026020601', '2026-02-03 09:30:00', '2026-02-05 11:00:00'),
+-- Booking 35: Camille (room 6, 2h, 400/hr = 800)
+(12, 35, 800.00,  'PHP', 'cash',          'pending',   NULL,            '2026-02-21 12:45:00', '2026-02-21 12:45:00');
