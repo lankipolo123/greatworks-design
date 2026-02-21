@@ -34,8 +34,13 @@ class BookingController extends Controller
             $query->where('room_id', $request->room_id);
         }
 
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
+        // Admin/moderator can filter by any user_id; customers only see their own
+        if ($request->user()->hasRole(['admin', 'moderator'])) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } else {
+            $query->where('user_id', $request->user()->id);
         }
 
         $bookings = $query->orderBy('date', 'desc')
@@ -91,8 +96,12 @@ class BookingController extends Controller
         ], 201);
     }
 
-    public function show(Booking $booking): JsonResponse
+    public function show(Request $request, Booking $booking): JsonResponse
     {
+        if ($request->user()->id !== $booking->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         return response()->json($booking->load(['user', 'room', 'payment']));
     }
 

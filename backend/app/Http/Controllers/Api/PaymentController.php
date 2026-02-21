@@ -32,8 +32,13 @@ class PaymentController extends Controller
             $query->where('method', $request->method);
         }
 
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
+        // Admin/moderator can filter by any user_id; customers only see their own
+        if ($request->user()->hasRole(['admin', 'moderator'])) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } else {
+            $query->where('user_id', $request->user()->id);
         }
 
         $payments = $query->orderBy('created_at', 'desc')
@@ -62,8 +67,12 @@ class PaymentController extends Controller
         ], 201);
     }
 
-    public function show(Payment $payment): JsonResponse
+    public function show(Request $request, Payment $payment): JsonResponse
     {
+        if ($request->user()->id !== $payment->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         return response()->json($payment->load(['user', 'booking']));
     }
 

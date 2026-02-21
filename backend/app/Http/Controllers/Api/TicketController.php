@@ -32,8 +32,13 @@ class TicketController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
+        // Admin/moderator can filter by any user_id; customers only see their own
+        if ($request->user()->hasRole(['admin', 'moderator'])) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } else {
+            $query->where('user_id', $request->user()->id);
         }
 
         $tickets = $query->orderBy('created_at', 'desc')
@@ -60,8 +65,12 @@ class TicketController extends Controller
         ], 201);
     }
 
-    public function show(Ticket $ticket): JsonResponse
+    public function show(Request $request, Ticket $ticket): JsonResponse
     {
+        if ($request->user()->id !== $ticket->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         return response()->json($ticket->load('user'));
     }
 

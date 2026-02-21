@@ -104,6 +104,10 @@ class UserController extends Controller
      */
     public function uploadProfilePhoto(Request $request, User $user, CloudinaryService $cloudinaryService): JsonResponse
     {
+        if ($request->user()->id !== $user->id && !$request->user()->hasRole(['admin', 'moderator'])) {
+            return response()->json(['message' => 'You can only manage your own profile photo.'], 403);
+        }
+
         try {
             \Log::info('=== PROFILE PHOTO UPLOAD DEBUG START ===');
             \Log::info('User ID: ' . $user->id);
@@ -184,8 +188,12 @@ class UserController extends Controller
     /**
      * Delete user profile photo
      */
-    public function deleteProfilePhoto(User $user): JsonResponse
+    public function deleteProfilePhoto(Request $request, User $user): JsonResponse
     {
+        if ($request->user()->id !== $user->id && !$request->user()->hasRole(['admin', 'moderator'])) {
+            return response()->json(['message' => 'You can only manage your own profile photo.'], 403);
+        }
+
         if (!$user->profile_photo) {
             return response()->json([
                 'message' => 'No profile photo to delete',

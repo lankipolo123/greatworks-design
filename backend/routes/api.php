@@ -75,17 +75,15 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin,moderator')->group(function () {
-        // Location management (update/delete only — creation is admin-only)
+        // Location management (update only — creation & deletion are admin-only)
         Route::put('/locations/{location}', [LocationController::class, 'update']);
-        Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
 
         // Location image management
         Route::post('/locations/{location}/image', [LocationController::class, 'uploadImage']);
         Route::delete('/locations/{location}/image', [LocationController::class, 'deleteImage']);
 
-        // Room management (update/delete only — creation is admin-only)
+        // Room management (update only — creation & deletion are admin-only)
         Route::put('/rooms/{room}', [RoomController::class, 'update']);
-        Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
         // Room image management
         Route::post('/rooms/{room}/image', [RoomController::class, 'uploadImage']);
@@ -103,20 +101,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/tickets/{ticket}', [TicketController::class, 'update']);
         Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy']);
 
-        // Payment management
-        Route::post('/payments', [PaymentController::class, 'store']);
+        // Payment management (read/update only — creation & deletion are admin-only)
         Route::put('/payments/{payment}', [PaymentController::class, 'update']);
-        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
 
         // User management (admin & moderator)
         Route::apiResource('users', UserController::class)->except(['update']);
         Route::put('/users/{user}', [UserController::class, 'update'])
             ->middleware('prevent-admin-role');
 
-        // Activity Logs (read-only for moderators, store for logging)
+        // Activity Logs (read-only for moderators)
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
         Route::get('/activity-logs/{activityLog}', [ActivityLogController::class, 'show']);
-        Route::post('/activity-logs', [ActivityLogController::class, 'store']);
     });
 
     /*
@@ -125,10 +120,19 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin')->group(function () {
-        // Location creation (admin only)
+        // Location creation & deletion (admin only)
         Route::post('/locations', [LocationController::class, 'store']);
+        Route::delete('/locations/{location}', [LocationController::class, 'destroy']);
 
-        // Room creation (admin only)
+        // Room creation & deletion (admin only)
         Route::post('/rooms', [RoomController::class, 'store']);
+        Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
+
+        // Payment creation & deletion (admin only)
+        Route::post('/payments', [PaymentController::class, 'store']);
+        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
+
+        // Activity log creation (admin only — prevents audit trail manipulation)
+        Route::post('/activity-logs', [ActivityLogController::class, 'store']);
     });
 });
