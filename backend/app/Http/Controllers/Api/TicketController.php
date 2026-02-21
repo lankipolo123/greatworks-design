@@ -32,8 +32,14 @@ class TicketController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        // Admin/moderator can filter by any user_id; customers only see their own
-        if ($request->user()->hasRole(['admin', 'moderator'])) {
+        // Scope by role
+        if ($request->user()->isAdmin()) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } elseif ($request->user()->isModerator()) {
+            // Moderators only see tickets tagged with their location
+            $query->where('location_id', $request->user()->location_id);
             if ($request->has('user_id')) {
                 $query->where('user_id', $request->user_id);
             }
@@ -51,6 +57,7 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
+            'location_id' => 'nullable|exists:locations,id',
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'sometimes|in:open,pending,in_progress,closed',
@@ -67,7 +74,13 @@ class TicketController extends Controller
 
     public function show(Request $request, Ticket $ticket): JsonResponse
     {
-        if ($request->user()->id !== $ticket->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+        if ($request->user()->isAdmin()) {
+            // Admin can view any ticket
+        } elseif ($request->user()->isModerator()) {
+            if ($ticket->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        } elseif ($request->user()->id !== $ticket->user_id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
@@ -76,6 +89,13 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket): JsonResponse
     {
+        // Moderators can only update tickets at their location
+        if ($request->user()->isModerator()) {
+            if ($ticket->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $validated = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
@@ -91,8 +111,15 @@ class TicketController extends Controller
         ]);
     }
 
-    public function destroy(Ticket $ticket): JsonResponse
+    public function destroy(Request $request, Ticket $ticket): JsonResponse
     {
+        // Moderators can only delete tickets at their location
+        if ($request->user()->isModerator()) {
+            if ($ticket->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $ticket->delete();
 
         return response()->json([

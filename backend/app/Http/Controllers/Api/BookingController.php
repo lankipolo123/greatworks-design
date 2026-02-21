@@ -34,8 +34,16 @@ class BookingController extends Controller
             $query->where('room_id', $request->room_id);
         }
 
-        // Admin/moderator can filter by any user_id; customers only see their own
-        if ($request->user()->hasRole(['admin', 'moderator'])) {
+        // Scope by role
+        if ($request->user()->isAdmin()) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } elseif ($request->user()->isModerator()) {
+            // Moderators only see bookings for rooms at their location
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('location_id', $request->user()->location_id);
+            });
             if ($request->has('user_id')) {
                 $query->where('user_id', $request->user_id);
             }
@@ -98,7 +106,14 @@ class BookingController extends Controller
 
     public function show(Request $request, Booking $booking): JsonResponse
     {
-        if ($request->user()->id !== $booking->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+        if ($request->user()->isAdmin()) {
+            // Admin can view any booking
+        } elseif ($request->user()->isModerator()) {
+            $booking->load('room');
+            if ($booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        } elseif ($request->user()->id !== $booking->user_id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
@@ -107,6 +122,14 @@ class BookingController extends Controller
 
     public function update(Request $request, Booking $booking): JsonResponse
     {
+        // Moderators can only update bookings at their location
+        if ($request->user()->isModerator()) {
+            $booking->load('room');
+            if ($booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $validated = $request->validate([
             'room_id' => 'sometimes|exists:rooms,id',
             'date' => 'sometimes|date',
@@ -170,8 +193,16 @@ class BookingController extends Controller
         ]);
     }
 
-    public function destroy(Booking $booking): JsonResponse
+    public function destroy(Request $request, Booking $booking): JsonResponse
     {
+        // Moderators can only delete bookings at their location
+        if ($request->user()->isModerator()) {
+            $booking->load('room');
+            if ($booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $booking->delete();
 
         return response()->json([
@@ -182,6 +213,13 @@ class BookingController extends Controller
     public function calendar(Request $request): JsonResponse
     {
         $query = Booking::with(['user', 'room']);
+
+        // Moderators only see calendar for their location's rooms
+        if ($request->user()->isModerator()) {
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('location_id', $request->user()->location_id);
+            });
+        }
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('date', [$request->start_date, $request->end_date]);

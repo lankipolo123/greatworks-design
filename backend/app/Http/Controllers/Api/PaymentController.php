@@ -32,8 +32,16 @@ class PaymentController extends Controller
             $query->where('method', $request->method);
         }
 
-        // Admin/moderator can filter by any user_id; customers only see their own
-        if ($request->user()->hasRole(['admin', 'moderator'])) {
+        // Scope by role
+        if ($request->user()->isAdmin()) {
+            if ($request->has('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } elseif ($request->user()->isModerator()) {
+            // Moderators only see payments for bookings at their location
+            $query->whereHas('booking.room', function ($q) use ($request) {
+                $q->where('location_id', $request->user()->location_id);
+            });
             if ($request->has('user_id')) {
                 $query->where('user_id', $request->user_id);
             }
@@ -69,7 +77,14 @@ class PaymentController extends Controller
 
     public function show(Request $request, Payment $payment): JsonResponse
     {
-        if ($request->user()->id !== $payment->user_id && !$request->user()->hasRole(['admin', 'moderator'])) {
+        if ($request->user()->isAdmin()) {
+            // Admin can view any payment
+        } elseif ($request->user()->isModerator()) {
+            $payment->load('booking.room');
+            if (!$payment->booking || $payment->booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        } elseif ($request->user()->id !== $payment->user_id) {
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
@@ -78,6 +93,14 @@ class PaymentController extends Controller
 
     public function update(Request $request, Payment $payment): JsonResponse
     {
+        // Moderators can only update payments for bookings at their location
+        if ($request->user()->isModerator()) {
+            $payment->load('booking.room');
+            if (!$payment->booking || $payment->booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $validated = $request->validate([
             'status' => 'sometimes|in:pending,completed,failed,refunded',
             'reference_number' => 'nullable|string|max:100',
@@ -91,8 +114,16 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function destroy(Payment $payment): JsonResponse
+    public function destroy(Request $request, Payment $payment): JsonResponse
     {
+        // Moderators can only delete payments for bookings at their location
+        if ($request->user()->isModerator()) {
+            $payment->load('booking.room');
+            if (!$payment->booking || $payment->booking->room->location_id !== $request->user()->location_id) {
+                return response()->json(['message' => 'Unauthorized.'], 403);
+            }
+        }
+
         $payment->delete();
 
         return response()->json([
