@@ -3,8 +3,6 @@
 -- All user passwords: password123
 -- ============================================
 
-USE greatwork_db;
-
 
 -- ============================================
 -- ROOMS (27 rooms, no co_working)
