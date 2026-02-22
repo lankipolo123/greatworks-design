@@ -11,6 +11,8 @@ import '@/components/search-bar.js';
 import '@/components/app-button.js';
 import '@/components/app-dialog.js';
 import '@/components/add-user-form.js';
+import '@/components/users-avatar.js';
+import '@/components/badge-component.js';
 import '@/layouts/header-controls.js';
 import '@/layouts/tabs-wrapper.js';
 import '@/layouts/search-wrapper.js';
@@ -90,6 +92,64 @@ class AdminUser extends LitElement {
       color: #888;
       font-style: italic;
       margin-top: 4px;
+    }
+
+    .user-profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .user-profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .user-profile-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .user-profile-email {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .user-profile-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .user-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .user-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .user-detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .user-detail-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a1a1a;
     }
   `;
 
@@ -323,6 +383,55 @@ class AdminUser extends LitElement {
     this.generatedCredentials = null;
   }
 
+  _renderUserDetails() {
+    if (!this.selectedUser) return '';
+    const u = this.selectedUser;
+
+    const roleVariant = u.role?.toLowerCase() === 'admin' ? 'danger' :
+      u.role?.toLowerCase() === 'moderator' ? 'info' : 'technical';
+    const statusVariant = u.status?.toLowerCase() === 'active' ? 'success' :
+      u.status?.toLowerCase() === 'inactive' ? 'inactive' :
+        u.status?.toLowerCase() === 'archived' ? 'archived' :
+          u.status?.toLowerCase() === 'pending' ? 'pending' : 'primary';
+
+    return html`
+      <div class="user-profile-header">
+        <user-avatar
+          size="64"
+          .src=${u.profile_photo || ''}
+          .name=${u.name || ''}
+          .gender=${u.gender || ''}>
+        </user-avatar>
+        <div class="user-profile-info">
+          <div class="user-profile-name">${u.name}</div>
+          <div class="user-profile-email">${u.email}</div>
+          <div class="user-profile-badges">
+            <badge-component variant="${roleVariant}" size="small">${u.role}</badge-component>
+            <badge-component variant="${statusVariant}" size="small">${u.status}</badge-component>
+          </div>
+        </div>
+      </div>
+      <div class="user-details-grid">
+        <div class="user-detail-item">
+          <span class="user-detail-label">User ID</span>
+          <span class="user-detail-value">${u.id}</span>
+        </div>
+        <div class="user-detail-item">
+          <span class="user-detail-label">Phone</span>
+          <span class="user-detail-value">${u.phone || '—'}</span>
+        </div>
+        <div class="user-detail-item">
+          <span class="user-detail-label">Gender</span>
+          <span class="user-detail-value">${u.gender || '—'}</span>
+        </div>
+        <div class="user-detail-item">
+          <span class="user-detail-label">Joined</span>
+          <span class="user-detail-value">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <content-card mode="4">
@@ -423,13 +532,12 @@ class AdminUser extends LitElement {
       <app-dialog
         .isOpen=${this.showDetailsDialog}
         title="User Details"
-        mode="details"
         size="medium"
         styleMode="compact"
         .hideFooter=${true}
         .closeOnOverlay=${true}
-        .detailsData=${this.selectedUser}
         @dialog-close=${this.handleDialogClose}>
+        ${this._renderUserDetails()}
       </app-dialog>
 
       <app-dialog

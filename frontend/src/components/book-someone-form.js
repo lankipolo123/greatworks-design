@@ -6,6 +6,17 @@ import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 
 class BookSomeoneForm extends LitElement {
 
+  static properties = {
+    booking: { type: Object },
+    roomTypes: { type: Array }
+  };
+
+  constructor() {
+    super();
+    this.booking = null;
+    this.roomTypes = null;
+  }
+
   static styles = css`
     :host {
       display: block;
@@ -64,6 +75,9 @@ class BookSomeoneForm extends LitElement {
   `;
 
   render() {
+    const b = this.booking;
+    const types = this.roomTypes || ROOM_TYPES;
+
     return html`
       <form id="book-form">
         <div class="form-grid">
@@ -73,6 +87,7 @@ class BookSomeoneForm extends LitElement {
             name="userName"
             placeholder="Enter name"
             variant="compact"
+            .value=${b?.userName || ''}
             ?required=${true}>
           </input-field>
 
@@ -82,6 +97,7 @@ class BookSomeoneForm extends LitElement {
             name="email"
             placeholder="Enter email"
             variant="compact"
+            .value=${b?.userEmail || ''}
             ?required=${true}>
           </input-field>
 
@@ -91,6 +107,7 @@ class BookSomeoneForm extends LitElement {
             name="phone"
             placeholder="Enter phone"
             variant="compact"
+            .value=${b?.phone || ''}
             ?required=${true}>
           </input-field>
 
@@ -99,6 +116,7 @@ class BookSomeoneForm extends LitElement {
             type="date"
             name="date"
             variant="compact"
+            .value=${b?.date || ''}
             ?required=${true}>
           </input-field>
 
@@ -107,6 +125,7 @@ class BookSomeoneForm extends LitElement {
             type="time"
             name="time"
             variant="compact"
+            .value=${b?.startTime || b?.time || ''}
             ?required=${true}>
           </input-field>
 
@@ -114,7 +133,7 @@ class BookSomeoneForm extends LitElement {
             label="Duration (hrs)"
             type="number"
             name="duration"
-            value="1"
+            .value=${b?.durationHours != null ? String(b.durationHours) : '1'}
             variant="compact"
             ?required=${true}>
           </input-field>
@@ -123,8 +142,8 @@ class BookSomeoneForm extends LitElement {
             <label>Room Type *</label>
             <select name="roomType" required>
               <option value="">Select type</option>
-              ${ROOM_TYPES.map(rt => html`
-                <option value="${rt.value}">${rt.label}</option>
+              ${types.map(rt => html`
+                <option value="${rt.value}" ?selected=${b?.roomType === rt.value}>${rt.label}</option>
               `)}
             </select>
           </div>
@@ -133,11 +152,14 @@ class BookSomeoneForm extends LitElement {
             label="Guests"
             type="number"
             name="guests"
-            value="1"
+            .value=${b?.guests != null ? String(b.guests) : '1'}
             variant="compact">
           </input-field>
 
-      
+          <div class="form-group full">
+            <label>Notes</label>
+            <textarea name="notes" placeholder="Optional notes" rows="2">${b?.notes || ''}</textarea>
+          </div>
         </div>
 
         <div class="form-actions">

@@ -597,7 +597,7 @@ class AdminReservation extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form>
+        <book-someone-form .booking=${this.selectedReservation}>
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel
           </app-button>

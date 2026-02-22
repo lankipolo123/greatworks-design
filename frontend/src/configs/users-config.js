@@ -1,6 +1,7 @@
 // src/configs/users-config.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import '/src/components/users-avatar.js';
 
 export const usersTableConfig = {
     columns: [
@@ -10,7 +11,18 @@ export const usersTableConfig = {
         },
         {
             key: 'name',
-            label: 'Name'
+            label: 'Name',
+            render: (value, row) => html`
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <user-avatar
+                        size="28"
+                        .src=${row.profile_photo || ''}
+                        .name=${value || ''}
+                        .gender=${row.gender || ''}>
+                    </user-avatar>
+                    <span>${value}</span>
+                </div>
+            `
         },
         {
             key: 'email',
