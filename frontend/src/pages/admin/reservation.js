@@ -36,7 +36,8 @@ class AdminReservation extends LitElement {
     selectedReservation: { type: Object },
     reservationLoading: { type: Boolean },
     editLoading: { type: Boolean },
-    deleteLoading: { type: Boolean }
+    deleteLoading: { type: Boolean },
+    _loaded: { type: Boolean, state: true }
   };
 
   static styles = css`
@@ -115,6 +116,27 @@ class AdminReservation extends LitElement {
       gap: 10px;
       margin-top: 1rem;
     }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e0e0e0;
+      border-top-color: #ffb300;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `;
 
   constructor() {
@@ -133,6 +155,7 @@ class AdminReservation extends LitElement {
     this.reservationLoading = false;
     this.editLoading = false;
     this.deleteLoading = false;
+    this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Upcoming' },
@@ -165,6 +188,8 @@ class AdminReservation extends LitElement {
     } catch (e) {
       console.error('Failed to load reservations:', e.message || e);
       this.reservation = [];
+    } finally {
+      this._loaded = true;
     }
   }
 
@@ -467,6 +492,10 @@ class AdminReservation extends LitElement {
   }
 
   render() {
+    if (!this._loaded) {
+      return html`<div class="page-loader"><div class="spinner"></div></div>`;
+    }
+
     return html`
       <content-card mode="4">
         <header-controls>

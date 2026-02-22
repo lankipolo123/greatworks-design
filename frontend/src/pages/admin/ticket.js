@@ -27,7 +27,8 @@ class AdminTicket extends LitElement {
     searchValue: { type: String },
     showExportDialog: { type: Boolean },
     showTicketDialog: { type: Boolean },
-    selectedTicket: { type: Object }
+    selectedTicket: { type: Object },
+    _loaded: { type: Boolean, state: true }
   };
 
   static styles = css`
@@ -44,6 +45,27 @@ class AdminTicket extends LitElement {
       padding: 1rem;
       border: 1.25px solid rgba(45, 43, 43, 0.27);
     }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e0e0e0;
+      border-top-color: #ffb300;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `;
 
   constructor() {
@@ -56,6 +78,7 @@ class AdminTicket extends LitElement {
     this.showExportDialog = false;
     this.showTicketDialog = false;
     this.selectedTicket = null;
+    this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'open', label: 'Open' },
@@ -84,6 +107,8 @@ class AdminTicket extends LitElement {
       this.updatePagination();
     } catch (e) {
       console.error('Failed to fetch tickets:', e);
+    } finally {
+      this._loaded = true;
     }
   }
 
@@ -189,6 +214,10 @@ class AdminTicket extends LitElement {
   }
 
   render() {
+    if (!this._loaded) {
+      return html`<div class="page-loader"><div class="spinner"></div></div>`;
+    }
+
     return html`
       <content-card mode="4">
         <header-controls>

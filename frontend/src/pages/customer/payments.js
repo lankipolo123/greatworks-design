@@ -20,6 +20,7 @@ class CustomerPayments extends LitElement {
     searchValue: { type: String },
     showDetailsDialog: { type: Boolean },
     selectedPayment: { type: Object },
+    _loaded: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -36,6 +37,27 @@ class CustomerPayments extends LitElement {
       padding: 1rem;
       border: 1.25px solid rgba(45, 43, 43, 0.27);
     }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e0e0e0;
+      border-top-color: #ffb300;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `;
 
   constructor() {
@@ -46,6 +68,7 @@ class CustomerPayments extends LitElement {
     this.searchValue = '';
     this.showDetailsDialog = false;
     this.selectedPayment = null;
+    this._loaded = false;
     this.handlePageChange = this.handlePageChange.bind(this);
   }
 
@@ -67,6 +90,8 @@ class CustomerPayments extends LitElement {
       this.updatePagination();
     } catch (e) {
       console.error('Failed to fetch payments:', e);
+    } finally {
+      this._loaded = true;
     }
   }
 
@@ -124,6 +149,10 @@ class CustomerPayments extends LitElement {
   }
 
   render() {
+    if (!this._loaded) {
+      return html`<div class="page-loader"><div class="spinner"></div></div>`;
+    }
+
     return html`
       <content-card mode="4">
         <header-controls mode="2">

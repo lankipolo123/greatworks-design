@@ -34,6 +34,7 @@ class CustomerReservation extends LitElement {
     searchValue: { type: String },
     showDetailsDialog: { type: Boolean },
     selectedReservation: { type: Object },
+    _loaded: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -80,6 +81,27 @@ class CustomerReservation extends LitElement {
       font-weight: 500;
       color: #1a1a1a;
     }
+
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e0e0e0;
+      border-top-color: #ffb300;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `;
 
   constructor() {
@@ -91,6 +113,7 @@ class CustomerReservation extends LitElement {
     this.searchValue = '';
     this.showDetailsDialog = false;
     this.selectedReservation = null;
+    this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Upcoming' },
@@ -123,6 +146,8 @@ class CustomerReservation extends LitElement {
     } catch (e) {
       console.error('Failed to load reservations:', e.message || e);
       this.reservation = [];
+    } finally {
+      this._loaded = true;
     }
   }
 
@@ -251,6 +276,10 @@ class CustomerReservation extends LitElement {
   }
 
   render() {
+    if (!this._loaded) {
+      return html`<div class="page-loader"><div class="spinner"></div></div>`;
+    }
+
     return html`
       <content-card mode="4">
         <header-controls>

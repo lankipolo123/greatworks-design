@@ -35,6 +35,7 @@ class CustomerBooking extends LitElement {
     locationsList: { type: Array },
     selectedLocation: { type: String },
     selectedBranch: { type: String },
+    _loaded: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -213,6 +214,27 @@ class CustomerBooking extends LitElement {
       background: #eee;
     }
 
+    .page-loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #e0e0e0;
+      border-top-color: #ffb300;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @media (max-width: 1024px) {
       content-card {
         flex-direction: column;
@@ -250,6 +272,7 @@ class CustomerBooking extends LitElement {
     this.slotInfo = null;
     this.slotLoading = false;
     this._lastBookTime = 0;
+    this._loaded = false;
 
     this._loadBookings();
     this._loadRooms();
@@ -283,6 +306,8 @@ class CustomerBooking extends LitElement {
     } catch (e) {
       console.error('Failed to load bookings:', e.message || e);
       this.allBookings = [];
+    } finally {
+      this._loaded = true;
     }
   }
 
@@ -637,6 +662,10 @@ class CustomerBooking extends LitElement {
   }
 
   render() {
+    if (!this._loaded) {
+      return html`<div class="page-loader"><div class="spinner"></div></div>`;
+    }
+
     return html`
       <content-card mode="3">
         <calendar-section>
