@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PragmaRX\Google2FA\Google2FA;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 
 class TwoFactorController extends Controller
 {
@@ -45,9 +49,19 @@ class TwoFactorController extends Controller
             $secret
         );
 
+        // Generate QR code as SVG data URL
+        $renderer = new ImageRenderer(
+            new RendererStyle(200),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+        $svg = $writer->writeString($otpauthUrl);
+        $qrCodeDataUrl = 'data:image/svg+xml;base64,' . base64_encode($svg);
+
         return response()->json([
             'secret' => $secret,
             'otpauth_url' => $otpauthUrl,
+            'qr_code_data_url' => $qrCodeDataUrl,
         ]);
     }
 

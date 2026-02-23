@@ -22,7 +22,7 @@ export class ProfileHeader extends LitElement {
     // 2FA setup state
     _2faStep: { type: String, state: true },       // null | 'qr' | 'verify' | 'backup' | 'disable'
     _2faSecret: { type: String, state: true },
-    _2faOtpauthUrl: { type: String, state: true },
+    _2faQrDataUrl: { type: String, state: true },
     _2faCode: { type: String, state: true },
     _2faBackupCodes: { type: Array, state: true },
     _2faPassword: { type: String, state: true },
@@ -378,7 +378,7 @@ export class ProfileHeader extends LitElement {
     this.twoFactorEnabled = false;
     this._2faStep = null;
     this._2faSecret = '';
-    this._2faOtpauthUrl = '';
+    this._2faQrDataUrl = '';
     this._2faCode = '';
     this._2faBackupCodes = [];
     this._2faPassword = '';
@@ -453,7 +453,7 @@ export class ProfileHeader extends LitElement {
     try {
       const data = await auth.setup2FA();
       this._2faSecret = data.secret;
-      this._2faOtpauthUrl = data.otpauth_url;
+      this._2faQrDataUrl = data.qr_code_data_url;
       this._2faStep = 'qr';
     } catch (e) {
       this._2faError = e.message || 'Failed to start 2FA setup';
@@ -536,7 +536,7 @@ export class ProfileHeader extends LitElement {
     this.show2FADialog = false;
     this._2faStep = null;
     this._2faSecret = '';
-    this._2faOtpauthUrl = '';
+    this._2faQrDataUrl = '';
     this._2faCode = '';
     this._2faBackupCodes = [];
     this._2faPassword = '';
@@ -556,13 +556,12 @@ export class ProfileHeader extends LitElement {
     }
 
     if (this._2faStep === 'qr') {
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(this._2faOtpauthUrl)}`;
       return html`
         <div class="twofa-content">
           <div class="twofa-step-title">Step 1: Scan QR Code</div>
           <div class="twofa-desc">Scan this with your authenticator app (Google Authenticator, Authy, etc.)</div>
           <div class="qr-box">
-            <img src="${qrUrl}" alt="2FA QR Code" width="180" height="180" />
+            <img src="${this._2faQrDataUrl}" alt="2FA QR Code" width="180" height="180" />
           </div>
           <div class="twofa-desc">Can't scan? Enter this key manually:</div>
           <div class="secret-key-box" @click=${this._copySecret}>${this._2faSecret}</div>
