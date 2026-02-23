@@ -83,6 +83,11 @@ class User extends Authenticatable
         return $this->role === 'customer';
     }
 
+    public function isTemporary(): bool
+    {
+        return $this->role === 'temporary';
+    }
+
     public function hasRole(string|array $roles): bool
     {
         if (is_string($roles)) {

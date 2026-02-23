@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['customer', 'admin', 'moderator'])->default('customer');
+            $table->enum('role', ['customer', 'admin', 'moderator', 'temporary'])->default('customer');
             $table->enum('status', ['active', 'inactive', 'archived'])->default('active');
             $table->string('profile_photo')->nullable();
             $table->rememberToken();

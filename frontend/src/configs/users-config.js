@@ -34,7 +34,8 @@ export const usersTableConfig = {
             render: (value) => {
                 const variant = value?.toLowerCase() === 'admin' ? 'danger' :
                     value?.toLowerCase() === 'moderator' ? 'info' :
-                        value?.toLowerCase() === 'customer' ? 'technical' : 'technical';
+                        value?.toLowerCase() === 'temporary' ? 'warning' :
+                            value?.toLowerCase() === 'customer' ? 'technical' : 'technical';
                 return html`
                     <badge-component variant="${variant}" size="small">
                         ${value}
@@ -65,6 +66,7 @@ export const usersTableConfig = {
     ],
 
     actions: [
-        { key: 'view', label: 'View', icon: 'visibility' }
+        { key: 'view', label: 'View', icon: 'visibility' },
+        { key: 'delete', label: 'Remove', icon: 'delete' }
     ]
 };

@@ -47,29 +47,21 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:customer,moderator,admin',
+            'role' => 'required|in:customer,moderator,admin,temporary',
             'location_id' => 'nullable|exists:locations,id',
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
-        // Moderators can only create moderator and customer users
+        // Moderators can only create moderator, customer, and temporary users
         if ($request->user()->isModerator() && $validated['role'] === 'admin') {
             return response()->json([
                 'message' => 'Moderators cannot create admin users.',
             ], 403);
         }
 
-        // For customer role, password is required
-        if ($validated['role'] === 'customer' && empty($validated['password'])) {
-            return response()->json([
-                'message' => 'The password field is required for customer accounts.',
-                'errors' => ['password' => ['The password field is required for customer accounts.']],
-            ], 422);
-        }
-
-        // Auto-generate password for admin/moderator if not provided
+        // Auto-generate password for all roles if not provided
         $generatedPassword = null;
-        if (empty($validated['password']) && in_array($validated['role'], ['admin', 'moderator'])) {
+        if (empty($validated['password'])) {
             $generatedPassword = Str::random(16);
             $validated['password'] = $generatedPassword;
         }
@@ -114,7 +106,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
-            'role' => 'sometimes|in:customer,moderator,admin',
+            'role' => 'sometimes|in:customer,moderator,admin,temporary',
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
@@ -126,8 +118,25 @@ class UserController extends Controller
         ]);
     }
 
-    public function destroy(User $user): JsonResponse
+    public function destroy(Request $request, User $user): JsonResponse
     {
+        $currentUser = $request->user();
+
+        // Prevent deleting yourself
+        if ($currentUser->id === $user->id) {
+            return response()->json([
+                'message' => 'You cannot delete your own account from here.',
+            ], 403);
+        }
+
+        // Moderators can only delete customers and temporary accounts
+        if ($currentUser->isModerator() && !in_array($user->role, ['customer', 'temporary'])) {
+            return response()->json([
+                'message' => 'Moderators can only remove customer and temporary accounts.',
+            ], 403);
+        }
+
+        $user->tokens()->delete();
         $user->delete();
 
         return response()->json([

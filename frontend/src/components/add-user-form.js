@@ -131,20 +131,9 @@ class AddUserForm extends LitElement {
             ?required=${true}>
           </input-field>
 
-          ${this.selectedRole === '' || this.selectedRole === 'customer' ? html`
-            <input-field
-              label="Password"
-              type="password"
-              name="password"
-              placeholder="Min 8 characters"
-              variant="compact"
-              ?required=${true}>
-            </input-field>
-          ` : html`
-            <div class="auto-password-notice">
-              A secure password will be auto-generated for this account.
-            </div>
-          `}
+          <div class="auto-password-notice">
+            A secure password will be auto-generated for this account.
+          </div>
 
           <div class="form-row">
             <input-field
@@ -161,6 +150,7 @@ class AddUserForm extends LitElement {
                 <option value="">Select role</option>
                 <option value="customer">Customer</option>
                 <option value="moderator">Moderator</option>
+                <option value="temporary">Temporary</option>
                 ${isAdmin() ? html`<option value="admin">Admin</option>` : ''}
               </select>
             </div>

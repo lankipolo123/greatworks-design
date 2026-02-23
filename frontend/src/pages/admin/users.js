@@ -38,6 +38,9 @@ class AdminUser extends LitElement {
     showCredentialsDialog: { type: Boolean },
     generatedCredentials: { type: Object },
     sendingEmail: { type: Boolean },
+    showDeleteDialog: { type: Boolean },
+    deleteTarget: { type: Object },
+    deleting: { type: Boolean },
     _loaded: { type: Boolean, state: true }
   };
 
@@ -190,12 +193,16 @@ class AdminUser extends LitElement {
     this.showCredentialsDialog = false;
     this.generatedCredentials = null;
     this.sendingEmail = false;
+    this.showDeleteDialog = false;
+    this.deleteTarget = null;
+    this.deleting = false;
     this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All Users' },
       { id: 'customer', label: 'Customers' },
       { id: 'moderator', label: 'Moderator' },
       { id: 'admin', label: 'Admin' },
+      { id: 'temporary', label: 'Temporary' },
       { id: 'archived', label: 'Archived' }
     ];
 
@@ -234,6 +241,8 @@ class AdminUser extends LitElement {
       filtered = filtered.filter(u => u.role === 'moderator');
     } else if (this.activeTab === 'admin') {
       filtered = filtered.filter(u => u.role === 'admin');
+    } else if (this.activeTab === 'temporary') {
+      filtered = filtered.filter(u => u.role === 'temporary');
     } else if (this.activeTab === 'archived') {
       filtered = filtered.filter(u => u.status === 'archived' || u.status === 'inactive');
     }
@@ -286,7 +295,32 @@ class AdminUser extends LitElement {
     if (action === 'view') {
       this.selectedUser = item;
       this.showDetailsDialog = true;
+    } else if (action === 'delete') {
+      this.deleteTarget = item;
+      this.showDeleteDialog = true;
     }
+  }
+
+  async handleConfirmDelete() {
+    if (!this.deleteTarget) return;
+    this.deleting = true;
+    try {
+      await usersApi.delete(this.deleteTarget.id);
+      toast.success('User removed successfully!');
+      this.showDeleteDialog = false;
+      this.deleteTarget = null;
+      this.fetchUsers();
+    } catch (err) {
+      const msg = err.message || 'Failed to remove user';
+      toast.error(msg);
+    } finally {
+      this.deleting = false;
+    }
+  }
+
+  handleDeleteDialogClose() {
+    this.showDeleteDialog = false;
+    this.deleteTarget = null;
   }
 
   handlePageChange(e) {
@@ -337,7 +371,6 @@ class AdminUser extends LitElement {
 
       const role = getValue('role');
       const email = getValue('email');
-      const password = getValue('password');
 
       const payload = {
         name,
@@ -346,10 +379,6 @@ class AdminUser extends LitElement {
         role,
         location_id: role === 'moderator' ? (getValue('location_id') || null) : null,
       };
-
-      if (password) {
-        payload.password = password;
-      }
 
       const result = await usersApi.create(payload);
 
@@ -413,7 +442,8 @@ class AdminUser extends LitElement {
     const u = this.selectedUser;
 
     const roleVariant = u.role?.toLowerCase() === 'admin' ? 'danger' :
-      u.role?.toLowerCase() === 'moderator' ? 'info' : 'technical';
+      u.role?.toLowerCase() === 'moderator' ? 'info' :
+        u.role?.toLowerCase() === 'temporary' ? 'warning' : 'technical';
     const statusVariant = u.status?.toLowerCase() === 'active' ? 'success' :
       u.status?.toLowerCase() === 'inactive' ? 'inactive' :
         u.status?.toLowerCase() === 'archived' ? 'archived' :
@@ -565,6 +595,30 @@ class AdminUser extends LitElement {
         .closeOnOverlay=${true}
         @dialog-close=${this.handleDialogClose}>
         ${this._renderUserDetails()}
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showDeleteDialog}
+        title="Remove User"
+        description="This action cannot be undone."
+        size="small"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDeleteDialogClose}>
+        ${this.deleteTarget ? html`
+          <div style="margin-bottom: 16px;">
+            Are you sure you want to remove <strong>${this.deleteTarget.name}</strong> (${this.deleteTarget.email})?
+          </div>
+          <div class="credentials-actions" style="justify-content: flex-end;">
+            <app-button type="secondary" size="medium" @click=${this.handleDeleteDialogClose} ?disabled=${this.deleting}>
+              Cancel
+            </app-button>
+            <app-button type="danger" size="medium" @click=${() => this.handleConfirmDelete()} ?disabled=${this.deleting}>
+              ${this.deleting ? 'Removing...' : 'Remove'}
+            </app-button>
+          </div>
+        ` : ''}
       </app-dialog>
 
       <app-dialog
