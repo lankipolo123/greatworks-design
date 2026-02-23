@@ -1,6 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
 import '/src/components/app-dialog.js';
+import '/src/components/app-button.js';
+import { auth } from '/src/service/api.js';
+import { toast } from '/src/service/toast-widget.js';
 
 export class ProfileHeader extends LitElement {
   static properties = {
@@ -15,7 +18,16 @@ export class ProfileHeader extends LitElement {
     isUploading: { type: Boolean },
     showUploadDialog: { type: Boolean },
     show2FADialog: { type: Boolean },
-    twoFactorEnabled: { type: Boolean }
+    twoFactorEnabled: { type: Boolean },
+    // 2FA setup state
+    _2faStep: { type: String, state: true },       // null | 'qr' | 'verify' | 'backup' | 'disable'
+    _2faSecret: { type: String, state: true },
+    _2faOtpauthUrl: { type: String, state: true },
+    _2faCode: { type: String, state: true },
+    _2faBackupCodes: { type: Array, state: true },
+    _2faPassword: { type: String, state: true },
+    _2faLoading: { type: Boolean, state: true },
+    _2faError: { type: String, state: true },
   };
 
   static styles = css`
@@ -218,6 +230,136 @@ export class ProfileHeader extends LitElement {
       100% { transform: rotate(360deg); }
     }
 
+    /* 2FA Dialog Content Styles */
+    .twofa-content {
+      text-align: center;
+    }
+
+    .twofa-step-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .twofa-desc {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .qr-box {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .qr-box img {
+      display: block;
+      max-width: 180px;
+    }
+
+    .secret-key-box {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      word-break: break-all;
+      cursor: pointer;
+      margin: 8px 0;
+      user-select: all;
+    }
+
+    .secret-key-box:hover {
+      background: #e9ecef;
+    }
+
+    .copy-hint {
+      font-size: 0.7rem;
+      color: #999;
+      margin-bottom: 12px;
+    }
+
+    .totp-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 1.4rem;
+      font-family: monospace;
+      text-align: center;
+      letter-spacing: 0.5rem;
+      box-sizing: border-box;
+      margin: 10px 0;
+    }
+
+    .totp-input:focus {
+      outline: none;
+      border-color: #d6150b;
+    }
+
+    .disable-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      margin: 10px 0;
+    }
+
+    .disable-input:focus {
+      outline: none;
+      border-color: #666;
+    }
+
+    .twofa-error {
+      color: #c00;
+      font-size: 0.8rem;
+      margin: 6px 0;
+    }
+
+    .twofa-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .backup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .backup-code-item {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .backup-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.75rem;
+      color: #856404;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
   `;
 
   constructor() {
@@ -234,6 +376,28 @@ export class ProfileHeader extends LitElement {
     this.showUploadDialog = false;
     this.show2FADialog = false;
     this.twoFactorEnabled = false;
+    this._2faStep = null;
+    this._2faSecret = '';
+    this._2faOtpauthUrl = '';
+    this._2faCode = '';
+    this._2faBackupCodes = [];
+    this._2faPassword = '';
+    this._2faLoading = false;
+    this._2faError = '';
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._fetch2FAStatus();
+  }
+
+  async _fetch2FAStatus() {
+    try {
+      const data = await auth.get2FAStatus();
+      this.twoFactorEnabled = data.two_factor_enabled;
+    } catch (e) {
+      // user may not be authenticated yet
+    }
   }
 
   formatDate(dateString) {
@@ -268,25 +432,223 @@ export class ProfileHeader extends LitElement {
 
   handle2FAToggle(e) {
     e.preventDefault();
+    this._2faError = '';
+    this._2faCode = '';
+    this._2faPassword = '';
+
+    if (this.twoFactorEnabled) {
+      // Disable flow — ask for password
+      this._2faStep = 'disable';
+    } else {
+      // Enable flow — start setup
+      this._2faStep = 'loading';
+      this._startSetup();
+    }
     this.show2FADialog = true;
   }
 
-  handle2FAConfirm() {
-    this.twoFactorEnabled = !this.twoFactorEnabled;
+  async _startSetup() {
+    this._2faLoading = true;
+    this._2faError = '';
+    try {
+      const data = await auth.setup2FA();
+      this._2faSecret = data.secret;
+      this._2faOtpauthUrl = data.otpauth_url;
+      this._2faStep = 'qr';
+    } catch (e) {
+      this._2faError = e.message || 'Failed to start 2FA setup';
+      this._2faStep = 'qr';
+    } finally {
+      this._2faLoading = false;
+    }
+  }
+
+  _goToVerify() {
+    this._2faStep = 'verify';
+    this._2faCode = '';
+    this._2faError = '';
+  }
+
+  async _verifyCode() {
+    if (this._2faCode.length !== 6) {
+      this._2faError = 'Please enter a 6-digit code';
+      return;
+    }
+    this._2faLoading = true;
+    this._2faError = '';
+    try {
+      const data = await auth.verifySetup2FA(this._2faCode);
+      this._2faBackupCodes = data.backup_codes;
+      this._2faStep = 'backup';
+      this.twoFactorEnabled = true;
+      toast.success('Two-factor authentication enabled!');
+    } catch (e) {
+      this._2faError = e.message || 'Invalid code. Try again.';
+    } finally {
+      this._2faLoading = false;
+    }
+  }
+
+  async _disableTwoFactor() {
+    if (!this._2faPassword) {
+      this._2faError = 'Please enter your password';
+      return;
+    }
+    this._2faLoading = true;
+    this._2faError = '';
+    try {
+      await auth.disable2FA(this._2faPassword);
+      this.twoFactorEnabled = false;
+      this._close2FADialog();
+      toast.success('Two-factor authentication disabled');
+    } catch (e) {
+      this._2faError = e.message || 'Incorrect password';
+    } finally {
+      this._2faLoading = false;
+    }
+  }
+
+  _copySecret() {
+    navigator.clipboard.writeText(this._2faSecret).then(() => {
+      toast.success('Secret key copied!');
+    });
+  }
+
+  _handleCodeInput(e) {
+    this._2faCode = e.target.value.replace(/\D/g, '').slice(0, 6);
+  }
+
+  _handleCodeKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this._verifyCode();
+    }
+  }
+
+  _handleDisableKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this._disableTwoFactor();
+    }
+  }
+
+  _close2FADialog() {
     this.show2FADialog = false;
-    this.dispatchEvent(new CustomEvent('2fa-toggle', {
-      detail: { enabled: this.twoFactorEnabled },
-      bubbles: true,
-      composed: true
-    }));
+    this._2faStep = null;
+    this._2faSecret = '';
+    this._2faOtpauthUrl = '';
+    this._2faCode = '';
+    this._2faBackupCodes = [];
+    this._2faPassword = '';
+    this._2faError = '';
+    this._2faLoading = false;
   }
 
   handle2FADialogClose() {
-    this.show2FADialog = false;
+    // Don't close during backup step (user must click Done)
+    if (this._2faStep === 'backup') return;
+    this._close2FADialog();
+  }
+
+  _render2FAContent() {
+    if (this._2faStep === 'loading' || (this._2faStep === 'qr' && this._2faLoading)) {
+      return html`<div class="twofa-content"><div class="twofa-desc">Setting up...</div></div>`;
+    }
+
+    if (this._2faStep === 'qr') {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(this._2faOtpauthUrl)}`;
+      return html`
+        <div class="twofa-content">
+          <div class="twofa-step-title">Step 1: Scan QR Code</div>
+          <div class="twofa-desc">Scan this with your authenticator app (Google Authenticator, Authy, etc.)</div>
+          <div class="qr-box">
+            <img src="${qrUrl}" alt="2FA QR Code" width="180" height="180" />
+          </div>
+          <div class="twofa-desc">Can't scan? Enter this key manually:</div>
+          <div class="secret-key-box" @click=${this._copySecret}>${this._2faSecret}</div>
+          <div class="copy-hint">Click to copy</div>
+          ${this._2faError ? html`<div class="twofa-error">${this._2faError}</div>` : ''}
+          <div class="twofa-actions">
+            <app-button type="secondary" size="small" @click=${this._close2FADialog}>Cancel</app-button>
+            <app-button type="primary" size="small" @click=${this._goToVerify}>Next</app-button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this._2faStep === 'verify') {
+      return html`
+        <div class="twofa-content">
+          <div class="twofa-step-title">Step 2: Enter Verification Code</div>
+          <div class="twofa-desc">Enter the 6-digit code from your authenticator app</div>
+          <input
+            class="totp-input"
+            type="text"
+            inputmode="numeric"
+            placeholder="000000"
+            .value=${this._2faCode}
+            @input=${this._handleCodeInput}
+            @keydown=${this._handleCodeKeydown}
+            ?disabled=${this._2faLoading}
+            autofocus
+          />
+          ${this._2faError ? html`<div class="twofa-error">${this._2faError}</div>` : ''}
+          <div class="twofa-actions">
+            <app-button type="secondary" size="small" @click=${() => { this._2faStep = 'qr'; this._2faError = ''; }}>Back</app-button>
+            <app-button type="primary" size="small" .loading=${this._2faLoading} @click=${this._verifyCode}>Verify & Enable</app-button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this._2faStep === 'backup') {
+      return html`
+        <div class="twofa-content">
+          <div class="twofa-step-title">Save Your Backup Codes</div>
+          <div class="twofa-desc">Store these codes somewhere safe. Each can only be used once.</div>
+          <div class="backup-grid">
+            ${this._2faBackupCodes.map(code => html`<div class="backup-code-item">${code}</div>`)}
+          </div>
+          <div class="backup-warning">
+            These codes will NOT be shown again. If you lose your authenticator app, use a backup code to sign in.
+          </div>
+          <div class="twofa-actions">
+            <app-button type="primary" size="small" @click=${this._close2FADialog}>Done</app-button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this._2faStep === 'disable') {
+      return html`
+        <div class="twofa-content">
+          <div class="twofa-step-title">Disable Two-Factor Authentication</div>
+          <div class="twofa-desc">Enter your password to confirm</div>
+          <input
+            class="disable-input"
+            type="password"
+            placeholder="Enter your password"
+            .value=${this._2faPassword}
+            @input=${e => (this._2faPassword = e.target.value)}
+            @keydown=${this._handleDisableKeydown}
+            ?disabled=${this._2faLoading}
+          />
+          ${this._2faError ? html`<div class="twofa-error">${this._2faError}</div>` : ''}
+          <div class="twofa-actions">
+            <app-button type="secondary" size="small" @click=${this._close2FADialog}>Cancel</app-button>
+            <app-button type="danger" size="small" .loading=${this._2faLoading} @click=${this._disableTwoFactor}>Disable 2FA</app-button>
+          </div>
+        </div>
+      `;
+    }
+
+    return html``;
   }
 
   render() {
-    const action = this.twoFactorEnabled ? 'Disable' : 'Enable';
+    const dialogTitle = this._2faStep === 'disable'
+      ? 'Disable Two-Factor Authentication'
+      : 'Set Up Two-Factor Authentication';
 
     return html`
       <app-dialog
@@ -305,18 +667,14 @@ export class ProfileHeader extends LitElement {
 
       <app-dialog
         .isOpen=${this.show2FADialog}
-        title="${action} Two-Factor Authentication"
-        description="${action === 'Enable'
-          ? 'Add an extra layer of security to your account. You will be asked for a verification code each time you log in.'
-          : 'This will remove the extra security layer from your account. Are you sure?'}"
-        confirmText="${action}"
-        confirmColor="${action === 'Enable' ? 'primary' : 'danger'}"
-        cancelText="Cancel"
+        title="${dialogTitle}"
         size="medium"
-        @dialog-confirm=${this.handle2FAConfirm}
+        .hideFooter=${true}
         @dialog-close=${this.handle2FADialogClose}
         @dialog-cancel=${this.handle2FADialogClose}
-      ></app-dialog>
+      >
+        ${this._render2FAContent()}
+      </app-dialog>
 
       <div class="profile-card">
         ${this.isUploading ? html`
