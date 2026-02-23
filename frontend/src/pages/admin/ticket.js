@@ -189,17 +189,17 @@ class AdminTicket extends LitElement {
 
     // Update ticket status based on action
     if (action === 'accept') {
-      // Update ticket status to ongoing
+      // Update ticket status to in_progress
       const index = this.tickets.findIndex(t => t.id === ticket.id);
       if (index !== -1) {
-        this.tickets[index].status = 'ongoing';
+        this.tickets[index].status = 'in_progress';
         this.requestUpdate();
       }
     } else if (action === 'close') {
-      // Update ticket status to completed
+      // Update ticket status to closed
       const index = this.tickets.findIndex(t => t.id === ticket.id);
       if (index !== -1) {
-        this.tickets[index].status = 'completed';
+        this.tickets[index].status = 'closed';
         this.requestUpdate();
       }
     }

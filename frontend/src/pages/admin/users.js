@@ -476,8 +476,8 @@ class AdminUser extends LitElement {
           <span class="user-detail-value">${u.phone || '—'}</span>
         </div>
         <div class="user-detail-item">
-          <span class="user-detail-label">Gender</span>
-          <span class="user-detail-value">${u.gender || '—'}</span>
+          <span class="user-detail-label">Bookings</span>
+          <span class="user-detail-value">${u.bookings_count ?? 0}</span>
         </div>
         <div class="user-detail-item">
           <span class="user-detail-label">Joined</span>

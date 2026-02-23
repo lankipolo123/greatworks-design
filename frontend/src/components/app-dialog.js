@@ -340,82 +340,121 @@ export class AppDialog extends LitElement {
       .trim();
   }
 
+  getStatusVariant(status) {
+    const s = status?.toLowerCase();
+    if (s === 'open') return 'info';
+    if (s === 'pending') return 'pending';
+    if (s === 'in_progress') return 'ongoing';
+    if (s === 'closed') return 'completed';
+    return 'primary';
+  }
+
+  getPriorityVariant(priority) {
+    const p = priority?.toLowerCase();
+    if (p === 'low') return 'low';
+    if (p === 'medium') return 'medium';
+    if (p === 'high') return 'high';
+    return 'medium';
+  }
+
+  getRoleVariant(role) {
+    const r = role?.toLowerCase();
+    if (r === 'admin') return 'danger';
+    if (r === 'moderator') return 'info';
+    if (r === 'temporary') return 'warning';
+    return 'technical';
+  }
+
+  getUserStatusVariant(status) {
+    const s = status?.toLowerCase();
+    if (s === 'active') return 'success';
+    if (s === 'inactive') return 'inactive';
+    if (s === 'archived') return 'archived';
+    return 'primary';
+  }
+
   renderTicketView() {
     if (!this.ticketData) return html`<p>No ticket data available</p>`;
 
-    const {
-      id,
-      userId,
-      userName,
-      userAvatar,
-      subject,
-      message,
-      category,
-      location,
-      createdAt,
-      status
-    } = this.ticketData;
+    const ticket = this.ticketData;
+    const user = ticket.user || {};
 
     return html`
-      <div class="ticket-header">
+      <!-- User Profile Section -->
+      <div class="ticket-profile-section">
         <div class="ticket-avatar">
-          ${userAvatar
-        ? html`<img src="${userAvatar}" alt="${userName}" />`
-        : this.getInitials(userName)
+          ${user.profile_photo
+        ? html`<img src="${user.profile_photo}" alt="${user.name}" />`
+        : this.getInitials(user.name)
       }
         </div>
         <div class="ticket-user-info">
-          <div class="ticket-user-name">${userName || userId}</div>
-          <div class="ticket-meta">
-            <span class="ticket-meta-item">${this.formatDate(createdAt)}</span>
-            ${location ? html`
-              <span class="ticket-meta-separator">•</span>
-              <span class="ticket-meta-item">${location}</span>
-            ` : ''}
+          <div class="ticket-user-name">${user.name || 'Unknown User'}</div>
+          <div class="ticket-user-email">${user.email || ''}</div>
+          <div class="ticket-user-badges">
+            ${user.role ? html`<badge-component variant="${this.getRoleVariant(user.role)}" size="small">${user.role}</badge-component>` : ''}
+            ${user.status ? html`<badge-component variant="${this.getUserStatusVariant(user.status)}" size="small">${user.status}</badge-component>` : ''}
           </div>
-          ${category ? html`
-            <div class="ticket-tags">
-              <span class="ticket-tag ${category.toLowerCase()}">${category}</span>
-            </div>
-          ` : ''}
-        </div>
-        <button class="ticket-more-btn" @click=${(e) => e.stopPropagation()}>⋮</button>
-      </div>
-
-      <div class="ticket-content">
-        <div class="ticket-greeting">Dear GreatWorks Team,</div>
-        <div class="ticket-message">${message}</div>
-        <div class="ticket-signature">
-          <div>Regards,</div>
-          <div class="ticket-signature-name">${userName || userId}</div>
         </div>
       </div>
 
-      ${status === 'pending' ? html`
+      <!-- Ticket Details Grid -->
+      <div class="ticket-details-grid">
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Ticket ID</span>
+          <span class="ticket-detail-value">#${ticket.id}</span>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Status</span>
+          <badge-component variant="${this.getStatusVariant(ticket.status)}" size="small">${ticket.status?.replace('_', ' ') || '—'}</badge-component>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Priority</span>
+          <badge-component variant="${this.getPriorityVariant(ticket.priority)}" size="small">${ticket.priority || '—'}</badge-component>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Location</span>
+          <span class="ticket-detail-value">${ticket.location?.name || '—'}</span>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Phone</span>
+          <span class="ticket-detail-value">${user.phone || '—'}</span>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Created</span>
+          <span class="ticket-detail-value">${ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '—'}</span>
+        </div>
+      </div>
+
+      <!-- Ticket Request Section -->
+      <div class="ticket-request-section">
+        <div class="ticket-request-label">Subject</div>
+        <div class="ticket-request-subject">${ticket.subject || '—'}</div>
+        ${ticket.description ? html`
+          <div class="ticket-request-label" style="margin-top: 12px;">Description</div>
+          <div class="ticket-request-description">${ticket.description}</div>
+        ` : ''}
+      </div>
+
+      ${ticket.status === 'open' ? html`
         <div class="ticket-actions">
-          <button 
-            class="ticket-action-btn accept" 
+          <button
+            class="ticket-action-btn accept"
             @click=${() => this.handleTicketAction('accept')}
           >
             Accept
           </button>
-          <button 
-            class="ticket-action-btn decline" 
+          <button
+            class="ticket-action-btn decline"
             @click=${() => this.handleTicketAction('decline')}
           >
             Decline
           </button>
         </div>
-      ` : status === 'ongoing' ? html`
+      ` : ticket.status === 'in_progress' ? html`
         <div class="ticket-actions">
-          <button 
-            class="ticket-action-btn respond" 
-            @click=${() => this.handleTicketAction('respond')}
-          >
-            Respond
-          </button>
-          <button 
-            class="ticket-action-btn close" 
+          <button
+            class="ticket-action-btn close"
             @click=${() => this.handleTicketAction('close')}
           >
             Close Ticket

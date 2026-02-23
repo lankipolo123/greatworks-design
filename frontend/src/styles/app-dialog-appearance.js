@@ -450,24 +450,25 @@ export const dialogAppearance = css`
     }
 
     /* Ticket View Mode */
-    .ticket-header {
+    .ticket-profile-section {
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
+      align-items: center;
+      gap: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid #e0e0e0;
       margin-bottom: 16px;
     }
 
     .ticket-avatar {
-      width: 48px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       background: #e0e0e0;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 600;
+      font-size: 1.1rem;
       color: #666;
       flex-shrink: 0;
       overflow: hidden;
@@ -484,116 +485,91 @@ export const dialogAppearance = css`
     }
 
     .ticket-user-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #333;
-      margin: 0 0 4px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 0 0 2px 0;
     }
 
-    .ticket-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .ticket-user-email {
       font-size: 0.85rem;
-      color: #888;
-      flex-wrap: wrap;
+      color: #666;
+      margin-bottom: 4px;
     }
 
-    .ticket-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .ticket-meta-separator {
-      color: #ccc;
-    }
-
-    .ticket-tags {
+    .ticket-user-badges {
       display: flex;
       gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 8px;
+      margin-top: 4px;
     }
 
-    .ticket-tag {
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
+    /* Ticket Details Grid */
+    .ticket-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 16px;
+    }
+
+    .ticket-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .ticket-detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .ticket-detail-value {
+      font-size: 0.85rem;
       font-weight: 500;
-      background: #f0f0f0;
-      color: #666;
+      color: #1a1a1a;
     }
 
-    .ticket-tag.technical {
-      background: #e3f2fd;
-      color: #1976d2;
+    /* Ticket Request Section */
+    .ticket-request-section {
+      padding-bottom: 16px;
     }
 
-    .ticket-tag.billing {
-      background: #fff3e0;
-      color: #f57c00;
+    .ticket-request-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
     }
 
-    .ticket-tag.general {
-      background: #f3e5f5;
-      color: #7b1fa2;
+    .ticket-request-subject {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
     }
 
-    .ticket-tag.urgent {
-      background: #ffebee;
-      color: #c62828;
-    }
-
-    .ticket-more-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.2rem;
-      color: #666;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.2s;
-    }
-
-    .ticket-more-btn:hover {
-      background: #f5f5f5;
-    }
-
-    .ticket-content {
-      color: #333;
-    }
-
-    .ticket-greeting {
-      font-size: 0.95rem;
-      color: #333;
-      margin-bottom: 12px;
-    }
-
-    .ticket-message {
+    .ticket-request-description {
       font-size: 0.95rem;
       line-height: 1.6;
       color: #555;
-      margin-bottom: 16px;
       white-space: pre-wrap;
-    }
-
-    .ticket-signature {
-      font-size: 0.95rem;
-      color: #666;
-      margin-top: 16px;
-    }
-
-    .ticket-signature-name {
-      margin-top: 2px;
-      color: #333;
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #eee;
     }
 
     .ticket-actions {
       display: flex;
       justify-content: center;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 8px;
     }
 
     .ticket-action-btn {

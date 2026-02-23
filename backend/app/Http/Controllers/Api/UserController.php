@@ -16,7 +16,7 @@ class UserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = User::query();
+        $query = User::withCount('bookings');
 
         if ($request->has('search')) {
             $search = $request->search;
