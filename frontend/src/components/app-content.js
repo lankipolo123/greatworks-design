@@ -1,25 +1,28 @@
 import { LitElement, html, css } from 'lit';
-// Admin pages
-import '/src/pages/admin/dashboard.js';
-import '/src/pages/admin/reservation.js';
-import '/src/pages/admin/booking.js';
-import '/src/pages/admin/ticket.js';
-import '/src/pages/admin/users.js';
-import '/src/pages/admin/logs.js';
-import '/src/pages/admin/payments.js';
-// Customer pages
-import '/src/pages/customer/dashboard.js';
-import '/src/pages/customer/reservation.js';
-import '/src/pages/customer/booking.js';
-import '/src/pages/customer/ticket.js';
-import '/src/pages/customer/payments.js';
-// Shared
-import '/src/pages/settings.js';
+
+const pageImports = {
+    'admin-dashboard': () => import('/src/pages/admin/dashboard.js'),
+    'admin-reservation': () => import('/src/pages/admin/reservation.js'),
+    'admin-booking': () => import('/src/pages/admin/booking.js'),
+    'admin-ticket': () => import('/src/pages/admin/ticket.js'),
+    'admin-user': () => import('/src/pages/admin/users.js'),
+    'admin-logs': () => import('/src/pages/admin/logs.js'),
+    'admin-payments': () => import('/src/pages/admin/payments.js'),
+    'customer-dashboard': () => import('/src/pages/customer/dashboard.js'),
+    'customer-reservation': () => import('/src/pages/customer/reservation.js'),
+    'customer-booking': () => import('/src/pages/customer/booking.js'),
+    'customer-ticket': () => import('/src/pages/customer/ticket.js'),
+    'customer-payments': () => import('/src/pages/customer/payments.js'),
+    'app-settings': () => import('/src/pages/settings.js'),
+};
+
+const loadedPages = new Set();
 
 class AppContent extends LitElement {
     static properties = {
         currentPage: { type: String },
-        userRole: { type: String }
+        userRole: { type: String },
+        _pageReady: { type: Boolean, state: true }
     };
 
     static styles = css`
@@ -29,12 +32,57 @@ class AppContent extends LitElement {
       height: 100%;
       background: #fffffffe;
     }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #888;
+      font-size: 14px;
+    }
   `;
 
     constructor() {
         super();
         this.currentPage = 'dashboard';
         this.userRole = 'customer';
+        this._pageReady = false;
+    }
+
+    _getComponentName() {
+        const isAdmin = this.userRole === 'admin' || this.userRole === 'moderator';
+        const prefix = isAdmin ? 'admin' : 'customer';
+        if (this.currentPage === 'settings') return 'app-settings';
+        if (this.currentPage === 'user' && isAdmin) return 'admin-user';
+        if (this.currentPage === 'logs' && isAdmin) return 'admin-logs';
+        return `${prefix}-${this.currentPage || 'dashboard'}`;
+    }
+
+    async _loadPage(componentName) {
+        if (loadedPages.has(componentName)) {
+            this._pageReady = true;
+            return;
+        }
+        const loader = pageImports[componentName];
+        if (loader) {
+            this._pageReady = false;
+            await loader();
+            loadedPages.add(componentName);
+            this._pageReady = true;
+        } else {
+            this._pageReady = true;
+        }
+    }
+
+    updated(changed) {
+        if (changed.has('currentPage') || changed.has('userRole')) {
+            this._loadPage(this._getComponentName());
+        }
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this._loadPage(this._getComponentName());
     }
 
     renderAdminPage() {
@@ -64,6 +112,9 @@ class AppContent extends LitElement {
     }
 
     render() {
+        if (!this._pageReady) {
+            return html`<div class="loading">Loading...</div>`;
+        }
         if (this.userRole === 'admin' || this.userRole === 'moderator') {
             return html`${this.renderAdminPage()}`;
         }
