@@ -63,6 +63,18 @@ class AuthController extends Controller
             ]);
         }
 
+        // If 2FA is enabled, don't issue a token yet — require TOTP verification
+        if ($user->two_factor_enabled) {
+            $twoFactorToken = hash('sha256', $user->id . $user->two_factor_secret . config('app.key'));
+
+            return response()->json([
+                'message' => 'Two-factor authentication required',
+                'two_factor_required' => true,
+                'user_id' => $user->id,
+                'two_factor_token' => $twoFactorToken,
+            ]);
+        }
+
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([

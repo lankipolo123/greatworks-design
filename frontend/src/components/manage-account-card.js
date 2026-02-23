@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/change-email-card.js';
 import '/src/components/change-password-card.js';
+import '/src/components/two-factor-card.js';
 import '/src/components/termination-card.js';
 import '/src/components/app-button.js';
 import '/src/components/app-dialog.js';
@@ -306,6 +307,10 @@ export class ManageAccountCard extends LitElement {
 
             <div class="section">
               <change-password-card @change-password="${this.handleChangePassword}"></change-password-card>
+            </div>
+
+            <div class="section">
+              <two-factor-card></two-factor-card>
             </div>
 
             <div class="section">

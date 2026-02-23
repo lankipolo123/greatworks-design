@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TwoFactorController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\PaymentController;
@@ -19,6 +20,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// 2FA verification during login (public — user not yet authenticated)
+Route::post('/2fa/verify', [TwoFactorController::class, 'verify']);
 
 // Public room listing
 Route::get('/rooms', [RoomController::class, 'index']);
@@ -43,6 +47,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/change-email', [AuthController::class, 'changeEmail']);
     Route::post('/deactivate-account', [AuthController::class, 'deactivateAccount']);
     Route::post('/delete-account', [AuthController::class, 'deleteAccount']);
+
+    // Two-factor authentication management
+    Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
+    Route::post('/2fa/verify-setup', [TwoFactorController::class, 'verifySetup']);
+    Route::post('/2fa/disable', [TwoFactorController::class, 'disable']);
+    Route::get('/2fa/status', [TwoFactorController::class, 'status']);
+    Route::post('/2fa/backup-codes', [TwoFactorController::class, 'regenerateBackupCodes']);
 
     // Profile photo management (all authenticated users can manage their own)
     Route::post('/users/{user}/profile-photo', [UserController::class, 'uploadProfilePhoto']);

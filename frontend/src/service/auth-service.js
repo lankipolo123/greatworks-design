@@ -6,6 +6,22 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+
+    // If 2FA is required, return early without storing token
+    if (data.two_factor_required) {
+      return data;
+    }
+
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    return data;
+  },
+
+  async verify2FA(userId, code, twoFactorToken) {
+    const data = await apiRequest('/2fa/verify', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, code, two_factor_token: twoFactorToken }),
+    });
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('auth_user', JSON.stringify(data.user));
     return data;
@@ -92,5 +108,35 @@ export const auth = {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     return data;
+  },
+
+  // ─── Two-Factor Authentication ──────────────────────────
+  async get2FAStatus() {
+    return apiRequest('/2fa/status');
+  },
+
+  async setup2FA() {
+    return apiRequest('/2fa/setup', { method: 'POST' });
+  },
+
+  async verifySetup2FA(code) {
+    return apiRequest('/2fa/verify-setup', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  },
+
+  async disable2FA(password) {
+    return apiRequest('/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
+  },
+
+  async regenerateBackupCodes(password) {
+    return apiRequest('/2fa/backup-codes', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    });
   },
 };

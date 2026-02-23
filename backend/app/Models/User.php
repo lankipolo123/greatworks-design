@@ -22,11 +22,16 @@ class User extends Authenticatable
         'location_id',
         'status',
         'profile_photo',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_backup_codes',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_backup_codes',
     ];
 
     protected function casts(): array
@@ -34,6 +39,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_enabled' => 'boolean',
         ];
     }
 
