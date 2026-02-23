@@ -1,11 +1,11 @@
-import { apiRequest, cacheGet, cacheSet, cacheInvalidate, toQuery } from './api-core.js';
+import { apiRequest, cacheGet, cacheSet, cacheInvalidate, dedupedFetch, toQuery } from './api-core.js';
 
 export const payments = {
   async getAll(params = {}) {
     const key = `payments:${JSON.stringify(params)}`;
     const cached = cacheGet(key);
     if (cached) return cached;
-    const data = await apiRequest(`/payments${toQuery(params)}`);
+    const data = await dedupedFetch(key, () => apiRequest(`/payments${toQuery(params)}`));
     cacheSet(key, data);
     return data;
   },

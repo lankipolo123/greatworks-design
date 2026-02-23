@@ -1,11 +1,11 @@
-import { apiRequest, cacheGet, cacheSet, cacheInvalidate, toQuery } from './api-core.js';
+import { apiRequest, cacheGet, cacheSet, cacheInvalidate, dedupedFetch, toQuery } from './api-core.js';
 
 export const reservations = {
   async getAll(params = {}) {
     const key = `reservations:${JSON.stringify(params)}`;
     const cached = cacheGet(key);
     if (cached) return cached;
-    const data = await apiRequest(`/reservations${toQuery(params)}`);
+    const data = await dedupedFetch(key, () => apiRequest(`/reservations${toQuery(params)}`));
     cacheSet(key, data);
     return data;
   },

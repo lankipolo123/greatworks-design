@@ -1,11 +1,11 @@
-import { apiRequest, cacheGet, cacheSet, cacheInvalidate, toQuery } from './api-core.js';
+import { apiRequest, cacheGet, cacheSet, cacheInvalidate, dedupedFetch, toQuery } from './api-core.js';
 
 export const bookings = {
   async getAll(params = {}) {
     const key = `bookings:${JSON.stringify(params)}`;
     const cached = cacheGet(key);
     if (cached) return cached;
-    const data = await apiRequest(`/bookings${toQuery(params)}`);
+    const data = await dedupedFetch(key, () => apiRequest(`/bookings${toQuery(params)}`));
     cacheSet(key, data);
     return data;
   },
@@ -36,7 +36,7 @@ export const bookings = {
     const key = `bookings-cal:${JSON.stringify(params)}`;
     const cached = cacheGet(key);
     if (cached) return cached;
-    const data = await apiRequest(`/bookings/calendar${toQuery(params)}`);
+    const data = await dedupedFetch(key, () => apiRequest(`/bookings/calendar${toQuery(params)}`));
     cacheSet(key, data);
     return data;
   },

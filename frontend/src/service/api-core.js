@@ -29,7 +29,7 @@ export const isCustomer = () => hasRole('customer');
 
 // ─── Data Cache ────────────────────────────────────────────
 const _cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 30 * 1000; // 30 seconds — kept short since mutations invalidate immediately
 
 export function cacheGet(key) {
   const entry = _cache.get(key);
@@ -55,6 +55,28 @@ export function cacheInvalidate(prefix) {
 
 export function cacheInvalidateAll() {
   _cache.clear();
+}
+
+// ─── Request Deduplication ────────────────────────────────
+// If an identical GET request is already in-flight, reuse the same
+// promise instead of firing a second HTTP request.
+const _inflight = new Map();
+
+export function dedupedFetch(key, fetchFn) {
+  if (_inflight.has(key)) return _inflight.get(key);
+
+  const promise = fetchFn()
+    .then(data => {
+      _inflight.delete(key);
+      return data;
+    })
+    .catch(err => {
+      _inflight.delete(key);
+      throw err;
+    });
+
+  _inflight.set(key, promise);
+  return promise;
 }
 
 // ─── API Request ───────────────────────────────────────────
