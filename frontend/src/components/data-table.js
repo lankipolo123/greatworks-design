@@ -7,6 +7,7 @@ export class DataTable extends LitElement {
         data: { type: Array },
         conf: { type: Object },
         loading: { type: Boolean },
+        skeletonRows: { type: Number },
         mode: { type: Number },
         openMenuId: { type: String }
     };
@@ -97,11 +98,39 @@ td {
     border-bottom: none !important;
 }
 
-.no-data, .loading { 
-    text-align: center; 
-    padding: 28px; 
-    color: #9ca3af; 
+.no-data, .loading {
+    text-align: center;
+    padding: 28px;
+    color: #9ca3af;
     font-size: 12px;
+}
+
+/* Skeleton shimmer rows */
+.skeleton-cell {
+    padding: 10px 5px;
+}
+
+.skeleton-bar {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Fade-in for real data rows */
+tbody tr {
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 `;
@@ -111,6 +140,7 @@ td {
         this.data = [];
         this.conf = [];
         this.loading = false;
+        this.skeletonRows = 5;
         this.mode = 1;
         this.openMenuId = null;
     }
@@ -228,9 +258,32 @@ td {
         const conf = this.normalizeConfig(this.conf);
 
         if (this.loading) {
+            const colCount = conf.length || 4;
+            const rows = Array.from({ length: this.skeletonRows });
+            const widths = ['60%', '45%', '70%', '35%', '55%'];
             return html`
         <div class="table-container">
-          <div class="loading">Loading...</div>
+          <table>
+            <thead>
+              <tr>
+                ${conf.length
+                  ? conf.map(c => html`<th>${c.header}</th>`)
+                  : Array.from({ length: colCount }, () => html`<th><div class="skeleton-bar" style="width:50%"></div></th>`)
+                }
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((_, ri) => html`
+                <tr>
+                  ${Array.from({ length: colCount }, (_, ci) => html`
+                    <td class="skeleton-cell">
+                      <div class="skeleton-bar" style="width:${widths[(ri + ci) % widths.length]}"></div>
+                    </td>
+                  `)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
         </div>
       `;
         }

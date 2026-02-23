@@ -214,10 +214,6 @@ class AdminTicket extends LitElement {
   }
 
   render() {
-    if (!this._loaded) {
-      return html`<div class="page-loader"><div class="spinner"></div></div>`;
-    }
-
     return html`
       <content-card mode="4">
         <header-controls>
@@ -252,6 +248,8 @@ class AdminTicket extends LitElement {
         <data-table
           .data=${this.paginatedTickets}
           .conf=${ticketsTableConfig}
+          .loading=${!this._loaded}
+          .skeletonRows=${this.itemsPerPage}
           mode="1"
           @table-action=${this.handleTableAction}>
         </data-table>

@@ -492,10 +492,6 @@ class AdminReservation extends LitElement {
   }
 
   render() {
-    if (!this._loaded) {
-      return html`<div class="page-loader"><div class="spinner"></div></div>`;
-    }
-
     return html`
       <content-card mode="4">
         <header-controls>
@@ -536,6 +532,8 @@ class AdminReservation extends LitElement {
         <data-table
           .data=${this.paginatedReservation}
           .conf=${reservationTableConfig}
+          .loading=${!this._loaded}
+          .skeletonRows=${this.itemsPerPage}
           mode="1"
           @table-action=${this.handleTableAction}>
         </data-table>

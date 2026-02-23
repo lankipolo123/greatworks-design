@@ -165,10 +165,6 @@ class AdminLogs extends LitElement {
   }
 
   render() {
-    if (!this._loaded) {
-      return html`<div class="page-loader"><div class="spinner"></div></div>`;
-    }
-
     return html`
       <content-card mode="4">
         <header-controls mode="2">
@@ -192,6 +188,8 @@ class AdminLogs extends LitElement {
         <data-table
           .data=${this.paginatedLogs}
           .conf=${logsTableConfig}
+          .loading=${!this._loaded}
+          .skeletonRows=${this.itemsPerPage}
           mode="1"
           @table-action=${this.handleTableAction}>
         </data-table>

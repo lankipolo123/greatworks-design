@@ -70,6 +70,7 @@ export const auth = {
       body: JSON.stringify({ email: newEmail, password }),
     });
     localStorage.setItem('auth_user', JSON.stringify(data.user));
+    cacheInvalidate('auth-user');
     return data;
   },
 

@@ -149,10 +149,6 @@ class CustomerPayments extends LitElement {
   }
 
   render() {
-    if (!this._loaded) {
-      return html`<div class="page-loader"><div class="spinner"></div></div>`;
-    }
-
     return html`
       <content-card mode="4">
         <header-controls mode="2">
@@ -170,6 +166,8 @@ class CustomerPayments extends LitElement {
         <data-table
           .data=${this.paginatedPayments}
           .conf=${paymentsTableConfig}
+          .loading=${!this._loaded}
+          .skeletonRows=${this.itemsPerPage}
           mode="1"
           @table-action=${this.handleTableAction}>
         </data-table>

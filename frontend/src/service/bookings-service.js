@@ -17,18 +17,21 @@ export const bookings = {
   async create(bookingData) {
     const res = await apiRequest('/bookings', { method: 'POST', body: JSON.stringify(bookingData) });
     cacheInvalidate('bookings:');
+    cacheInvalidate('bookings-cal:');
     return res;
   },
 
   async update(id, bookingData) {
     const res = await apiRequest(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(bookingData) });
     cacheInvalidate('bookings:');
+    cacheInvalidate('bookings-cal:');
     return res;
   },
 
   async delete(id) {
     const res = await apiRequest(`/bookings/${id}`, { method: 'DELETE' });
     cacheInvalidate('bookings:');
+    cacheInvalidate('bookings-cal:');
     return res;
   },
 

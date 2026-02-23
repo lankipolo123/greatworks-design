@@ -59,7 +59,7 @@ export class ClockUtility {
                 hour12: true,
                 hour: '2-digit',
                 minute: '2-digit',
-                seconds: '2-digit'
+                second: '2-digit'
             }),
             date: now.toLocaleDateString('en-US', {
                 month: 'short',
