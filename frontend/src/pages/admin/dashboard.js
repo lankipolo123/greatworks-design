@@ -50,6 +50,14 @@ class AdminDashboard extends LitElement {
       pendingTickets: 0
     };
     this._loaded = false;
+
+    // ✅ ONLY ADDITION: Override actions for dashboard table
+    this.dashboardTicketsConfig = {
+      ...ticketsTableConfig,
+      actions: [
+        { key: 'ticketView', label: 'Look at Ticket', icon: 'visibility' }
+      ]
+    };
   }
 
   connectedCallback() {
@@ -70,9 +78,11 @@ class AdminDashboard extends LitElement {
         usersApi.getAll({ per_page: 100 }),
         bookingsApi.getAll({ per_page: 100 }),
       ]);
+
       this.tickets = ticketRes.data || ticketRes;
       this.users = userRes.data || userRes;
       this.reservations = bookingRes.data || bookingRes;
+
       this.updateDashboard();
       this._loaded = true;
     } catch (e) {
@@ -174,7 +184,7 @@ class AdminDashboard extends LitElement {
           >
             <data-table
               .data=${this.recentTickets}
-              .conf=${ticketsTableConfig}
+              .conf=${this.dashboardTicketsConfig} 
               mode="3"
               @table-action=${this.handleTableAction}
             ></data-table>

@@ -20,7 +20,7 @@ export class ActionMenu extends LitElement {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ff0707d7;
+  color: #000000d7;
 }
 
 .menu-trigger:disabled {

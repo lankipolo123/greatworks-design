@@ -15,7 +15,14 @@ export const paymentsTableConfig = {
         },
         {
             key: 'amount',
-            label: 'Price'
+            label: 'Price',
+            render: value => {
+                const formatted = Number(value).toLocaleString('en-PH', {
+                    style: 'currency',
+                    currency: 'PHP'
+                });
+                return html`${formatted}`;
+            }
         },
         {
             key: 'currency',

@@ -82,8 +82,8 @@ class AdminTicket extends LitElement {
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'open', label: 'Open' },
-      { id: 'in_progress', label: 'In Progress' },
-      { id: 'closed', label: 'Closed' }
+      { id: 'progress', label: 'Progress' },
+      { id: 'completed', label: 'Completed' }
     ];
 
     this.handlePageChange = this.handlePageChange.bind(this);

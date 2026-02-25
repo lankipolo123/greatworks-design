@@ -158,9 +158,10 @@ class AdminReservation extends LitElement {
     this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All' },
-      { id: 'upcoming', label: 'Upcoming' },
-      { id: 'ongoing', label: 'Ongoing' },
-      { id: 'completed', label: 'Archived/Complete' }
+      { id: 'upcoming', label: 'Pending' },
+      { id: 'ongoing', label: 'Confirmed' },
+      { id: 'completed', label: 'Complete' },
+      { id: 'cancelled', label: 'Archived' }
     ];
 
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -219,7 +220,10 @@ class AdminReservation extends LitElement {
     } else if (this.activeTab === 'ongoing') {
       filtered = filtered.filter(r => r.status === 'confirmed' || r.status === 'ongoing');
     } else if (this.activeTab === 'completed') {
-      filtered = filtered.filter(r => r.status === 'completed' || r.status === 'cancelled');
+      filtered = filtered.filter(r => r.status === 'completed' || r.status === 'completed');
+    }
+    else if (this.activeTab === 'cancelled') {
+      filtered = filtered.filter(r => r.status === 'cancelled' || r.status === 'cancelled');
     }
 
     if (this.searchValue) {

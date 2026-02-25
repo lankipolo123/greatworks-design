@@ -21,35 +21,25 @@ export const ticketsTableConfig = {
             key: 'status',
             label: 'Status',
             render: (value) => {
-                const variant = value?.toLowerCase() === 'pending' ? 'pending' :
-                    value?.toLowerCase() === 'ongoing' ? 'ongoing' :
-                        value?.toLowerCase() === 'completed' || value?.toLowerCase() === 'closed' ? 'completed' :
-                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
+                const status = value?.toLowerCase();
+
+                const variant =
+                    status === 'open' ? 'primary' :
+                        status === 'progress' ? 'warning' :
+                            status === 'completed' ? 'success' :
+                                'primary';
+
                 return html`
-                    <badge-component variant="${variant}" size="small">
-                        ${value}
-                    </badge-component>
-                `;
-            }
-        },
-        {
-            key: 'priority',
-            label: 'Priority',
-            render: (value) => {
-                const variant = value?.toLowerCase() === 'low' ? 'low' :
-                    value?.toLowerCase() === 'medium' ? 'medium' :
-                        value?.toLowerCase() === 'high' ? 'high' :
-                            value?.toLowerCase() === 'critical' || value?.toLowerCase() === 'urgent' ? 'critical' : 'medium';
-                return html`
-                    <badge-component variant="${variant}" size="small">
-                        ${value}
-                    </badge-component>
-                `;
+        <badge-component variant="${variant}" size="small">
+            ${value}
+        </badge-component>
+    `;
             }
         },
         {
             key: 'created_at',
             label: 'Date',
+            render: value => new Date(value).toLocaleString()
         }
     ],
 

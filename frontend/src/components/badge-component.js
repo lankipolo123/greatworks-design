@@ -52,15 +52,15 @@ class BadgeComponent extends LitElement {
     .badge.ongoing,
     .badge.confirmed,
     .badge.processing {
-      background: #cfe2ff;
-      color: #084298;
+      background: #ffffff;
+      color: #0066ff;
     }
 
     .badge.completed,
     .badge.success,
     .badge.active {
-      background: #12eb03df;
-      color: #ffffff;
+      background: #ffffffdf;
+      color: #b5f021;
     }
 
     .badge.cancelled,
@@ -89,8 +89,8 @@ class BadgeComponent extends LitElement {
 
     /* Category Variants */
     .badge.technical {
-      background: #1976d2;
-      color: #e3f2fd;
+      background: #00ccff;
+      color: #ffffff;
     }
 
     .badge.billing {
