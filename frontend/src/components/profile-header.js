@@ -360,6 +360,83 @@ export class ProfileHeader extends LitElement {
       line-height: 1.4;
     }
 
+    .twofa-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: twofaFadeIn 0.2s ease-out;
+    }
+
+    @keyframes twofaFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .twofa-dialog {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+      width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      animation: twofaSlideUp 0.3s ease-out;
+    }
+
+    @keyframes twofaSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .twofa-dialog-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .twofa-dialog-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+    }
+
+    .twofa-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #f90505;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .twofa-close-btn:hover {
+      background: #f5f5f5;
+      color: #d30101;
+    }
+
+    .twofa-dialog-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
   `;
 
   constructor() {
@@ -664,16 +741,21 @@ export class ProfileHeader extends LitElement {
         @dialog-cancel=${this.handleDialogClose}
       ></app-dialog>
 
-      <app-dialog
-        .isOpen=${this.show2FADialog}
-        title="${dialogTitle}"
-        size="medium"
-        .hideFooter=${true}
-        @dialog-close=${this.handle2FADialogClose}
-        @dialog-cancel=${this.handle2FADialogClose}
-      >
-        ${this._render2FAContent()}
-      </app-dialog>
+      ${this.show2FADialog ? html`
+        <div class="twofa-overlay" @click=${e => { if (e.target === e.currentTarget) this.handle2FADialogClose(); }}>
+          <div class="twofa-dialog">
+            <div class="twofa-dialog-header">
+              <h2 class="twofa-dialog-title">${dialogTitle}</h2>
+              ${this._2faStep !== 'backup' ? html`
+                <button class="twofa-close-btn" @click=${this._close2FADialog}>&times;</button>
+              ` : ''}
+            </div>
+            <div class="twofa-dialog-body">
+              ${this._render2FAContent()}
+            </div>
+          </div>
+        </div>
+      ` : ''}
 
       <div class="profile-card">
         ${this.isUploading ? html`
