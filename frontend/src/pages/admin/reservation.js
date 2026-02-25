@@ -10,6 +10,7 @@ import '/src/components/app-button.js';
 import '/src/components/app-dialog.js';
 import '/src/components/book-someone-form.js';
 import '/src/components/badge-component.js';
+import '/src/components/users-avatar.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/tabs-wrapper.js';
 import '/src/layouts/search-wrapper.js';
@@ -85,13 +86,41 @@ class AdminReservation extends LitElement {
       color: #1a1a1a;
     }
 
+    .reservation-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .reservation-profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .reservation-profile-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .reservation-profile-email {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .reservation-profile-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
     .details-actions {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
       margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid #e0e0e0;
     }
 
     .delete-warning {
@@ -200,6 +229,7 @@ class AdminReservation extends LitElement {
       userId: r.user?.name || r.user?.email || `User #${r.user_id}`,
       userName: r.user?.name || '',
       userEmail: r.user?.email || '',
+      user: r.user || null,
       roomId: r.room_id,
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
@@ -427,11 +457,47 @@ class AdminReservation extends LitElement {
     }
   }
 
+  _getRoleVariant(role) {
+    const r = role?.toLowerCase();
+    if (r === 'admin') return 'danger';
+    if (r === 'moderator') return 'info';
+    if (r === 'temporary') return 'warning';
+    return 'technical';
+  }
+
+  _getStatusVariant(status) {
+    const s = status?.toLowerCase();
+    if (s === 'active') return 'success';
+    if (s === 'inactive') return 'inactive';
+    if (s === 'archived') return 'archived';
+    return 'primary';
+  }
+
   _renderDetailsDialog() {
     if (!this.selectedReservation) return '';
     const r = this.selectedReservation;
+    const user = r.user || {};
 
     return html`
+      ${user.name || user.email ? html`
+        <div class="reservation-profile">
+          <user-avatar
+            size="48"
+            .src=${user.profile_photo || ''}
+            .name=${user.name || ''}
+            .gender=${user.gender || ''}>
+          </user-avatar>
+          <div class="reservation-profile-info">
+            <div class="reservation-profile-name">${user.name || 'Unknown User'}</div>
+            <div class="reservation-profile-email">${user.email || ''}</div>
+            <div class="reservation-profile-badges">
+              ${user.role ? html`<badge-component variant="${this._getRoleVariant(user.role)}" size="small">${user.role}</badge-component>` : ''}
+              ${user.status ? html`<badge-component variant="${this._getStatusVariant(user.status)}" size="small">${user.status}</badge-component>` : ''}
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="details-content">
         <div class="detail-item">
           <span class="detail-label">Reservation ID</span>
@@ -440,10 +506,6 @@ class AdminReservation extends LitElement {
         <div class="detail-item">
           <span class="detail-label">Status</span>
           <badge-component variant="${r.status}" size="small">${r.status}</badge-component>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">User</span>
-          <span class="detail-value">${r.userName || r.userId}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Room</span>
