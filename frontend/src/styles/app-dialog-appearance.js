@@ -116,13 +116,13 @@ export const dialogAppearance = css`
       display: flex;
       justify-content: flex-end;
       gap: 12px;
-      border-top: 1px solid #2d2b2b45;
+      border-top: 1px solid #f0f0f0;
     }
 
     /* COMPACT STYLE - Forms */
     :host([style-mode="compact"]) .dialog-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 16px 20px 8px;
+      border-bottom: none;
     }
 
     :host([style-mode="compact"]) .dialog-title {
@@ -136,19 +136,19 @@ export const dialogAppearance = css`
     }
 
     :host([style-mode="compact"]) .dialog-description {
-      font-size: 0.875rem;
-      color: #888;
+      font-size: 0.85rem;
+      color: #999;
       margin: 2px 0 0 0;
       font-weight: 400;
     }
 
     :host([style-mode="compact"]) .dialog-body {
-      padding: 16px 20px;
+      padding: 12px 20px 16px;
     }
 
     :host([style-mode="compact"]) .dialog-footer {
       padding: 12px 20px;
-      border-top: 1px solid #e0e0e0;
+      border-top: none;
     }
 
     /* CLEAN STYLE - Export/Minimal */
@@ -409,8 +409,9 @@ export const dialogAppearance = css`
 
     .date-range-section {
       margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e0e0e0;
+      padding: 14px;
+      background: #f8f8fa;
+      border-radius: 8px;
     }
 
     .date-range-title {
@@ -453,22 +454,23 @@ export const dialogAppearance = css`
     .ticket-profile-section {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e0e0e0;
+      gap: 14px;
+      padding: 14px;
+      background: #f8f8fa;
+      border-radius: 10px;
       margin-bottom: 16px;
     }
 
     .ticket-avatar {
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background: #e0e0e0;
+      background: #e4e4e8;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: #666;
       flex-shrink: 0;
       overflow: hidden;
@@ -485,15 +487,15 @@ export const dialogAppearance = css`
     }
 
     .ticket-user-name {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #1a1a1a;
       margin: 0 0 2px 0;
     }
 
     .ticket-user-email {
-      font-size: 0.85rem;
-      color: #666;
+      font-size: 0.8rem;
+      color: #888;
       margin-bottom: 4px;
     }
 
@@ -507,24 +509,25 @@ export const dialogAppearance = css`
     .ticket-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e0e0e0;
+      gap: 8px;
       margin-bottom: 16px;
     }
 
     .ticket-detail-item {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
+      padding: 10px 12px;
+      background: #f8f8fa;
+      border-radius: 8px;
     }
 
     .ticket-detail-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      color: #888;
+      color: #999;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
     }
 
     .ticket-detail-value {
@@ -539,44 +542,44 @@ export const dialogAppearance = css`
     }
 
     .ticket-request-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      color: #888;
+      color: #999;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
     }
 
     .ticket-request-subject {
       font-size: 1rem;
       font-weight: 600;
       color: #1a1a1a;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .ticket-request-description {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       line-height: 1.6;
       color: #555;
       white-space: pre-wrap;
-      background: #f9f9f9;
-      padding: 12px;
+      background: #f8f8fa;
+      padding: 12px 14px;
       border-radius: 8px;
-      border: 1px solid #eee;
     }
 
     .ticket-actions {
       display: flex;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
       margin-top: 8px;
+      padding-top: 8px;
     }
 
     .ticket-action-btn {
       padding: 10px 32px;
       border: none;
       border-radius: 24px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
@@ -591,8 +594,8 @@ export const dialogAppearance = css`
 
     .ticket-action-btn.accept:hover {
       background: #15803d;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(22, 163, 74, 0.25);
     }
 
     .ticket-action-btn.decline {
@@ -602,8 +605,8 @@ export const dialogAppearance = css`
 
     .ticket-action-btn.decline:hover {
       background: #b91c1c;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(220, 38, 38, 0.25);
     }
 
     .ticket-action-btn.respond {
@@ -613,8 +616,8 @@ export const dialogAppearance = css`
 
     .ticket-action-btn.respond:hover {
       background: #1d4ed8;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
     }
 
     .ticket-action-btn.close {
@@ -624,22 +627,24 @@ export const dialogAppearance = css`
 
     .ticket-action-btn.close:hover {
       background: #4b5563;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(107, 114, 128, 0.25);
     }
 
     /* Generic Details View Mode */
     .details-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 8px;
     }
 
     .details-item {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
+      padding: 10px 12px;
+      background: #f8f8fa;
+      border-radius: 8px;
     }
 
     .details-item.full {
@@ -647,36 +652,30 @@ export const dialogAppearance = css`
     }
 
     .details-label {
-      font-size: 0.75rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      color: #888;
+      color: #999;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.04em;
     }
 
     .details-value {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #333;
       font-weight: 500;
     }
 
     .details-value.large {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-    }
-
-    .details-divider {
-      height: 1px;
-      background: #e0e0e0;
-      margin: 16px 0;
-      grid-column: 1 / -1;
     }
 
     .details-section-title {
       font-size: 0.9rem;
       font-weight: 600;
       color: #333;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      margin-top: 8px;
       grid-column: 1 / -1;
     }
 
@@ -685,7 +684,7 @@ export const dialogAppearance = css`
       align-items: center;
       padding: 4px 12px;
       border-radius: 12px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
       width: fit-content;
     }

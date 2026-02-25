@@ -101,10 +101,11 @@ class AdminUser extends LitElement {
     .user-profile-header {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 14px;
+      background: #f8f8fa;
+      border-radius: 10px;
     }
 
     .user-profile-info {
@@ -114,14 +115,14 @@ class AdminUser extends LitElement {
     }
 
     .user-profile-name {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #1a1a1a;
     }
 
     .user-profile-email {
-      font-size: 0.85rem;
-      color: #666;
+      font-size: 0.8rem;
+      color: #888;
     }
 
     .user-profile-badges {
@@ -133,21 +134,24 @@ class AdminUser extends LitElement {
     .user-details-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
     }
 
     .user-detail-item {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
+      padding: 10px 12px;
+      background: #f8f8fa;
+      border-radius: 8px;
     }
 
     .user-detail-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      color: #888;
+      color: #999;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
     }
 
     .user-detail-value {
