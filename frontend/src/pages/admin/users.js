@@ -103,9 +103,6 @@ class AdminUser extends LitElement {
       align-items: center;
       gap: 14px;
       margin-bottom: 16px;
-      padding: 14px;
-      background: #f8f8fa;
-      border-radius: 10px;
     }
 
     .user-profile-info {
@@ -141,9 +138,6 @@ class AdminUser extends LitElement {
       display: flex;
       flex-direction: column;
       gap: 3px;
-      padding: 10px 12px;
-      background: #f8f8fa;
-      border-radius: 8px;
     }
 
     .user-detail-label {

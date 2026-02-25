@@ -409,9 +409,6 @@ export const dialogAppearance = css`
 
     .date-range-section {
       margin-top: 16px;
-      padding: 14px;
-      background: #f8f8fa;
-      border-radius: 8px;
     }
 
     .date-range-title {
@@ -455,9 +452,6 @@ export const dialogAppearance = css`
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 14px;
-      background: #f8f8fa;
-      border-radius: 10px;
       margin-bottom: 16px;
     }
 
@@ -517,9 +511,6 @@ export const dialogAppearance = css`
       display: flex;
       flex-direction: column;
       gap: 3px;
-      padding: 10px 12px;
-      background: #f8f8fa;
-      border-radius: 8px;
     }
 
     .ticket-detail-label {
@@ -562,9 +553,6 @@ export const dialogAppearance = css`
       line-height: 1.6;
       color: #555;
       white-space: pre-wrap;
-      background: #f8f8fa;
-      padding: 12px 14px;
-      border-radius: 8px;
     }
 
     .ticket-actions {
@@ -642,9 +630,6 @@ export const dialogAppearance = css`
       display: flex;
       flex-direction: column;
       gap: 3px;
-      padding: 10px 12px;
-      background: #f8f8fa;
-      border-radius: 8px;
     }
 
     .details-item.full {
