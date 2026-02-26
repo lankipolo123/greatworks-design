@@ -3,6 +3,7 @@ import { html } from 'lit';
 import '/src/components/badge-component.js';
 import '/src/components/users-avatar.js';
 import { hashId } from '@/utility/hash-id.js';
+import { isModerator } from '/src/service/api-core.js';
 
 export const usersTableConfig = {
     columns: [
@@ -70,5 +71,13 @@ export const usersTableConfig = {
     actions: [
         { key: 'view', label: 'View', icon: 'visibility' },
         { key: 'delete', label: 'Remove', icon: 'delete' }
-    ]
+    ],
+
+    // Moderators cannot delete admin users
+    filterActions: (actions, row) => {
+        if (isModerator() && row.role === 'admin') {
+            return actions.filter(a => a.key !== 'delete');
+        }
+        return actions;
+    }
 };

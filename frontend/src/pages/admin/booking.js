@@ -14,7 +14,7 @@ import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
 import { bookingFabOptions } from '/src/configs/fab-options-config.js';
-import { isAdmin } from '/src/service/api-core.js';
+import { isAdmin, isModerator, getUser } from '/src/service/api-core.js';
 import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
@@ -255,7 +255,11 @@ class AdminBooking extends LitElement {
     // Rooms list for dropdowns
     this.roomsList = [];
     this.locationsList = [];
-    this.selectedLocation = 'all';
+    // Moderators are locked to their assigned location
+    const user = getUser();
+    this._isModerator = isModerator();
+    this._moderatorLocationId = this._isModerator && user?.location_id ? String(user.location_id) : null;
+    this.selectedLocation = this._moderatorLocationId || 'all';
     this._loaded = false;
 
     this._loadBookings();
@@ -319,6 +323,8 @@ class AdminBooking extends LitElement {
   }
 
   get _locationDropdownOptions() {
+    // Moderators don't get the dropdown — return empty so it hides
+    if (this._isModerator) return [];
     return [
       { value: 'all', label: 'Select Location' },
       ...this.locationsList.map(l => ({ value: String(l.id), label: l.name }))
@@ -388,6 +394,7 @@ class AdminBooking extends LitElement {
   }
 
   handleLocationChange(e) {
+    if (this._isModerator) return; // locked to assigned location
     this.selectedLocation = e.detail.location;
   }
 

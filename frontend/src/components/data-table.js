@@ -163,7 +163,12 @@ tbody tr {
                 cols.push({
                     property: 'actions',
                     header: 'Actions',
-                    html: (_, row) => this.renderActions(row, conf.actions)
+                    html: (_, row) => {
+                        const acts = typeof conf.filterActions === 'function'
+                            ? conf.filterActions(conf.actions, row)
+                            : conf.actions;
+                        return this.renderActions(row, acts);
+                    }
                 });
             }
 
