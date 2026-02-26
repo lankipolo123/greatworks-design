@@ -88,6 +88,15 @@ class CustomerBooking extends LitElement {
       color: #1a1a1a;
     }
 
+    .details-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1.5px solid #2d2b2b10;
+    }
+
     .slot-info {
       background: #f8f9fa;
       border: 1.5px solid #2d2b2b25;
@@ -383,6 +392,94 @@ class CustomerBooking extends LitElement {
       display: flex;
       justify-content: center;
       gap: 0.5rem;
+    }
+
+    .receipt-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-bottom: 0.5rem;
+    }
+
+    .receipt-header .receipt-brand {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: 0.02em;
+    }
+
+    .receipt-header .receipt-date {
+      font-size: 0.7rem;
+      color: #999;
+    }
+
+    .receipt-divider {
+      border: none;
+      border-top: 1.5px dashed #d0d0d0;
+      margin: 0.6rem 0;
+    }
+
+    .receipt-method-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: #555;
+      padding: 0.2rem 0;
+    }
+
+    .receipt-method-row span:last-child {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .receipt-footer {
+      text-align: center;
+      font-size: 0.68rem;
+      color: #aaa;
+      margin-top: 0.6rem;
+    }
+
+    .receipt-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .receipt-actions button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      border: 1.5px solid #2d2b2b20;
+      background: #f8f9fa;
+      color: #333;
+    }
+
+    .receipt-actions button:hover {
+      background: #eee;
+    }
+
+    .receipt-actions button .material-symbols-outlined {
+      font-size: 1rem;
+    }
+
+    .receipt-actions button.primary-action {
+      background: #ffb300;
+      color: #fff;
+      border-color: #ffb300;
+    }
+
+    .receipt-actions button.primary-action:hover {
+      background: #ffa000;
     }
 
     .page-loader {
@@ -750,6 +847,7 @@ class CustomerBooking extends LitElement {
   _renderDetailsDialog() {
     if (!this.selectedBooking) return '';
     const b = this.selectedBooking;
+    const isPending = b.status === 'pending';
 
     return html`
       <div class="details-content">
@@ -788,7 +886,33 @@ class CustomerBooking extends LitElement {
           </div>
         ` : ''}
       </div>
+
+      ${isPending ? html`
+        <div class="details-actions">
+          <app-button type="secondary" size="small" @click=${() => this._handleChangePaymentMethod(b)}>
+            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">swap_horiz</span>
+            Change Payment Method
+          </app-button>
+        </div>
+      ` : ''}
     `;
+  }
+
+  _handleChangePaymentMethod(booking) {
+    const selectedRoom = this.roomsList.find(r => r.name === booking.roomName);
+    this._createdBooking = {
+      id: booking.id,
+      room_id: selectedRoom?.id || null,
+      roomName: booking.roomName,
+      date: booking.date,
+      start_time: booking.startTime || booking.time,
+      duration_hours: booking.durationHours,
+      guests: booking.guests,
+      price_per_hour: selectedRoom?.price_per_hour || 0,
+    };
+    this._selectedPaymentMethod = '';
+    this.showDetailsDialog = false;
+    this.showPaymentDialog = true;
   }
 
   _renderBookForm() {
@@ -873,18 +997,14 @@ class CustomerBooking extends LitElement {
       this.showPaymentDialog = false;
 
       if (this._selectedPaymentMethod === 'cash') {
-        // Cash: show reservation ID to present at front desk
         toast.success('Please proceed to the counter to complete your payment.');
-        this.showConfirmationDialog = true;
       } else {
-        // Online methods (gcash, debit_card, bank_transfer): payment completed, reload
         toast.success('Payment successful! Your booking is confirmed.');
-        this._createdBooking = null;
-        this._createdPayment = null;
-        this._selectedPaymentMethod = '';
         await this._loadBookings();
         appState.emit('data-changed');
       }
+      // Show receipt for all payment methods
+      this.showConfirmationDialog = true;
     } catch (err) {
       toast.error(err.message || 'Failed to record payment');
     } finally {
@@ -956,18 +1076,46 @@ class CustomerBooking extends LitElement {
     `;
   }
 
+  _getPaymentMethodLabel(method) {
+    const labels = {
+      gcash: 'GCash',
+      cash: 'Cash - Pay at Counter',
+      debit_card: 'Debit Card',
+      bank_transfer: 'Bank Transfer',
+    };
+    return labels[method] || method;
+  }
+
+  _isCashPayment() {
+    return this._selectedPaymentMethod === 'cash';
+  }
+
   _renderConfirmationDialog() {
     const b = this._createdBooking;
     if (!b) return '';
     const total = this._getBookingTotal();
+    const isCash = this._isCashPayment();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
 
     return html`
       <div class="confirmation-content">
         <div class="confirmation-icon">
           <span class="material-symbols-outlined" style="font-size:48px;color:#4caf50;">check_circle</span>
         </div>
-        <h3 class="confirmation-title">Booking Reserved</h3>
-        <p class="confirmation-subtitle">Show this reservation ID to the front desk to complete your payment and confirm your booking.</p>
+
+        <div class="receipt-header">
+          <span class="receipt-brand">GreatWorks</span>
+          <span class="receipt-date">${dateStr} at ${timeStr}</span>
+        </div>
+
+        <h3 class="confirmation-title">${isCash ? 'Booking Reserved' : 'Booking Confirmed'}</h3>
+        <p class="confirmation-subtitle">
+          ${isCash
+            ? 'Present this receipt at the front desk to complete your payment.'
+            : 'Your booking has been confirmed. Save this receipt for your records.'}
+        </p>
 
         <div class="reservation-id-card">
           <span class="reservation-id-label">Reservation ID</span>
@@ -995,31 +1143,126 @@ class CustomerBooking extends LitElement {
             <span>Guests</span>
             <span>${b.guests}</span>
           </div>
-          <div class="confirmation-row">
-            <span>Payment</span>
-            <span>
-              <badge-component variant="warning" size="small">Cash - Pay at Counter</badge-component>
-            </span>
+
+          <hr class="receipt-divider" />
+
+          <div class="receipt-method-row">
+            <span>Payment Method</span>
+            <span>${this._getPaymentMethodLabel(this._selectedPaymentMethod)}</span>
           </div>
-          <div class="confirmation-row">
+          <div class="receipt-method-row">
             <span>Status</span>
-            <span>
-              <badge-component variant="primary" size="small">Pending Payment</badge-component>
-            </span>
+            <span>${isCash ? 'Pending Payment' : 'Paid'}</span>
           </div>
           <div class="confirmation-row total">
-            <span>Amount Due</span>
+            <span>${isCash ? 'Amount Due' : 'Amount Paid'}</span>
             <span>${Number(total).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
           </div>
         </div>
 
-        <div class="confirmation-actions">
-          <app-button type="primary" size="small" @click=${() => this.handleConfirmationDone()}>
+        <div class="receipt-footer">
+          This serves as your official booking receipt.
+        </div>
+
+        <div class="receipt-actions">
+          <button @click=${() => this._downloadReceipt()}>
+            <span class="material-symbols-outlined">download</span>
+            Download
+          </button>
+          <button @click=${() => this._printReceipt()}>
+            <span class="material-symbols-outlined">print</span>
+            Print
+          </button>
+          <button class="primary-action" @click=${() => this.handleConfirmationDone()}>
             Done
-          </app-button>
+          </button>
         </div>
       </div>
     `;
+  }
+
+  _buildReceiptHTML() {
+    const b = this._createdBooking;
+    if (!b) return '';
+    const total = this._getBookingTotal();
+    const isCash = this._isCashPayment();
+    const reservationId = hashId('BKG', b.id);
+    const now = new Date();
+    const issuedDate = now.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const issuedTime = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+    const totalFormatted = Number(total).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Booking Receipt - ${reservationId}</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 400px; margin: 40px auto; padding: 24px; color: #1a1a1a; }
+  .header { text-align: center; margin-bottom: 16px; }
+  .brand { font-size: 1.3rem; font-weight: 700; }
+  .date { font-size: 0.75rem; color: #999; }
+  .title { text-align: center; font-size: 1rem; font-weight: 600; margin: 8px 0 4px; }
+  .subtitle { text-align: center; font-size: 0.78rem; color: #888; margin: 0 0 16px; }
+  .id-card { text-align: center; background: #f0faf0; border: 1.5px solid #4caf5040; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+  .id-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #888; letter-spacing: 0.05em; display: block; }
+  .id-value { font-size: 1.4rem; font-weight: 800; color: #2e7d32; font-family: monospace; letter-spacing: 0.08em; }
+  .details { background: #f8f9fa; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.85rem; }
+  .row .label { color: #555; }
+  .row .value { font-weight: 600; }
+  .divider { border: none; border-top: 1.5px dashed #d0d0d0; margin: 8px 0; }
+  .total { border-top: 1.5px solid #e0e0e0; margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 0.95rem; }
+  .footer { text-align: center; font-size: 0.7rem; color: #aaa; margin-top: 16px; }
+  @media print { body { margin: 0; } }
+</style></head><body>
+  <div class="header">
+    <div class="brand">GreatWorks</div>
+    <div class="date">${issuedDate} at ${issuedTime}</div>
+  </div>
+  <div class="title">${isCash ? 'Booking Reserved' : 'Booking Confirmed'}</div>
+  <p class="subtitle">${isCash ? 'Present this receipt at the front desk to complete your payment.' : 'Your booking has been confirmed.'}</p>
+  <div class="id-card">
+    <span class="id-label">Reservation ID</span>
+    <span class="id-value">${reservationId}</span>
+  </div>
+  <div class="details">
+    <div class="row"><span class="label">Room</span><span class="value">${b.roomName}</span></div>
+    <div class="row"><span class="label">Date</span><span class="value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span></div>
+    <div class="row"><span class="label">Time</span><span class="value">${b.start_time}</span></div>
+    <div class="row"><span class="label">Duration</span><span class="value">${b.duration_hours}h</span></div>
+    <div class="row"><span class="label">Guests</span><span class="value">${b.guests}</span></div>
+    <hr class="divider" />
+    <div class="row"><span class="label">Payment</span><span class="value">${this._getPaymentMethodLabel(this._selectedPaymentMethod)}</span></div>
+    <div class="row"><span class="label">Status</span><span class="value">${isCash ? 'Pending Payment' : 'Paid'}</span></div>
+    <div class="row total"><span class="label">${isCash ? 'Amount Due' : 'Amount Paid'}</span><span class="value">${totalFormatted}</span></div>
+  </div>
+  <div class="footer">This serves as your official booking receipt.</div>
+</body></html>`;
+  }
+
+  _downloadReceipt() {
+    const html = this._buildReceiptHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `booking-receipt-${hashId('BKG', this._createdBooking.id)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Receipt downloaded!');
+  }
+
+  _printReceipt() {
+    const html = this._buildReceiptHTML();
+    const win = window.open('', '_blank', 'width=450,height=600');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      win.print();
+    } else {
+      toast.error('Unable to open print window. Please allow popups.');
+    }
   }
 
   _onBookFormChange() {
@@ -1116,10 +1359,10 @@ class CustomerBooking extends LitElement {
         ${this._renderPaymentDialog()}
       </app-dialog>
 
-      <!-- Confirmation Dialog -->
+      <!-- Booking Receipt Dialog -->
       <app-dialog
         .isOpen=${this.showConfirmationDialog}
-        title="Reservation Confirmed"
+        title="Booking Receipt"
         size="small"
         styleMode="compact"
         .closeOnOverlay=${false}
