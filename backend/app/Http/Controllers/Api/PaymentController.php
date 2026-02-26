@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,15 +58,40 @@ class PaymentController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'booking_id' => 'nullable|exists:bookings,id',
-            'amount' => 'required|numeric|min:0',
-            'currency' => 'sometimes|string|size:3',
-            'method' => 'required|in:gcash,credit_card,debit_card,cash,bank_transfer',
-            'status' => 'sometimes|in:pending,completed,failed,refunded',
-            'reference_number' => 'nullable|string|max:100',
-        ]);
+        $user = $request->user();
+
+        // Admins can create payments for any user
+        if ($user->isAdmin()) {
+            $validated = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'booking_id' => 'nullable|exists:bookings,id',
+                'amount' => 'required|numeric|min:0',
+                'currency' => 'sometimes|string|size:3',
+                'method' => 'required|in:gcash,credit_card,debit_card,cash,bank_transfer',
+                'status' => 'sometimes|in:pending,completed,failed,refunded',
+                'reference_number' => 'nullable|string|max:100',
+            ]);
+        } else {
+            // Customers/moderators create payments for their own bookings
+            $validated = $request->validate([
+                'booking_id' => 'required|exists:bookings,id',
+                'amount' => 'required|numeric|min:0',
+                'currency' => 'sometimes|string|size:3',
+                'method' => 'required|in:gcash,credit_card,debit_card,cash,bank_transfer',
+                'reference_number' => 'nullable|string|max:100',
+            ]);
+
+            // Verify the booking belongs to this user
+            $booking = Booking::find($validated['booking_id']);
+            if (!$booking || $booking->user_id !== $user->id) {
+                return response()->json(['message' => 'You can only create payments for your own bookings.'], 403);
+            }
+
+            $validated['user_id'] = $user->id;
+
+            // Cash payments stay pending (pay at counter), others mark as completed
+            $validated['status'] = $validated['method'] === 'cash' ? 'pending' : 'completed';
+        }
 
         $payment = Payment::create($validated);
 

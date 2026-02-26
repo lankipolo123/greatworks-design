@@ -76,8 +76,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets', [TicketController::class, 'store']);
     Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
 
-    // Payments (view own payments)
+    // Payments (view own payments, create for own bookings)
     Route::get('/payments', [PaymentController::class, 'index']);
+    Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 
     /*
@@ -140,8 +141,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/rooms', [RoomController::class, 'store']);
         Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
-        // Payment creation & deletion (admin only)
-        Route::post('/payments', [PaymentController::class, 'store']);
+        // Payment deletion (admin only)
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
 
         // Activity log creation (admin only — prevents audit trail manipulation)

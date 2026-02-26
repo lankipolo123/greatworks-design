@@ -13,7 +13,7 @@ import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
-import { bookings, rooms, locations } from '/src/service/api.js';
+import { bookings, rooms, locations, payments } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class CustomerBooking extends LitElement {
@@ -28,8 +28,14 @@ class CustomerBooking extends LitElement {
     totalPages: { type: Number },
     showDetailsDialog: { type: Boolean },
     showBookDialog: { type: Boolean },
+    showPaymentDialog: { type: Boolean },
+    showConfirmationDialog: { type: Boolean },
     selectedBooking: { type: Object },
     bookLoading: { type: Boolean },
+    _paymentLoading: { type: Boolean, state: true },
+    _selectedPaymentMethod: { type: String, state: true },
+    _createdBooking: { type: Object, state: true },
+    _createdPayment: { type: Object, state: true },
     roomsList: { type: Array },
     slotInfo: { type: Object },
     slotLoading: { type: Boolean },
@@ -215,6 +221,170 @@ class CustomerBooking extends LitElement {
       background: #eee;
     }
 
+    .payment-summary {
+      background: #f8f9fa;
+      border: 1.5px solid #2d2b2b15;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .payment-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+    }
+
+    .payment-summary-row.total {
+      border-top: 1.5px solid #2d2b2b15;
+      margin-top: 0.3rem;
+      padding-top: 0.5rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .payment-summary-label {
+      color: #666;
+    }
+
+    .payment-summary-value {
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    .payment-methods-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+
+    .payment-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .payment-method-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.65rem 0.75rem;
+      border: 1.5px solid #2d2b2b20;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #333;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .payment-method-btn:hover {
+      border-color: #ffb300;
+      background: #fffdf5;
+    }
+
+    .payment-method-btn.selected {
+      border-color: #ffb300;
+      background: #fff8e1;
+      font-weight: 600;
+    }
+
+    .payment-method-btn .material-symbols-outlined {
+      font-size: 1.15rem;
+      color: #ffb300;
+    }
+
+    .confirmation-content {
+      text-align: center;
+    }
+
+    .confirmation-icon {
+      margin-bottom: 0.5rem;
+    }
+
+    .confirmation-title {
+      margin: 0 0 0.25rem;
+      font-size: 1.05rem;
+      color: #1a1a1a;
+    }
+
+    .confirmation-subtitle {
+      margin: 0 0 1rem;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .reservation-id-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: #f0faf0;
+      border: 1.5px solid #4caf5040;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .reservation-id-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #888;
+      letter-spacing: 0.05em;
+    }
+
+    .reservation-id-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #2e7d32;
+      font-family: monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .confirmation-details {
+      text-align: left;
+      background: #f8f9fa;
+      border: 1.5px solid #2d2b2b15;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .confirmation-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+      font-size: 0.82rem;
+      color: #555;
+    }
+
+    .confirmation-row span:last-child {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .confirmation-row.total {
+      border-top: 1.5px solid #2d2b2b15;
+      margin-top: 0.3rem;
+      padding-top: 0.5rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .confirmation-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
     .page-loader {
       display: flex;
       align-items: center;
@@ -261,6 +431,8 @@ class CustomerBooking extends LitElement {
     this.itemsPerPage = 5;
     this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
     this.showDetailsDialog = false;
+    this.showPaymentDialog = false;
+    this.showConfirmationDialog = false;
     this.selectedBooking = null;
 
     this.locationsList = [];
@@ -269,6 +441,10 @@ class CustomerBooking extends LitElement {
 
     this.showBookDialog = false;
     this.bookLoading = false;
+    this._paymentLoading = false;
+    this._selectedPaymentMethod = '';
+    this._createdBooking = null;
+    this._createdPayment = null;
     this.roomsList = [];
     this.slotInfo = null;
     this.slotLoading = false;
@@ -438,6 +614,8 @@ class CustomerBooking extends LitElement {
   handleDialogClose() {
     this.showDetailsDialog = false;
     this.showBookDialog = false;
+    this.showPaymentDialog = false;
+    this.showConfirmationDialog = false;
     this.selectedBooking = null;
     this.slotInfo = null;
   }
@@ -503,8 +681,11 @@ class CustomerBooking extends LitElement {
     const getValue = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
 
     try {
-      await bookings.create({
-        room_id: parseInt(getValue('room_id')),
+      const roomId = parseInt(getValue('room_id'));
+      const selectedRoom = this.roomsList.find(r => r.id === roomId);
+
+      const res = await bookings.create({
+        room_id: roomId,
         date: getValue('date'),
         start_time: getValue('time'),
         duration_hours: parseInt(getValue('duration') || '1'),
@@ -513,9 +694,23 @@ class CustomerBooking extends LitElement {
       });
 
       this._lastBookTime = Date.now();
-      toast.success('Booking created successfully!');
+      const booking = res.booking || res;
+      this._createdBooking = {
+        id: booking.id,
+        room_id: roomId,
+        roomName: selectedRoom?.name || `Room #${roomId}`,
+        date: getValue('date'),
+        start_time: getValue('time'),
+        duration_hours: parseInt(getValue('duration') || '1'),
+        guests: parseInt(getValue('guests') || '1'),
+        price_per_hour: selectedRoom?.price_per_hour || 0,
+      };
+
+      toast.success('Booking created! Please select a payment method.');
       this.showBookDialog = false;
       this.slotInfo = null;
+      this._selectedPaymentMethod = '';
+      this.showPaymentDialog = true;
       await this._loadBookings();
     } catch (err) {
       if (err.status === 422 && err.message?.includes('slots')) {
@@ -652,6 +847,181 @@ class CustomerBooking extends LitElement {
     `;
   }
 
+  // ── Payment Flow ──
+  _getBookingTotal() {
+    if (!this._createdBooking) return 0;
+    return (this._createdBooking.price_per_hour || 0) * (this._createdBooking.duration_hours || 1);
+  }
+
+  handlePaymentMethodSelect(method) {
+    this._selectedPaymentMethod = method;
+  }
+
+  async handlePaymentConfirm() {
+    if (!this._selectedPaymentMethod || !this._createdBooking) return;
+    this._paymentLoading = true;
+
+    try {
+      const res = await payments.create({
+        booking_id: this._createdBooking.id,
+        amount: this._getBookingTotal(),
+        currency: 'PHP',
+        method: this._selectedPaymentMethod,
+      });
+
+      this._createdPayment = res.payment || res;
+      this.showPaymentDialog = false;
+
+      if (this._selectedPaymentMethod === 'cash') {
+        // Cash: show reservation ID to present at front desk
+        toast.success('Please proceed to the counter to complete your payment.');
+        this.showConfirmationDialog = true;
+      } else {
+        // Online methods (gcash, debit_card, bank_transfer): payment completed, reload
+        toast.success('Payment successful! Your booking is confirmed.');
+        this._createdBooking = null;
+        this._createdPayment = null;
+        this._selectedPaymentMethod = '';
+        await this._loadBookings();
+        appState.emit('data-changed');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to record payment');
+    } finally {
+      this._paymentLoading = false;
+    }
+  }
+
+  handleConfirmationDone() {
+    this.showConfirmationDialog = false;
+    this._createdBooking = null;
+    this._createdPayment = null;
+    this._selectedPaymentMethod = '';
+    this._loadBookings();
+  }
+
+  _renderPaymentDialog() {
+    const b = this._createdBooking;
+    if (!b) return '';
+    const total = this._getBookingTotal();
+    const methods = [
+      { key: 'gcash', label: 'GCash', icon: 'account_balance_wallet' },
+      { key: 'cash', label: 'Cash (Pay at Counter)', icon: 'payments' },
+      { key: 'debit_card', label: 'Debit Card', icon: 'credit_card' },
+      { key: 'bank_transfer', label: 'Bank Transfer', icon: 'account_balance' },
+    ];
+
+    return html`
+      <div class="payment-summary">
+        <div class="payment-summary-row">
+          <span class="payment-summary-label">Room</span>
+          <span class="payment-summary-value">${b.roomName}</span>
+        </div>
+        <div class="payment-summary-row">
+          <span class="payment-summary-label">Duration</span>
+          <span class="payment-summary-value">${b.duration_hours}h</span>
+        </div>
+        <div class="payment-summary-row">
+          <span class="payment-summary-label">Rate</span>
+          <span class="payment-summary-value">${Number(b.price_per_hour).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}/hr</span>
+        </div>
+        <div class="payment-summary-row total">
+          <span class="payment-summary-label">Total</span>
+          <span class="payment-summary-value">${Number(total).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
+        </div>
+      </div>
+
+      <div class="payment-methods-label">Select Payment Method</div>
+      <div class="payment-methods">
+        ${methods.map(m => html`
+          <button
+            class="payment-method-btn ${this._selectedPaymentMethod === m.key ? 'selected' : ''}"
+            @click=${() => this.handlePaymentMethodSelect(m.key)}>
+            <span class="material-symbols-outlined">${m.icon}</span>
+            <span>${m.label}</span>
+          </button>
+        `)}
+      </div>
+
+      <div class="form-actions">
+        <app-button type="secondary" size="small" @click=${this.handleDialogClose} ?disabled=${this._paymentLoading}>
+          Cancel
+        </app-button>
+        <app-button type="primary" size="small"
+          @click=${() => this.handlePaymentConfirm()}
+          ?disabled=${!this._selectedPaymentMethod || this._paymentLoading}>
+          ${this._paymentLoading ? 'Processing...' : 'Confirm Payment'}
+        </app-button>
+      </div>
+    `;
+  }
+
+  _renderConfirmationDialog() {
+    const b = this._createdBooking;
+    if (!b) return '';
+    const total = this._getBookingTotal();
+
+    return html`
+      <div class="confirmation-content">
+        <div class="confirmation-icon">
+          <span class="material-symbols-outlined" style="font-size:48px;color:#4caf50;">check_circle</span>
+        </div>
+        <h3 class="confirmation-title">Booking Reserved</h3>
+        <p class="confirmation-subtitle">Show this reservation ID to the front desk to complete your payment and confirm your booking.</p>
+
+        <div class="reservation-id-card">
+          <span class="reservation-id-label">Reservation ID</span>
+          <span class="reservation-id-value">${hashId('BKG', b.id)}</span>
+        </div>
+
+        <div class="confirmation-details">
+          <div class="confirmation-row">
+            <span>Room</span>
+            <span>${b.roomName}</span>
+          </div>
+          <div class="confirmation-row">
+            <span>Date</span>
+            <span>${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+          </div>
+          <div class="confirmation-row">
+            <span>Time</span>
+            <span>${b.start_time}</span>
+          </div>
+          <div class="confirmation-row">
+            <span>Duration</span>
+            <span>${b.duration_hours}h</span>
+          </div>
+          <div class="confirmation-row">
+            <span>Guests</span>
+            <span>${b.guests}</span>
+          </div>
+          <div class="confirmation-row">
+            <span>Payment</span>
+            <span>
+              <badge-component variant="warning" size="small">Cash - Pay at Counter</badge-component>
+            </span>
+          </div>
+          <div class="confirmation-row">
+            <span>Status</span>
+            <span>
+              <badge-component variant="primary" size="small">Pending Payment</badge-component>
+            </span>
+          </div>
+          <div class="confirmation-row total">
+            <span>Amount Due</span>
+            <span>${Number(total).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</span>
+          </div>
+        </div>
+
+        <div class="confirmation-actions">
+          <app-button type="primary" size="small" @click=${() => this.handleConfirmationDone()}>
+            Done
+          </app-button>
+        </div>
+      </div>
+    `;
+  }
+
   _onBookFormChange() {
     const form = this.shadowRoot.getElementById('customer-book-form');
     if (!form) return;
@@ -731,6 +1101,31 @@ class CustomerBooking extends LitElement {
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
         ${this._renderBookForm()}
+      </app-dialog>
+
+      <!-- Payment Method Dialog -->
+      <app-dialog
+        .isOpen=${this.showPaymentDialog}
+        title="Payment"
+        description="Choose how you'd like to pay"
+        size="medium"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this._renderPaymentDialog()}
+      </app-dialog>
+
+      <!-- Confirmation Dialog -->
+      <app-dialog
+        .isOpen=${this.showConfirmationDialog}
+        title="Reservation Confirmed"
+        size="small"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${() => this.handleConfirmationDone()}>
+        ${this._renderConfirmationDialog()}
       </app-dialog>
     `;
   }
