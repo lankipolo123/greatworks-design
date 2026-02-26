@@ -46,7 +46,7 @@ export class DashboardStats {
      * @returns {number} Count of pending tickets
      */
     static getPendingTickets(tickets) {
-        return tickets.filter(ticket => ticket.status === 'pending').length;
+        return tickets.filter(ticket => ticket.status === 'open').length;
     }
 
     /**

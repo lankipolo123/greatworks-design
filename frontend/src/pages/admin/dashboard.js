@@ -163,7 +163,7 @@ class AdminDashboard extends LitElement {
 
           <stat-card
             slot="four"
-            title="Pending Tickets"
+            title="Open Tickets"
             textColor="#ffac05"
             .value=${this._loaded ? this.stats.pendingTickets : '--'}
             .icon=${ICONS.clock}
