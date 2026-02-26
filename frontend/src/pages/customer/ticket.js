@@ -1,7 +1,7 @@
 // customer-ticket.js
 import { LitElement, html, css } from 'lit';
 import { ticketsTableConfig } from '/src/configs/tickets-config';
-import { tickets as ticketsApi } from '/src/service/api.js';
+import { tickets as ticketsApi, bookings, rooms } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
@@ -15,8 +15,10 @@ import '@/layouts/pagination-wrapper.js';
 import '@/components/pagination.js';
 import '@/components/stat-card.js';
 import '@/components/app-button.js';
+import '@/components/badge-component.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
+import { toast } from '/src/service/toast-widget.js';
 
 class CustomerTicket extends LitElement {
   static properties = {
@@ -28,10 +30,17 @@ class CustomerTicket extends LitElement {
     searchValue: { type: String },
     showTicketDialog: { type: Boolean },
     showCreateDialog: { type: Boolean },
+    showBookDialog: { type: Boolean },
     selectedTicket: { type: Object },
     pendingTicketId: { type: Number },
     _loaded: { type: Boolean, state: true },
     _submitting: { type: Boolean, state: true },
+    _hasActiveBooking: { type: Boolean, state: true },
+    _bookingsLoaded: { type: Boolean, state: true },
+    _roomsList: { type: Array, state: true },
+    _bookLoading: { type: Boolean, state: true },
+    _slotInfo: { type: Object, state: true },
+    _slotLoading: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -76,6 +85,102 @@ class CustomerTicket extends LitElement {
       gap: 1rem;
       margin-bottom: 1rem;
     }
+
+    .book-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .book-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .book-form .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .book-form label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .book-form input,
+    .book-form select,
+    .book-form textarea {
+      padding: 0.5rem;
+      border: 1.5px solid #2d2b2b25;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .book-form input:focus,
+    .book-form select:focus,
+    .book-form textarea:focus {
+      border-color: #ffb300;
+    }
+
+    .book-form textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .slot-info {
+      background: #f8f9fa;
+      border: 1.5px solid #2d2b2b25;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .slot-info .slot-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .slot-info .slot-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .slot-info .slot-label {
+      font-weight: 500;
+      color: #555;
+    }
+
+    .slot-info .slot-value {
+      font-weight: 700;
+    }
+
+    .slot-info .slot-value.available {
+      color: #155724;
+    }
+
+    .slot-info .slot-value.full {
+      color: #721c24;
+    }
+
+    .slot-info .slot-loading {
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    }
   `;
 
   constructor() {
@@ -87,10 +192,18 @@ class CustomerTicket extends LitElement {
     this.searchValue = '';
     this.showTicketDialog = false;
     this.showCreateDialog = false;
+    this.showBookDialog = false;
     this.selectedTicket = null;
     this.pendingTicketId = null;
     this._loaded = false;
     this._submitting = false;
+    this._hasActiveBooking = false;
+    this._bookingsLoaded = false;
+    this._roomsList = [];
+    this._bookLoading = false;
+    this._slotInfo = null;
+    this._slotLoading = false;
+    this._lastBookTime = 0;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'open', label: 'Open' },
@@ -104,7 +217,11 @@ class CustomerTicket extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.fetchTickets();
-    this._unsub = appState.on('data-changed', () => this.fetchTickets());
+    this._checkActiveBooking();
+    this._unsub = appState.on('data-changed', () => {
+      this.fetchTickets();
+      this._checkActiveBooking();
+    });
   }
 
   disconnectedCallback() {
@@ -122,6 +239,32 @@ class CustomerTicket extends LitElement {
       console.error('Failed to fetch tickets:', e);
     } finally {
       this._loaded = true;
+    }
+  }
+
+  async _checkActiveBooking() {
+    try {
+      const response = await bookings.getAll({ per_page: 100 });
+      const data = response.data || response;
+      const list = Array.isArray(data) ? data : [];
+      this._hasActiveBooking = list.some(
+        b => b.status === 'confirmed' || b.status === 'pending' || b.status === 'ongoing'
+      );
+    } catch (e) {
+      this._hasActiveBooking = false;
+    } finally {
+      this._bookingsLoaded = true;
+    }
+  }
+
+  async _loadRooms() {
+    if (this._roomsList.length) return;
+    try {
+      const response = await rooms.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this._roomsList = Array.isArray(data) ? data : [];
+    } catch {
+      this._roomsList = [];
     }
   }
 
@@ -207,10 +350,19 @@ class CustomerTicket extends LitElement {
   handleDialogClose() {
     this.showTicketDialog = false;
     this.showCreateDialog = false;
+    this.showBookDialog = false;
     this.selectedTicket = null;
+    this._slotInfo = null;
   }
 
   handleRequestTicket() {
+    if (!this._hasActiveBooking) {
+      toast.warning('Please book a room first before requesting a ticket.');
+      this._loadRooms();
+      this._slotInfo = null;
+      this.showBookDialog = true;
+      return;
+    }
     this.showCreateDialog = true;
   }
 
@@ -224,14 +376,156 @@ class CustomerTicket extends LitElement {
         subject: form.subject.value,
         message: form.message.value,
       });
+      toast.success('Ticket submitted successfully!');
       this.showCreateDialog = false;
       form.reset();
-      appState.emit('data-changed');
+      this.fetchTickets();
     } catch (err) {
-      console.error('Failed to create ticket:', err);
+      toast.error(err.message || 'Failed to create ticket');
     } finally {
       this._submitting = false;
     }
+  }
+
+  // ── Book Now from ticket page ──
+  async _checkAvailability(roomId, date, startTime, durationHours) {
+    if (!roomId || !date || !startTime || !durationHours) {
+      this._slotInfo = null;
+      return;
+    }
+    this._slotLoading = true;
+    try {
+      this._slotInfo = await bookings.getAvailability({
+        room_id: roomId, date, start_time: startTime, duration_hours: durationHours
+      });
+    } catch { this._slotInfo = null; }
+    finally { this._slotLoading = false; }
+  }
+
+  _onBookFormChange() {
+    const form = this.shadowRoot.getElementById('ticket-book-form');
+    if (!form) return;
+    const roomId = form.querySelector('[name="room_id"]')?.value;
+    const date = form.querySelector('[name="date"]')?.value;
+    const time = form.querySelector('[name="time"]')?.value;
+    const duration = form.querySelector('[name="duration"]')?.value;
+    this._checkAvailability(roomId, date, time, duration);
+  }
+
+  async handleBookSubmit() {
+    const form = this.shadowRoot.getElementById('ticket-book-form');
+    if (!form || !form.checkValidity()) {
+      form?.reportValidity();
+      return;
+    }
+
+    this._bookLoading = true;
+    const getValue = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
+
+    try {
+      await bookings.create({
+        room_id: parseInt(getValue('room_id')),
+        date: getValue('date'),
+        start_time: getValue('time'),
+        duration_hours: parseInt(getValue('duration') || '1'),
+        guests: parseInt(getValue('guests') || '1'),
+        notes: getValue('notes'),
+      });
+
+      toast.success('Booking created! You can now request a ticket.');
+      this.showBookDialog = false;
+      this._slotInfo = null;
+      this._hasActiveBooking = true;
+      this.showCreateDialog = true;
+    } catch (err) {
+      if (err.status === 422 && err.message?.includes('slots')) {
+        toast.error(`Not enough slots! Available: ${err.available_slots || 0}`);
+      } else {
+        toast.error(err.message || 'Failed to create booking');
+      }
+    } finally {
+      this._bookLoading = false;
+    }
+  }
+
+  _renderSlotInfo() {
+    if (this._slotLoading) {
+      return html`<div class="slot-info"><div class="slot-loading">Checking availability...</div></div>`;
+    }
+    if (!this._slotInfo) return '';
+    const isAvailable = this._slotInfo.available_slots > 0;
+    return html`
+      <div class="slot-info">
+        <div class="slot-row">
+          <span class="slot-label">Room Capacity</span>
+          <span class="slot-value">${this._slotInfo.total_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Currently Booked</span>
+          <span class="slot-value">${this._slotInfo.booked_slots}</span>
+        </div>
+        <div class="slot-row">
+          <span class="slot-label">Available Slots</span>
+          <span class="slot-value ${isAvailable ? 'available' : 'full'}">${this._slotInfo.available_slots}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderBookForm() {
+    const today = new Date().toISOString().split('T')[0];
+
+    return html`
+      <form id="ticket-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
+        <div class="form-group">
+          <label>Room *</label>
+          <select name="room_id" required @change=${() => this._onBookFormChange()}>
+            <option value="">Select room</option>
+            ${this._roomsList.map(r => html`
+              <option value="${r.id}">${r.name} (cap: ${r.capacity})</option>
+            `)}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" name="date" min="${today}" value="${today}" required
+            @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Time *</label>
+          <input type="time" name="time" required @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Duration (hrs) *</label>
+          <input type="number" name="duration" value="1" min="1" max="12" required
+            @change=${() => this._onBookFormChange()} />
+        </div>
+
+        <div class="form-group">
+          <label>Guests *</label>
+          <input type="number" name="guests" value="1" min="1" required />
+        </div>
+
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Any special requests..."></textarea>
+        </div>
+
+        ${this._renderSlotInfo()}
+
+        <div class="form-actions">
+          <app-button type="secondary" size="small" @click=${this.handleDialogClose} ?disabled=${this._bookLoading}>
+            Cancel
+          </app-button>
+          <app-button type="primary" size="small" @click=${() => this.handleBookSubmit()} ?disabled=${this._bookLoading}>
+            ${this._bookLoading ? 'Creating...' : 'Create Booking'}
+          </app-button>
+        </div>
+      </form>
+    `;
   }
 
   get _totalCount() { return this.tickets.length; }
@@ -318,6 +612,7 @@ class CustomerTicket extends LitElement {
         ` : ''}
       </content-card>
 
+      <!-- Ticket Details Dialog -->
       <app-dialog
         .isOpen=${this.showTicketDialog}
         .title=${this.selectedTicket?.subject || 'Ticket Details'}
@@ -330,6 +625,7 @@ class CustomerTicket extends LitElement {
         @dialog-close=${this.handleDialogClose}>
       </app-dialog>
 
+      <!-- Create Ticket Dialog -->
       <app-dialog
         .isOpen=${this.showCreateDialog}
         title="Request a Ticket"
@@ -352,6 +648,19 @@ class CustomerTicket extends LitElement {
             </app-button>
           </div>
         </form>
+      </app-dialog>
+
+      <!-- Book a Room Dialog (from ticket page) -->
+      <app-dialog
+        .isOpen=${this.showBookDialog}
+        title="Book a Room"
+        description="Select a room, date, and time for your booking"
+        size="medium"
+        styleMode="compact"
+        .closeOnOverlay=${false}
+        .hideFooter=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this._renderBookForm()}
       </app-dialog>
     `;
   }
