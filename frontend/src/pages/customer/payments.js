@@ -11,6 +11,8 @@ import '/src/components/users-avatar.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
+import '/src/components/stat-card.js';
+import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 
 class CustomerPayments extends LitElement {
@@ -59,6 +61,13 @@ class CustomerPayments extends LitElement {
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
     .payment-profile {
@@ -242,6 +251,11 @@ class CustomerPayments extends LitElement {
     });
   }
 
+  get _totalCount() { return this.payments.length; }
+  get _completedCount() { return this.payments.filter(p => ['completed', 'paid', 'success'].includes(p.status?.toLowerCase())).length; }
+  get _pendingCount() { return this.payments.filter(p => p.status?.toLowerCase() === 'pending').length; }
+  get _failedCount() { return this.payments.filter(p => ['failed', 'cancelled'].includes(p.status?.toLowerCase())).length; }
+
   _renderDetailsDialog() {
     if (!this.selectedPayment) return '';
     const p = this.selectedPayment;
@@ -310,6 +324,33 @@ class CustomerPayments extends LitElement {
 
   render() {
     return html`
+      <div class="stats-row">
+        <stat-card
+          title="Total Payments"
+          textColor="#811a0a"
+          .value=${this._loaded ? this._totalCount : '--'}
+          .icon=${ICONS.payments}>
+        </stat-card>
+        <stat-card
+          title="Completed"
+          textColor="#67ab07"
+          .value=${this._loaded ? this._completedCount : '--'}
+          .icon=${ICONS.chartLine}>
+        </stat-card>
+        <stat-card
+          title="Pending"
+          textColor="#ffac05"
+          .value=${this._loaded ? this._pendingCount : '--'}
+          .icon=${ICONS.clock}>
+        </stat-card>
+        <stat-card
+          title="Failed / Cancelled"
+          textColor="#c62828"
+          .value=${this._loaded ? this._failedCount : '--'}
+          .icon=${ICONS.trendingDown}>
+        </stat-card>
+      </div>
+
       <content-card mode="4">
         <header-controls mode="2">
           <search-bar-wrapper>

@@ -13,6 +13,9 @@ import '@/layouts/search-wrapper.js';
 import '@/layouts/search-bar-wrapper.js';
 import '@/layouts/pagination-wrapper.js';
 import '@/components/pagination.js';
+import '@/components/stat-card.js';
+import '@/components/app-button.js';
+import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 
 class CustomerTicket extends LitElement {
@@ -24,9 +27,11 @@ class CustomerTicket extends LitElement {
     activeTab: { type: String },
     searchValue: { type: String },
     showTicketDialog: { type: Boolean },
+    showCreateDialog: { type: Boolean },
     selectedTicket: { type: Object },
     pendingTicketId: { type: Number },
     _loaded: { type: Boolean, state: true },
+    _submitting: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -64,6 +69,13 @@ class CustomerTicket extends LitElement {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
   `;
 
   constructor() {
@@ -74,9 +86,11 @@ class CustomerTicket extends LitElement {
     this.activeTab = 'all';
     this.searchValue = '';
     this.showTicketDialog = false;
+    this.showCreateDialog = false;
     this.selectedTicket = null;
     this.pendingTicketId = null;
     this._loaded = false;
+    this._submitting = false;
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'open', label: 'Open' },
@@ -192,11 +206,68 @@ class CustomerTicket extends LitElement {
 
   handleDialogClose() {
     this.showTicketDialog = false;
+    this.showCreateDialog = false;
     this.selectedTicket = null;
   }
 
+  handleRequestTicket() {
+    this.showCreateDialog = true;
+  }
+
+  async handleCreateSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    if (!form.checkValidity()) return;
+    this._submitting = true;
+    try {
+      await ticketsApi.create({
+        subject: form.subject.value,
+        message: form.message.value,
+      });
+      this.showCreateDialog = false;
+      form.reset();
+      appState.emit('data-changed');
+    } catch (err) {
+      console.error('Failed to create ticket:', err);
+    } finally {
+      this._submitting = false;
+    }
+  }
+
+  get _totalCount() { return this.tickets.length; }
+  get _openCount() { return this.tickets.filter(t => t.status === 'open').length; }
+  get _inProgressCount() { return this.tickets.filter(t => t.status === 'in_progress').length; }
+  get _closedCount() { return this.tickets.filter(t => t.status === 'closed').length; }
+
   render() {
     return html`
+      <div class="stats-row">
+        <stat-card
+          title="Total Tickets"
+          textColor="#580460"
+          .value=${this._loaded ? this._totalCount : '--'}
+          .icon=${ICONS.ticketInbox}>
+        </stat-card>
+        <stat-card
+          title="Open"
+          textColor="#0a5e81"
+          .value=${this._loaded ? this._openCount : '--'}
+          .icon=${ICONS.ticket}>
+        </stat-card>
+        <stat-card
+          title="In Progress"
+          textColor="#ffac05"
+          .value=${this._loaded ? this._inProgressCount : '--'}
+          .icon=${ICONS.clock}>
+        </stat-card>
+        <stat-card
+          title="Closed"
+          textColor="#67ab07"
+          .value=${this._loaded ? this._closedCount : '--'}
+          .icon=${ICONS.chartLine}>
+        </stat-card>
+      </div>
+
       <content-card mode="4">
         <header-controls>
           <tabs-wrapper>
@@ -218,6 +289,12 @@ class CustomerTicket extends LitElement {
                 @search-input=${this.handleSearchInput}>
               </search-bar>
             </search-bar-wrapper>
+            <app-button
+              type="primary"
+              size="small"
+              @click=${this.handleRequestTicket}>
+              ${ICONS.plus} Request a Ticket
+            </app-button>
           </search-wrapper>
         </header-controls>
 
@@ -251,6 +328,30 @@ class CustomerTicket extends LitElement {
         .closeOnOverlay=${true}
         .ticketData=${this.selectedTicket}
         @dialog-close=${this.handleDialogClose}>
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showCreateDialog}
+        title="Request a Ticket"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        <form @submit=${this.handleCreateSubmit}>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <label style="font-size:0.8rem;font-weight:600;color:#333;">Subject</label>
+            <input name="subject" required placeholder="Brief summary of your issue"
+              style="padding:0.5rem 0.75rem;border:1.25px solid #2d2b2b45;border-radius:8px;font-size:0.85rem;outline:none;">
+            <label style="font-size:0.8rem;font-weight:600;color:#333;">Message</label>
+            <textarea name="message" required rows="4" placeholder="Describe your issue in detail..."
+              style="padding:0.5rem 0.75rem;border:1.25px solid #2d2b2b45;border-radius:8px;font-size:0.85rem;resize:vertical;outline:none;font-family:inherit;"></textarea>
+            <app-button type="primary" size="small" .disabled=${this._submitting}
+              @click=${(e) => e.target.closest('form').requestSubmit()}>
+              ${this._submitting ? 'Submitting...' : 'Submit Ticket'}
+            </app-button>
+          </div>
+        </form>
       </app-dialog>
     `;
   }

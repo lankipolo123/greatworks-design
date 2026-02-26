@@ -16,6 +16,10 @@ import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { reservations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
+import '/src/components/stat-card.js';
+import '/src/components/app-button.js';
+import { ICONS } from '/src/components/dashboard-icons.js';
+
 // Customer only sees view action, no edit/delete
 const customerTableConfig = {
   ...reservationTableConfig,
@@ -101,6 +105,13 @@ class CustomerReservation extends LitElement {
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
   `;
 
@@ -275,8 +286,48 @@ class CustomerReservation extends LitElement {
     `;
   }
 
+  get _totalCount() { return this.reservation.length; }
+  get _upcomingCount() { return this.reservation.filter(r => r.status === 'upcoming' || r.status === 'pending').length; }
+  get _ongoingCount() { return this.reservation.filter(r => r.status === 'confirmed' || r.status === 'ongoing').length; }
+  get _completedCount() { return this.reservation.filter(r => r.status === 'completed').length; }
+
+  handleBookNow() {
+    this.dispatchEvent(new CustomEvent('page-change', {
+      detail: { page: 'booking' },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   render() {
     return html`
+      <div class="stats-row">
+        <stat-card
+          title="Total Reservations"
+          textColor="#811a0a"
+          .value=${this._loaded ? this._totalCount : '--'}
+          .icon=${ICONS.booking}>
+        </stat-card>
+        <stat-card
+          title="Upcoming"
+          textColor="#0a5e81"
+          .value=${this._loaded ? this._upcomingCount : '--'}
+          .icon=${ICONS.clock}>
+        </stat-card>
+        <stat-card
+          title="Ongoing"
+          textColor="#ffac05"
+          .value=${this._loaded ? this._ongoingCount : '--'}
+          .icon=${ICONS.activity}>
+        </stat-card>
+        <stat-card
+          title="Completed"
+          textColor="#67ab07"
+          .value=${this._loaded ? this._completedCount : '--'}
+          .icon=${ICONS.chartLine}>
+        </stat-card>
+      </div>
+
       <content-card mode="4">
         <header-controls>
           <tabs-wrapper>
@@ -298,6 +349,12 @@ class CustomerReservation extends LitElement {
                 @search-input=${this.handleSearchInput}>
               </search-bar>
             </search-bar-wrapper>
+            <app-button
+              type="primary"
+              size="small"
+              @click=${this.handleBookNow}>
+              ${ICONS.plus} Book Now
+            </app-button>
           </search-wrapper>
         </header-controls>
 
