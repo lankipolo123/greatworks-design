@@ -103,7 +103,7 @@ class BookingCalendar extends LitElement {
     }
 
     .day {
-      min-height: 70px;
+      min-height: 90px;
       background: white;
       border-radius: 6px;
       padding: 0.4rem;
@@ -182,10 +182,10 @@ class BookingCalendar extends LitElement {
       background: linear-gradient(135deg, #e70707 0%, #ff4444 100%);
       color: white;
       font-weight: 600;
-      font-size: 0.6rem;
-      min-width: 22px;
-      height: 22px;
-      border-radius: 11px;
+      font-size: 0.65rem;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -231,7 +231,7 @@ class BookingCalendar extends LitElement {
       }
 
       .day {
-        min-height: 55px;
+        min-height: 70px;
         padding: 0.35rem;
       }
 
@@ -348,7 +348,7 @@ class BookingCalendar extends LitElement {
                     .src=${r.avatar || ''}
                     .name=${r.userId}
                     .gender=${r.gender || ''}
-                    size="22"
+                    size="30"
                   ></user-avatar>
                 </div>
               `)}
