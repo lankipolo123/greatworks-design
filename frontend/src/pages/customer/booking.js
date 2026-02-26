@@ -185,6 +185,36 @@ class CustomerBooking extends LitElement {
       resize: vertical;
     }
 
+    .occupancy-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1.5px solid #ffb30030;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.82rem;
+      color: #333;
+    }
+
+    .occupancy-bar .material-symbols-outlined {
+      font-size: 1.1rem;
+      color: #ffb300;
+    }
+
+    .occupancy-bar .occ-times {
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .occupancy-bar .occ-duration {
+      margin-left: auto;
+      font-weight: 600;
+      color: #666;
+      font-size: 0.78rem;
+    }
+
     .form-actions {
       grid-column: 1 / -1;
       display: flex;
@@ -782,11 +812,15 @@ class CustomerBooking extends LitElement {
       const roomId = parseInt(getValue('room_id'));
       const selectedRoom = this.roomsList.find(r => r.id === roomId);
 
+      const startHour = getValue('start_hour');
+      const endHour = getValue('end_hour');
+      const duration = this._calcDuration(startHour, endHour);
+
       const res = await bookings.create({
         room_id: roomId,
         date: getValue('date'),
-        start_time: getValue('time'),
-        duration_hours: parseInt(getValue('duration') || '1'),
+        start_time: startHour,
+        duration_hours: duration || 1,
         guests: parseInt(getValue('guests') || '1'),
         notes: getValue('notes'),
       });
@@ -800,8 +834,9 @@ class CustomerBooking extends LitElement {
         roomType: selectedRoom?.type || '',
         locationName: selectedRoom?.location || '',
         date: getValue('date'),
-        start_time: getValue('time'),
-        duration_hours: parseInt(getValue('duration') || '1'),
+        start_time: startHour,
+        end_time: endHour,
+        duration_hours: duration || 1,
         guests: parseInt(getValue('guests') || '1'),
         price_per_hour: selectedRoom?.price_per_hour || 0,
       };
@@ -928,8 +963,40 @@ class CustomerBooking extends LitElement {
     this.showPaymentDialog = true;
   }
 
+  _getHourOptions() {
+    const hours = [];
+    for (let h = 6; h <= 22; h++) {
+      const val = String(h).padStart(2, '0') + ':00';
+      const label = h === 0 ? '12:00 AM' : h < 12 ? `${h}:00 AM` : h === 12 ? '12:00 PM' : `${h - 12}:00 PM`;
+      hours.push({ value: val, label });
+    }
+    return hours;
+  }
+
+  _getEndHourOptions(startHour) {
+    if (!startHour) return [];
+    const startH = parseInt(startHour.split(':')[0]);
+    const hours = [];
+    for (let h = startH + 1; h <= Math.min(startH + 12, 23); h++) {
+      const val = String(h).padStart(2, '0') + ':00';
+      const label = h === 0 ? '12:00 AM' : h < 12 ? `${h}:00 AM` : h === 12 ? '12:00 PM' : `${h - 12}:00 PM`;
+      const dur = h - startH;
+      hours.push({ value: val, label: `${label} (${dur}h)` });
+    }
+    return hours;
+  }
+
+  _calcDuration(startHour, endHour) {
+    if (!startHour || !endHour) return 0;
+    return parseInt(endHour.split(':')[0]) - parseInt(startHour.split(':')[0]);
+  }
+
   _renderBookForm() {
     const today = new Date().toISOString().split('T')[0];
+    const form = this.shadowRoot?.getElementById('customer-book-form');
+    const startHour = form?.querySelector('[name="start_hour"]')?.value || '';
+    const endHour = form?.querySelector('[name="end_hour"]')?.value || '';
+    const duration = this._calcDuration(startHour, endHour);
 
     return html`
       <form id="customer-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
@@ -950,15 +1017,33 @@ class CustomerBooking extends LitElement {
         </div>
 
         <div class="form-group">
-          <label>Time *</label>
-          <input type="time" name="time" required @change=${() => this._onBookFormChange()} />
+          <label>Start Time *</label>
+          <select name="start_hour" required @change=${() => { this._resetEndHour(); this._onBookFormChange(); }}>
+            <option value="">Select start</option>
+            ${this._getHourOptions().map(h => html`
+              <option value="${h.value}">${h.label}</option>
+            `)}
+          </select>
         </div>
 
         <div class="form-group">
-          <label>Duration (hrs) *</label>
-          <input type="number" name="duration" value="1" min="1" max="12" required
-            @change=${() => this._onBookFormChange()} />
+          <label>End Time *</label>
+          <select name="end_hour" required @change=${() => this._onBookFormChange()}
+            ?disabled=${!startHour}>
+            <option value="">Select end</option>
+            ${this._getEndHourOptions(startHour).map(h => html`
+              <option value="${h.value}">${h.label}</option>
+            `)}
+          </select>
         </div>
+
+        ${duration > 0 ? html`
+          <div class="occupancy-bar">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>Occupancy: <span class="occ-times">${startHour} — ${endHour}</span></span>
+            <span class="occ-duration">${duration} hour${duration > 1 ? 's' : ''}</span>
+          </div>
+        ` : ''}
 
         <div class="form-group">
           <label>Guests *</label>
@@ -1157,12 +1242,8 @@ class CustomerBooking extends LitElement {
             <span>${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
           </div>
           <div class="confirmation-row">
-            <span>Time</span>
-            <span>${b.start_time}</span>
-          </div>
-          <div class="confirmation-row">
-            <span>Duration</span>
-            <span>${b.duration_hours}h</span>
+            <span>Occupancy</span>
+            <span>${b.start_time}${b.end_time ? ` — ${b.end_time}` : ''} (${b.duration_hours}h)</span>
           </div>
           <div class="confirmation-row">
             <span>Guests</span>
@@ -1253,8 +1334,7 @@ class CustomerBooking extends LitElement {
     ${b.roomType ? `<div class="row"><span class="label">Room Type</span><span class="value">${this._formatRoomType(b.roomType)}</span></div>` : ''}
     ${b.locationName ? `<div class="row"><span class="label">Location</span><span class="value">${b.locationName}</span></div>` : ''}
     <div class="row"><span class="label">Date</span><span class="value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span></div>
-    <div class="row"><span class="label">Time</span><span class="value">${b.start_time}</span></div>
-    <div class="row"><span class="label">Duration</span><span class="value">${b.duration_hours}h</span></div>
+    <div class="row"><span class="label">Occupancy</span><span class="value">${b.start_time}${b.end_time ? ` — ${b.end_time}` : ''} (${b.duration_hours}h)</span></div>
     <div class="row"><span class="label">Guests</span><span class="value">${b.guests}</span></div>
     <hr class="divider" />
     <div class="row"><span class="label">Payment</span><span class="value">${this._getPaymentMethodLabel(this._selectedPaymentMethod)}</span></div>
@@ -1292,14 +1372,26 @@ class CustomerBooking extends LitElement {
     }
   }
 
+  _resetEndHour() {
+    const form = this.shadowRoot.getElementById('customer-book-form');
+    if (!form) return;
+    const endSelect = form.querySelector('[name="end_hour"]');
+    if (endSelect) endSelect.value = '';
+    this.requestUpdate();
+  }
+
   _onBookFormChange() {
     const form = this.shadowRoot.getElementById('customer-book-form');
     if (!form) return;
     const roomId = form.querySelector('[name="room_id"]')?.value;
     const date = form.querySelector('[name="date"]')?.value;
-    const time = form.querySelector('[name="time"]')?.value;
-    const duration = form.querySelector('[name="duration"]')?.value;
-    this.checkAvailability(roomId, date, time, duration);
+    const startHour = form.querySelector('[name="start_hour"]')?.value;
+    const endHour = form.querySelector('[name="end_hour"]')?.value;
+    const duration = this._calcDuration(startHour, endHour);
+    this.requestUpdate();
+    if (duration > 0) {
+      this.checkAvailability(roomId, date, startHour, duration);
+    }
   }
 
   render() {
