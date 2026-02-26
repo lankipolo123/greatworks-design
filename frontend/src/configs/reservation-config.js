@@ -1,12 +1,14 @@
 // src/configs/reservation-config.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const reservationTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'ID'
+            label: 'Reservation ID',
+            render: (value) => hashId('RES', value)
         },
         {
             key: 'userId',

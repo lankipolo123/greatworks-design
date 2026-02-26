@@ -14,6 +14,7 @@ import '/src/components/app-dialog.js';
 import '/src/components/badge-component.js';
 import '/src/components/users-avatar.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
+import { hashId } from '@/utility/hash-id.js';
 
 class AdminPayments extends LitElement {
   static properties = {
@@ -285,7 +286,7 @@ class AdminPayments extends LitElement {
       <div class="payment-details-grid">
         <div class="payment-detail-item">
           <span class="payment-detail-label">Payment ID</span>
-          <span class="payment-detail-value">${p.id}</span>
+          <span class="payment-detail-value">${hashId('PAY', p.id)}</span>
         </div>
         <div class="payment-detail-item">
           <span class="payment-detail-label">Status</span>
@@ -310,7 +311,7 @@ class AdminPayments extends LitElement {
         ${p.reservation_id ? html`
           <div class="payment-detail-item">
             <span class="payment-detail-label">Reservation ID</span>
-            <span class="payment-detail-value">#${p.reservation_id}</span>
+            <span class="payment-detail-value">${hashId('RES', p.reservation_id)}</span>
           </div>
         ` : ''}
         ${p.notes ? html`

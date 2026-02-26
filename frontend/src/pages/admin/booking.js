@@ -19,6 +19,7 @@ import { ROOM_TYPES } from '/src/configs/room-types-config.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
+import { hashId } from '@/utility/hash-id.js';
 import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
@@ -793,7 +794,7 @@ class AdminBooking extends LitElement {
       <div class="details-content">
         <div class="detail-item">
           <span class="detail-label">Booking ID</span>
-          <span class="detail-value">${b.id}</span>
+          <span class="detail-value">${hashId('BKG', b.id)}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Status</span>

@@ -1,12 +1,14 @@
 // src/configs/tickets-config.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const ticketsTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'ID'
+            label: 'Ticket ID',
+            render: (value) => hashId('TKT', value)
         },
         {
             key: 'user',

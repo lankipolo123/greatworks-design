@@ -1,12 +1,14 @@
 // src/configs/booking-config.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const bookingTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'ID'
+            label: 'Booking ID',
+            render: (value) => hashId('BKG', value)
         },
         {
             key: 'userId',

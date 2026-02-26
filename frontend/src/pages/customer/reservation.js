@@ -13,6 +13,7 @@ import '/src/layouts/search-wrapper.js';
 import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
+import { hashId } from '@/utility/hash-id.js';
 import { reservations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
@@ -254,7 +255,7 @@ class CustomerReservation extends LitElement {
       <div class="details-content">
         <div class="detail-item">
           <span class="detail-label">Reservation ID</span>
-          <span class="detail-value">${r.id}</span>
+          <span class="detail-value">${hashId('RES', r.id)}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Status</span>

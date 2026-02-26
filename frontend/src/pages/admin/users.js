@@ -5,6 +5,7 @@ import { users as usersApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
+import { hashId } from '@/utility/hash-id.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
@@ -467,7 +468,7 @@ class AdminUser extends LitElement {
       <div class="user-details-grid">
         <div class="user-detail-item">
           <span class="user-detail-label">User ID</span>
-          <span class="user-detail-value">${u.id}</span>
+          <span class="user-detail-value">${hashId('USR', u.id)}</span>
         </div>
         <div class="user-detail-item">
           <span class="user-detail-label">Phone</span>

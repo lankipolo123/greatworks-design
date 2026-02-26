@@ -2,12 +2,14 @@
 import { html } from 'lit';
 import '/src/components/badge-component.js';
 import '/src/components/users-avatar.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const usersTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'User-ID'
+            label: 'User ID',
+            render: (value) => hashId('USR', value)
         },
         {
             key: 'name',

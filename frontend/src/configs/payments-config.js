@@ -1,12 +1,14 @@
 // src/configs/payments-config.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const paymentsTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'PAY-ID'
+            label: 'Payment ID',
+            render: (value) => hashId('PAY', value)
         },
         {
             key: 'user',
