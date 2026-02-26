@@ -169,12 +169,24 @@ class CustomerReservation extends LitElement {
       userId: r.user?.name || r.user?.email || `User #${r.user_id}`,
       userName: r.user?.name || '',
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
+      roomType: r.room?.type || '',
+      locationName: r.room?.location || '',
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
       time: typeof r.start_time === 'string' ? r.start_time.substring(0, 5) : (typeof r.time === 'string' ? r.time.substring(0, 5) : r.time),
       guests: r.guests,
       status: r.status,
       notes: r.notes || '',
     };
+  }
+
+  _formatRoomType(type) {
+    const labels = {
+      co_working: 'Co-Working',
+      virtual_offices: 'Virtual Offices',
+      private_offices: 'Private Offices',
+      events_meeting_room: 'Events & Meeting',
+    };
+    return labels[type] || type;
   }
 
   get filteredReservations() {
@@ -264,6 +276,14 @@ class CustomerReservation extends LitElement {
         <div class="detail-item">
           <span class="detail-label">Room</span>
           <span class="detail-value">${r.roomName || '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room Type</span>
+          <span class="detail-value">${r.roomType ? this._formatRoomType(r.roomType) : '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Location</span>
+          <span class="detail-value">${r.locationName || '-'}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>

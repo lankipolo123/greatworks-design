@@ -650,6 +650,7 @@ class CustomerBooking extends LitElement {
       roomName: b.room?.name || `Room #${b.room_id}`,
       roomType: b.room?.type || '',
       locationId: b.room?.location_id ? String(b.room.location_id) : null,
+      locationName: b.room?.location || '',
       date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
       startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
       time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
@@ -796,6 +797,8 @@ class CustomerBooking extends LitElement {
         id: booking.id,
         room_id: roomId,
         roomName: selectedRoom?.name || `Room #${roomId}`,
+        roomType: selectedRoom?.type || '',
+        locationName: selectedRoom?.location || '',
         date: getValue('date'),
         start_time: getValue('time'),
         duration_hours: parseInt(getValue('duration') || '1'),
@@ -864,6 +867,14 @@ class CustomerBooking extends LitElement {
           <span class="detail-value">${b.roomName || '-'}</span>
         </div>
         <div class="detail-item">
+          <span class="detail-label">Room Type</span>
+          <span class="detail-value">${b.roomType ? this._formatRoomType(b.roomType) : '-'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Location</span>
+          <span class="detail-value">${b.locationName || '-'}</span>
+        </div>
+        <div class="detail-item">
           <span class="detail-label">Date</span>
           <span class="detail-value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
         </div>
@@ -904,6 +915,8 @@ class CustomerBooking extends LitElement {
       id: booking.id,
       room_id: selectedRoom?.id || null,
       roomName: booking.roomName,
+      roomType: booking.roomType || selectedRoom?.type || '',
+      locationName: booking.locationName || selectedRoom?.location || '',
       date: booking.date,
       start_time: booking.startTime || booking.time,
       duration_hours: booking.durationHours,
@@ -1127,6 +1140,18 @@ class CustomerBooking extends LitElement {
             <span>Room</span>
             <span>${b.roomName}</span>
           </div>
+          ${b.roomType ? html`
+          <div class="confirmation-row">
+            <span>Room Type</span>
+            <span>${this._formatRoomType(b.roomType)}</span>
+          </div>
+          ` : ''}
+          ${b.locationName ? html`
+          <div class="confirmation-row">
+            <span>Location</span>
+            <span>${b.locationName}</span>
+          </div>
+          ` : ''}
           <div class="confirmation-row">
             <span>Date</span>
             <span>${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
@@ -1225,6 +1250,8 @@ class CustomerBooking extends LitElement {
   </div>
   <div class="details">
     <div class="row"><span class="label">Room</span><span class="value">${b.roomName}</span></div>
+    ${b.roomType ? `<div class="row"><span class="label">Room Type</span><span class="value">${this._formatRoomType(b.roomType)}</span></div>` : ''}
+    ${b.locationName ? `<div class="row"><span class="label">Location</span><span class="value">${b.locationName}</span></div>` : ''}
     <div class="row"><span class="label">Date</span><span class="value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span></div>
     <div class="row"><span class="label">Time</span><span class="value">${b.start_time}</span></div>
     <div class="row"><span class="label">Duration</span><span class="value">${b.duration_hours}h</span></div>

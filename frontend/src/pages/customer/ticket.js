@@ -691,6 +691,8 @@ class CustomerTicket extends LitElement {
         id: booking.id,
         room_id: roomId,
         roomName: selectedRoom?.name || `Room #${roomId}`,
+        roomType: selectedRoom?.type || '',
+        locationName: selectedRoom?.location || '',
         date: getValue('date'),
         start_time: getValue('time'),
         duration_hours: parseInt(getValue('duration') || '1'),
@@ -816,6 +818,16 @@ class CustomerTicket extends LitElement {
     `;
   }
 
+  _formatRoomType(type) {
+    const labels = {
+      co_working: 'Co-Working',
+      virtual_offices: 'Virtual Offices',
+      private_offices: 'Private Offices',
+      events_meeting_room: 'Events & Meeting',
+    };
+    return labels[type] || type;
+  }
+
   _getPaymentMethodLabel(method) {
     const labels = {
       gcash: 'GCash',
@@ -874,6 +886,8 @@ class CustomerTicket extends LitElement {
   </div>
   <div class="details">
     <div class="row"><span class="label">Room</span><span class="value">${b.roomName}</span></div>
+    ${b.roomType ? `<div class="row"><span class="label">Room Type</span><span class="value">${this._formatRoomType(b.roomType)}</span></div>` : ''}
+    ${b.locationName ? `<div class="row"><span class="label">Location</span><span class="value">${b.locationName}</span></div>` : ''}
     <div class="row"><span class="label">Date</span><span class="value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span></div>
     <div class="row"><span class="label">Time</span><span class="value">${b.start_time}</span></div>
     <div class="row"><span class="label">Duration</span><span class="value">${b.duration_hours}h</span></div>
@@ -951,6 +965,18 @@ class CustomerTicket extends LitElement {
             <span>Room</span>
             <span>${b.roomName}</span>
           </div>
+          ${b.roomType ? html`
+          <div class="confirmation-row">
+            <span>Room Type</span>
+            <span>${this._formatRoomType(b.roomType)}</span>
+          </div>
+          ` : ''}
+          ${b.locationName ? html`
+          <div class="confirmation-row">
+            <span>Location</span>
+            <span>${b.locationName}</span>
+          </div>
+          ` : ''}
           <div class="confirmation-row">
             <span>Date</span>
             <span>${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
