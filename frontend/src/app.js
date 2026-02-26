@@ -17,6 +17,7 @@ const loaded = new Set();
 class AppRoot extends LitElement {
   static properties = {
     currentPage: { type: String },
+    pendingTicketId: { type: Number },
     _ready: { type: Boolean, state: true }
   };
 
@@ -37,6 +38,7 @@ class AppRoot extends LitElement {
   constructor() {
     super();
     this.currentPage = window.location.hash.slice(1) || 'login';
+    this.pendingTicketId = null;
     this._ready = false;
 
     window.addEventListener('hashchange', () => {
@@ -77,6 +79,7 @@ class AppRoot extends LitElement {
 
   handlePageChange(e) {
     this.currentPage = e.detail.page;
+    this.pendingTicketId = e.detail.ticketId || null;
     window.location.hash = e.detail.page;
   }
 
@@ -157,6 +160,8 @@ class AppRoot extends LitElement {
           slot="content"
           currentPage=${this.currentPage}
           .userRole=${this.userRole}
+          .pendingTicketId=${this.pendingTicketId}
+          @ticket-opened=${() => { this.pendingTicketId = null; }}
         ></app-content>
       </dashboard-layout>
     `;

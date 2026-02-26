@@ -22,6 +22,7 @@ class AppContent extends LitElement {
     static properties = {
         currentPage: { type: String },
         userRole: { type: String },
+        pendingTicketId: { type: Number },
         _pageReady: { type: Boolean, state: true }
     };
 
@@ -46,6 +47,7 @@ class AppContent extends LitElement {
         super();
         this.currentPage = 'dashboard';
         this.userRole = 'customer';
+        this.pendingTicketId = null;
         this._pageReady = false;
     }
 
@@ -80,6 +82,11 @@ class AppContent extends LitElement {
         }
     }
 
+    _handleTicketOpened() {
+        this.pendingTicketId = null;
+        this.dispatchEvent(new CustomEvent('ticket-opened', { bubbles: true, composed: true }));
+    }
+
     connectedCallback() {
         super.connectedCallback();
         this._loadPage(this._getComponentName());
@@ -90,7 +97,7 @@ class AppContent extends LitElement {
             case 'dashboard': return html`<admin-dashboard></admin-dashboard>`;
             case 'reservation': return html`<admin-reservation></admin-reservation>`;
             case 'booking': return html`<admin-booking></admin-booking>`;
-            case 'ticket': return html`<admin-ticket></admin-ticket>`;
+            case 'ticket': return html`<admin-ticket .pendingTicketId=${this.pendingTicketId} @ticket-opened=${this._handleTicketOpened}></admin-ticket>`;
             case 'user': return html`<admin-user></admin-user>`;
             case 'logs': return html`<admin-logs></admin-logs>`;
             case 'payments': return html`<admin-payments></admin-payments>`;
@@ -104,7 +111,7 @@ class AppContent extends LitElement {
             case 'dashboard': return html`<customer-dashboard></customer-dashboard>`;
             case 'reservation': return html`<customer-reservation></customer-reservation>`;
             case 'booking': return html`<customer-booking></customer-booking>`;
-            case 'ticket': return html`<customer-ticket></customer-ticket>`;
+            case 'ticket': return html`<customer-ticket .pendingTicketId=${this.pendingTicketId} @ticket-opened=${this._handleTicketOpened}></customer-ticket>`;
             case 'payments': return html`<customer-payments></customer-payments>`;
             case 'settings': return html`<app-settings></app-settings>`;
             default: return html`<customer-dashboard></customer-dashboard>`;

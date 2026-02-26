@@ -28,6 +28,7 @@ class AdminTicket extends LitElement {
     showExportDialog: { type: Boolean },
     showTicketDialog: { type: Boolean },
     selectedTicket: { type: Object },
+    pendingTicketId: { type: Number },
     _loaded: { type: Boolean, state: true }
   };
 
@@ -78,6 +79,7 @@ class AdminTicket extends LitElement {
     this.showExportDialog = false;
     this.showTicketDialog = false;
     this.selectedTicket = null;
+    this.pendingTicketId = null;
     this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All' },
@@ -105,10 +107,29 @@ class AdminTicket extends LitElement {
       const data = await ticketsApi.getAll({ per_page: 100 });
       this.tickets = data.data || data;
       this.updatePagination();
+      this._openPendingTicket();
     } catch (e) {
       console.error('Failed to fetch tickets:', e);
     } finally {
       this._loaded = true;
+    }
+  }
+
+  updated(changed) {
+    super.updated?.(changed);
+    if (changed.has('pendingTicketId') && this.pendingTicketId && this.tickets.length) {
+      this._openPendingTicket();
+    }
+  }
+
+  _openPendingTicket() {
+    if (!this.pendingTicketId || !this.tickets.length) return;
+    const ticket = this.tickets.find(t => t.id === this.pendingTicketId);
+    if (ticket) {
+      this.selectedTicket = ticket;
+      this.showTicketDialog = true;
+      this.pendingTicketId = null;
+      this.dispatchEvent(new CustomEvent('ticket-opened', { bubbles: true, composed: true }));
     }
   }
 
