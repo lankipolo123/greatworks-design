@@ -91,12 +91,56 @@ class BookingSidebar extends LitElement {
     .bookings-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0;
       overflow-y: auto;
       overflow-x: hidden;
       flex: 1 1 auto;
       min-height: 0;
       padding-right: 0.5rem;
+    }
+
+    .time-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      min-height: 0;
+    }
+
+    .time-label {
+      flex-shrink: 0;
+      width: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 0.55rem;
+      position: relative;
+    }
+
+    .time-label span {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #888;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .time-line {
+      width: 2px;
+      flex: 1;
+      background: #e8e8e8;
+      margin-top: 6px;
+      border-radius: 1px;
+    }
+
+    .time-row:last-child .time-line {
+      background: transparent;
+    }
+
+    .time-card {
+      flex: 1;
+      min-width: 0;
+      padding: 0.35rem 0;
     }
 
     .bookings-list::-webkit-scrollbar {
@@ -186,6 +230,15 @@ class BookingSidebar extends LitElement {
     });
   }
 
+  _formatTime(time) {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  }
+
   _handleRoomTypeChange(e) {
     this.dispatchEvent(new CustomEvent('room-type-change', {
       detail: { roomType: e.detail.value },
@@ -268,10 +321,18 @@ class BookingSidebar extends LitElement {
 
         <div class="bookings-list">
           ${sortedBookings.map(booking => html`
-            <booking-card
-              .booking=${booking}
-              @card-click=${this._handleCardClick}>
-            </booking-card>
+            <div class="time-row">
+              <div class="time-label">
+                <span>${this._formatTime(booking.time)}</span>
+                <div class="time-line"></div>
+              </div>
+              <div class="time-card">
+                <booking-card
+                  .booking=${booking}
+                  @card-click=${this._handleCardClick}>
+                </booking-card>
+              </div>
+            </div>
           `)}
         </div>
 

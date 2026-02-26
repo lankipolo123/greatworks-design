@@ -165,7 +165,6 @@ class BookingCard extends LitElement {
           ></user-avatar>
           <div class="info">
             <div class="name">${userId}</div>
-            <div class="time">🕐 ${this._formatTime(time)}</div>
           </div>
           <div class="guests">
             <span class="icon">${ICONS.users}</span>
