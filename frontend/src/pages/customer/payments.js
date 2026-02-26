@@ -6,6 +6,8 @@ import { appState } from '/src/utility/app-state.js';
 import '/src/components/pagination.js';
 import '/src/components/search-bar.js';
 import '/src/components/app-dialog.js';
+import '/src/components/badge-component.js';
+import '/src/components/users-avatar.js';
 import '/src/layouts/header-controls.js';
 import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
@@ -57,6 +59,66 @@ class CustomerPayments extends LitElement {
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    .payment-profile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .payment-profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .payment-profile-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .payment-profile-email {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .payment-profile-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .payment-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .payment-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .payment-detail-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .payment-detail-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .payment-detail-value {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1a1a1a;
     }
   `;
 
@@ -148,6 +210,104 @@ class CustomerPayments extends LitElement {
     this.selectedPayment = null;
   }
 
+  _getRoleVariant(role) {
+    const r = role?.toLowerCase();
+    if (r === 'admin') return 'danger';
+    if (r === 'moderator') return 'info';
+    if (r === 'temporary') return 'warning';
+    return 'technical';
+  }
+
+  _getStatusVariant(status) {
+    const s = status?.toLowerCase();
+    if (s === 'active') return 'success';
+    if (s === 'inactive') return 'inactive';
+    if (s === 'archived') return 'archived';
+    return 'primary';
+  }
+
+  _getPaymentStatusVariant(status) {
+    const s = status?.toLowerCase();
+    if (s === 'completed' || s === 'paid' || s === 'success') return 'success';
+    if (s === 'pending') return 'pending';
+    if (s === 'failed') return 'failed';
+    if (s === 'cancelled') return 'cancelled';
+    return 'primary';
+  }
+
+  _formatAmount(amount) {
+    return Number(amount).toLocaleString('en-PH', {
+      style: 'currency',
+      currency: 'PHP'
+    });
+  }
+
+  _renderDetailsDialog() {
+    if (!this.selectedPayment) return '';
+    const p = this.selectedPayment;
+    const user = p.user || {};
+
+    return html`
+      ${user.name || user.email ? html`
+        <div class="payment-profile">
+          <user-avatar
+            size="48"
+            .src=${user.profile_photo || ''}
+            .name=${user.name || ''}
+            .gender=${user.gender || ''}>
+          </user-avatar>
+          <div class="payment-profile-info">
+            <div class="payment-profile-name">${user.name || 'Unknown User'}</div>
+            <div class="payment-profile-email">${user.email || ''}</div>
+            <div class="payment-profile-badges">
+              ${user.role ? html`<badge-component variant="${this._getRoleVariant(user.role)}" size="small">${user.role}</badge-component>` : ''}
+              ${user.status ? html`<badge-component variant="${this._getStatusVariant(user.status)}" size="small">${user.status}</badge-component>` : ''}
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="payment-details-grid">
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Payment ID</span>
+          <span class="payment-detail-value">${p.id}</span>
+        </div>
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Status</span>
+          <badge-component variant="${this._getPaymentStatusVariant(p.status)}" size="small">${p.status}</badge-component>
+        </div>
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Amount</span>
+          <span class="payment-detail-value">${this._formatAmount(p.amount)}</span>
+        </div>
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Currency</span>
+          <span class="payment-detail-value">${p.currency || '—'}</span>
+        </div>
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Method</span>
+          <badge-component variant="info" size="small">${p.method || '—'}</badge-component>
+        </div>
+        <div class="payment-detail-item">
+          <span class="payment-detail-label">Date</span>
+          <span class="payment-detail-value">${p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</span>
+        </div>
+        ${p.reservation_id ? html`
+          <div class="payment-detail-item">
+            <span class="payment-detail-label">Reservation ID</span>
+            <span class="payment-detail-value">#${p.reservation_id}</span>
+          </div>
+        ` : ''}
+        ${p.notes ? html`
+          <div class="payment-detail-item full">
+            <span class="payment-detail-label">Notes</span>
+            <span class="payment-detail-value">${p.notes}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <content-card mode="4">
@@ -186,13 +346,12 @@ class CustomerPayments extends LitElement {
       <app-dialog
         .isOpen=${this.showDetailsDialog}
         title="Payment Details"
-        mode="details"
         size="medium"
         styleMode="compact"
         .hideFooter=${true}
         .closeOnOverlay=${true}
-        .detailsData=${this.selectedPayment}
         @dialog-close=${this.handleDialogClose}>
+        ${this._renderDetailsDialog()}
       </app-dialog>
     `;
   }
