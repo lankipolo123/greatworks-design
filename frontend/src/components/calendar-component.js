@@ -199,57 +199,16 @@ class BookingCalendar extends LitElement {
       background: #f0fdf4;
     }
 
-    .day.occupancy-low .day-number {
-      color: #166534;
-    }
-
     .day.occupancy-medium {
       background: #fefce8;
-    }
-
-    .day.occupancy-medium .day-number {
-      color: #854d0e;
     }
 
     .day.occupancy-high {
       background: #fff7ed;
     }
 
-    .day.occupancy-high .day-number {
-      color: #c2410c;
-    }
-
     .day.occupancy-full {
       background: #fef2f2;
-    }
-
-    .day.occupancy-full .day-number {
-      color: #b91c1c;
-    }
-
-    .day .occupancy-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      border-radius: 0 0 6px 6px;
-    }
-
-    .day.occupancy-low .occupancy-bar {
-      background: #22c55e;
-    }
-
-    .day.occupancy-medium .occupancy-bar {
-      background: #eab308;
-    }
-
-    .day.occupancy-high .occupancy-bar {
-      background: #f97316;
-    }
-
-    .day.occupancy-full .occupancy-bar {
-      background: #ef4444;
     }
 
     .empty-day {
@@ -427,7 +386,6 @@ class BookingCalendar extends LitElement {
               ` : ''}
             </div>
           ` : ''}
-          ${occupancy ? html`<div class="occupancy-bar"></div>` : ''}
         </div>
       `);
     }
