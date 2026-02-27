@@ -43,6 +43,7 @@ class CustomerBooking extends LitElement {
     selectedLocation: { type: String },
     selectedBranch: { type: String },
     _loaded: { type: Boolean, state: true },
+    _daySummary: { type: Object, state: true },
   };
 
   static styles = css`
@@ -588,10 +589,12 @@ class CustomerBooking extends LitElement {
     this.slotLoading = false;
     this._lastBookTime = 0;
     this._loaded = false;
+    this._daySummary = {};
 
     this._loadBookings();
     this._loadRooms();
     this._loadLocations();
+    this._loadCalendarSummary();
   }
 
   connectedCallback() {
@@ -600,6 +603,7 @@ class CustomerBooking extends LitElement {
       this._loadBookings();
       this._loadRooms();
       this._loadLocations();
+      this._loadCalendarSummary();
     });
   }
 
@@ -643,6 +647,19 @@ class CustomerBooking extends LitElement {
       this.locationsList = Array.isArray(data) ? data : [];
     } catch (e) {
       this.locationsList = [];
+    }
+  }
+
+  async _loadCalendarSummary() {
+    try {
+      const params = {};
+      if (this.selectedLocation && this.selectedLocation !== 'all') {
+        params.location_id = this.selectedLocation;
+      }
+      const response = await bookings.getCalendar(params);
+      this._daySummary = response.day_summary || {};
+    } catch (e) {
+      this._daySummary = {};
     }
   }
 
@@ -720,6 +737,7 @@ class CustomerBooking extends LitElement {
 
   handleLocationChange(e) {
     this.selectedLocation = e.detail.location;
+    this._loadCalendarSummary();
   }
 
   handleDayClick(e) {
@@ -1423,6 +1441,7 @@ class CustomerBooking extends LitElement {
               .filter(b => b.status === 'confirmed' || b.status === 'pending')
               .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
               .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
+            .daySummary=${this._daySummary}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}

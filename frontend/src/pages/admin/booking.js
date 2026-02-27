@@ -535,6 +535,7 @@ class AdminBooking extends LitElement {
       toast.success('Booking created successfully!');
       this.showBookDialog = false;
       await this._loadBookings();
+      this._loadCalendarSummary();
     } catch (err) {
       if (err.status === 422 && err.message?.includes('slots')) {
         toast.error(`Not enough slots! Available: ${err.available_slots || 0}, Requested: ${data.guests}`);
@@ -686,6 +687,7 @@ class AdminBooking extends LitElement {
       this.showEditDialog = false;
       this.selectedBooking = null;
       await this._loadBookings();
+      this._loadCalendarSummary();
     } catch (err) {
       if (err.status === 422 && err.message?.includes('slots')) {
         toast.error(`Not enough slots! Available: ${err.available_slots || 0}`);
@@ -715,6 +717,7 @@ class AdminBooking extends LitElement {
       this.showDeleteDialog = false;
       this.selectedBooking = null;
       await this._loadBookings();
+      this._loadCalendarSummary();
     } catch (err) {
       toast.error(err.message || 'Failed to delete booking');
     } finally {
@@ -732,6 +735,7 @@ class AdminBooking extends LitElement {
       this.showDetailsDialog = false;
       this.selectedBooking = null;
       await this._loadBookings();
+      this._loadCalendarSummary();
     } catch (err) {
       toast.error(err.message || `Failed to ${newStatus} booking`);
     }
