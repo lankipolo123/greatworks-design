@@ -245,12 +245,13 @@ class BookingSidebar extends LitElement {
     const slotMap = {};
     for (const b of bookings) {
       const t = b.time || '00:00';
-      const hour = parseInt(t.split(':')[0]);
+      const [hours, minutes] = t.split(':').map(Number);
+      const hour = minutes >= 30 ? hours + 1 : hours;
       if (!slotMap[hour]) slotMap[hour] = [];
       slotMap[hour].push(b);
     }
     const slots = [];
-    for (let h = 6; h <= 22; h++) {
+    for (let h = 8; h <= 18; h++) {
       slots.push({ hour: h, bookings: slotMap[h] || [] });
     }
     return slots;
