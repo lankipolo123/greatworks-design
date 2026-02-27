@@ -1343,7 +1343,7 @@ class CustomerTicket extends LitElement {
         .isOpen=${this.showPaymentDialog}
         title="Payment"
         description="Choose how you'd like to pay"
-        size="medium"
+        size="large"
         styleMode="compact"
         .closeOnOverlay=${false}
         .hideFooter=${true}
