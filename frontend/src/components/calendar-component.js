@@ -8,6 +8,7 @@ class BookingCalendar extends LitElement {
     month: { type: Number },
     year: { type: Number },
     reservations: { type: Array },
+    daySummary: { type: Object },
     selectedDate: { type: String },
     branches: { type: Array },
     selectedBranch: { type: String },
@@ -194,6 +195,63 @@ class BookingCalendar extends LitElement {
       margin-left: 0.2rem;
     }
 
+    .day.occupancy-low {
+      background: #f0fdf4;
+    }
+
+    .day.occupancy-low .day-number {
+      color: #166534;
+    }
+
+    .day.occupancy-medium {
+      background: #fefce8;
+    }
+
+    .day.occupancy-medium .day-number {
+      color: #854d0e;
+    }
+
+    .day.occupancy-high {
+      background: #fff7ed;
+    }
+
+    .day.occupancy-high .day-number {
+      color: #c2410c;
+    }
+
+    .day.occupancy-full {
+      background: #fef2f2;
+    }
+
+    .day.occupancy-full .day-number {
+      color: #b91c1c;
+    }
+
+    .day .occupancy-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 0 0 6px 6px;
+    }
+
+    .day.occupancy-low .occupancy-bar {
+      background: #22c55e;
+    }
+
+    .day.occupancy-medium .occupancy-bar {
+      background: #eab308;
+    }
+
+    .day.occupancy-high .occupancy-bar {
+      background: #f97316;
+    }
+
+    .day.occupancy-full .occupancy-bar {
+      background: #ef4444;
+    }
+
     .empty-day {
       opacity: 0.4;
     }
@@ -256,6 +314,7 @@ class BookingCalendar extends LitElement {
     this.month = now.getMonth();
     this.year = now.getFullYear();
     this.reservations = [];
+    this.daySummary = {};
     this.selectedDate = null;
     this.branches = [];
     this.selectedBranch = 'all';
@@ -297,6 +356,16 @@ class BookingCalendar extends LitElement {
     }));
   }
 
+  _getOccupancyClass(dateStr) {
+    const summary = this.daySummary?.[dateStr];
+    if (!summary || summary.count === 0) return '';
+    const count = summary.count;
+    if (count >= 10) return 'occupancy-full';
+    if (count >= 6) return 'occupancy-high';
+    if (count >= 3) return 'occupancy-medium';
+    return 'occupancy-low';
+  }
+
   handleBranchChange(e) {
     this.dispatchEvent(new CustomEvent('branch-change', {
       detail: { branch: e.detail.value },
@@ -333,10 +402,11 @@ class BookingCalendar extends LitElement {
 
       const isToday = dateStr === todayStr;
       const isSelected = dateStr === this.selectedDate;
+      const occupancy = this._getOccupancyClass(dateStr);
 
       days.push(html`
-        <div 
-          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" 
+        <div
+          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancy}"
           @click=${() => this.handleDayClick(dateStr, booked)}
         >
           <div class="day-number">${d}</div>
@@ -357,6 +427,7 @@ class BookingCalendar extends LitElement {
               ` : ''}
             </div>
           ` : ''}
+          ${occupancy ? html`<div class="occupancy-bar"></div>` : ''}
         </div>
       `);
     }
