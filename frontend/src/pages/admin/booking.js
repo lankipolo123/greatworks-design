@@ -56,6 +56,7 @@ class AdminBooking extends LitElement {
     selectedLocation: { type: String },
     selectedLocationImage: { type: Object },
     _loaded: { type: Boolean, state: true },
+    _daySummary: { type: Object, state: true },
   };
 
   static styles = css`
@@ -261,16 +262,19 @@ class AdminBooking extends LitElement {
     this._moderatorLocationId = this._isModerator && user?.location_id ? String(user.location_id) : null;
     this.selectedLocation = this._moderatorLocationId || 'all';
     this._loaded = false;
+    this._daySummary = {};
 
     this._loadBookings();
     this._loadRooms();
     this._loadLocations();
+    this._loadCalendarSummary();
   }
 
   connectedCallback() {
     super.connectedCallback();
     this._unsub = appState.on('data-changed', () => {
       this._loadBookings();
+      this._loadCalendarSummary();
       this._loadRooms();
       this._loadLocations();
     });
@@ -319,6 +323,19 @@ class AdminBooking extends LitElement {
       this.locationsList = Array.isArray(data) ? data : [];
     } catch (e) {
       this.locationsList = [];
+    }
+  }
+
+  async _loadCalendarSummary() {
+    try {
+      const params = {};
+      if (this.selectedLocation && this.selectedLocation !== 'all') {
+        params.location_id = this.selectedLocation;
+      }
+      const response = await bookings.getCalendar(params);
+      this._daySummary = response.day_summary || {};
+    } catch (e) {
+      this._daySummary = {};
     }
   }
 
@@ -397,6 +414,7 @@ class AdminBooking extends LitElement {
   handleLocationChange(e) {
     if (this._isModerator) return; // locked to assigned location
     this.selectedLocation = e.detail.location;
+    this._loadCalendarSummary();
   }
 
   handleDayClick(e) {
@@ -879,6 +897,7 @@ class AdminBooking extends LitElement {
               .filter(b => b.status === 'confirmed' || b.status === 'pending')
               .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
               .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
+            .daySummary=${this._daySummary}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
