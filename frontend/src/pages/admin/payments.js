@@ -31,10 +31,7 @@ class AdminPayments extends LitElement {
     showDetailsDialog: { type: Boolean },
     selectedPayment: { type: Object },
     showCreateDialog: { type: Boolean },
-    showChangeMethodDialog: { type: Boolean },
     _createLoading: { type: Boolean, state: true },
-    _changeLoading: { type: Boolean, state: true },
-    _selectedNewMethod: { type: String, state: true },
     _usersList: { type: Array, state: true },
     _bookingsList: { type: Array, state: true },
     _loaded: { type: Boolean, state: true }
@@ -182,77 +179,6 @@ class AdminPayments extends LitElement {
       margin-top: 0.5rem;
     }
 
-    .details-actions {
-      margin-top: 1rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid #eee;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .payment-methods-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 0.5rem;
-    }
-
-    .payment-methods {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .payment-method-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 0.5rem 0.25rem;
-      border: 1.5px solid #2d2b2b15;
-      border-radius: 8px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 0.68rem;
-      font-weight: 500;
-      color: #555;
-      transition: all 0.15s;
-      font-family: inherit;
-    }
-
-    .payment-method-btn:hover {
-      border-color: #ffb300;
-      background: #fffdf5;
-    }
-
-    .payment-method-btn.selected {
-      border-color: #ffb300;
-      background: #fff8e1;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .payment-method-btn .pm-img {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .payment-method-btn .pm-img svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
   `;
 
   constructor() {
@@ -264,10 +190,7 @@ class AdminPayments extends LitElement {
     this.showExportDialog = false;
     this.showDetailsDialog = false;
     this.showCreateDialog = false;
-    this.showChangeMethodDialog = false;
     this._createLoading = false;
-    this._changeLoading = false;
-    this._selectedNewMethod = '';
     this._usersList = [];
     this._bookingsList = [];
     this.selectedPayment = null;
