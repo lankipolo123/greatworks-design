@@ -253,23 +253,25 @@ class CustomerTicket extends LitElement {
 
     .payment-methods {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
 
     .payment-method-btn {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 0.65rem 0.75rem;
-      border: 1.5px solid #2d2b2b20;
+      justify-content: center;
+      gap: 4px;
+      padding: 0.5rem 0.25rem;
+      border: 1.5px solid #2d2b2b15;
       border-radius: 8px;
       background: #fff;
       cursor: pointer;
-      font-size: 0.82rem;
+      font-size: 0.68rem;
       font-weight: 500;
-      color: #333;
+      color: #555;
       transition: all 0.15s;
       font-family: inherit;
     }
@@ -283,11 +285,20 @@ class CustomerTicket extends LitElement {
       border-color: #ffb300;
       background: #fff8e1;
       font-weight: 600;
+      color: #333;
     }
 
-    .payment-method-btn .material-symbols-outlined {
-      font-size: 1.15rem;
-      color: #ffb300;
+    .payment-method-btn .pm-img {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .payment-method-btn .pm-img svg {
+      width: 100%;
+      height: 100%;
     }
 
     .confirmation-content { text-align: center; }
@@ -806,10 +817,10 @@ class CustomerTicket extends LitElement {
     if (!b) return '';
     const total = this._getBookingTotal();
     const methods = [
-      { key: 'gcash', label: 'GCash', icon: 'account_balance_wallet' },
-      { key: 'cash', label: 'Cash (Pay at Counter)', icon: 'payments' },
-      { key: 'debit_card', label: 'Debit Card', icon: 'credit_card' },
-      { key: 'bank_transfer', label: 'Bank Transfer', icon: 'account_balance' },
+      { key: 'gcash', label: 'GCash', img: html`<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#007bff"/><text x="24" y="20" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="sans-serif">G</text><text x="24" y="34" text-anchor="middle" font-size="8" font-weight="600" fill="#fff" font-family="sans-serif">Cash</text></svg>` },
+      { key: 'cash', label: 'Cash', img: html`<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#43a047"/><rect x="10" y="14" width="28" height="20" rx="3" fill="#fff" opacity="0.3"/><circle cx="24" cy="24" r="6" fill="#fff" opacity="0.5"/><text x="24" y="28" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="sans-serif">₱</text></svg>` },
+      { key: 'debit_card', label: 'Debit Card', img: html`<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#7b1fa2"/><rect x="8" y="14" width="32" height="20" rx="3" fill="#fff" opacity="0.25"/><rect x="8" y="19" width="32" height="5" fill="#fff" opacity="0.3"/><rect x="12" y="28" width="12" height="2" rx="1" fill="#fff" opacity="0.5"/></svg>` },
+      { key: 'bank_transfer', label: 'Bank', img: html`<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#1565c0"/><path d="M24 10 L38 18 H10 Z" fill="#fff" opacity="0.4"/><rect x="14" y="19" width="4" height="12" rx="1" fill="#fff" opacity="0.35"/><rect x="22" y="19" width="4" height="12" rx="1" fill="#fff" opacity="0.35"/><rect x="30" y="19" width="4" height="12" rx="1" fill="#fff" opacity="0.35"/><rect x="10" y="32" width="28" height="3" rx="1" fill="#fff" opacity="0.4"/></svg>` },
     ];
 
     return html`
@@ -838,7 +849,7 @@ class CustomerTicket extends LitElement {
           <button
             class="payment-method-btn ${this._selectedPaymentMethod === m.key ? 'selected' : ''}"
             @click=${() => this.handlePaymentMethodSelect(m.key)}>
-            <span class="material-symbols-outlined">${m.icon}</span>
+            <span class="pm-img">${m.img}</span>
             <span>${m.label}</span>
           </button>
         `)}
