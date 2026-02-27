@@ -230,6 +230,7 @@ class AdminReservation extends LitElement {
       userId: r.user?.name || r.user?.email || `User #${r.user_id}`,
       userName: r.user?.name || '',
       userEmail: r.user?.email || '',
+      avatar: r.user?.profile_photo || '',
       user: r.user || null,
       roomId: r.room_id,
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),

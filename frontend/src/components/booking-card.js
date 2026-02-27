@@ -15,6 +15,7 @@ class BookingCard extends LitElement {
     }
 
     .card {
+      position: relative;
       background: white;
       border-radius: 4px;
       padding: 0.35rem 0.45rem;
@@ -25,6 +26,31 @@ class BookingCard extends LitElement {
 
     .card:hover {
       transform: translateX(2px);
+    }
+
+    .card.past {
+      opacity: 0.55;
+      border-color: #e0e0e0;
+      background: #fafafa;
+    }
+
+    .card.past .name {
+      color: #888;
+    }
+
+    .card.past .guests {
+      background: #bbb;
+    }
+
+    .card.past::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: #bbb;
+      border-radius: 4px 0 0 4px;
     }
 
     .card-header {
@@ -110,6 +136,27 @@ class BookingCard extends LitElement {
       color: #721c24;
     }
 
+    .status.completed {
+      background: #e2e3e5;
+      color: #383d41;
+    }
+
+    .card.status-confirmed {
+      border-left: 3px solid #28a745;
+    }
+
+    .card.status-pending {
+      border-left: 3px solid #ffc107;
+    }
+
+    .card.status-cancelled {
+      border-left: 3px solid #dc3545;
+    }
+
+    .card.status-completed {
+      border-left: 3px solid #6c757d;
+    }
+
     .room-type {
       background: #f0f4ff;
       color: #3451b2;
@@ -152,11 +199,23 @@ class BookingCard extends LitElement {
     }));
   }
 
+  _isPast() {
+    const { date, status } = this.booking;
+    if (status === 'completed' || status === 'cancelled') return true;
+    if (!date) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const bookingDate = new Date(date);
+    bookingDate.setHours(0, 0, 0, 0);
+    return bookingDate < today;
+  }
+
   render() {
     const { userId, time, guests, status, id, avatar, gender, roomType } = this.booking;
+    const past = this._isPast();
 
     return html`
-      <div class="card status-${status}" @click=${this._handleClick}>
+      <div class="card status-${status} ${past ? 'past' : ''}" @click=${this._handleClick}>
         <div class="card-header">
           <user-avatar
             .src=${avatar || ''}

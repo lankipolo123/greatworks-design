@@ -355,6 +355,7 @@ class AdminBooking extends LitElement {
       userId: b.user?.name || b.user?.email || `User #${b.user_id}`,
       userName: b.user?.name || '',
       userEmail: b.user?.email || '',
+      avatar: b.user?.profile_photo || '',
       roomId: b.room_id,
       roomName: b.room?.name || `Room #${b.room_id}`,
       roomType: b.room?.type || '',

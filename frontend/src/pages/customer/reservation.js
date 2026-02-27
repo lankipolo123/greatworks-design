@@ -254,6 +254,7 @@ class CustomerReservation extends LitElement {
       id: r.id,
       userId: r.user?.name || r.user?.email || `User #${r.user_id}`,
       userName: r.user?.name || '',
+      avatar: r.user?.profile_photo || '',
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
       roomType: r.room?.type || '',
       locationName: r.room?.location || '',

@@ -688,6 +688,7 @@ class CustomerBooking extends LitElement {
       id: b.id,
       userId: b.user?.name || b.user?.email || `User #${b.user_id}`,
       userName: b.user?.name || '',
+      avatar: b.user?.profile_photo || '',
       roomName: b.room?.name || `Room #${b.room_id}`,
       roomType: b.room?.type || '',
       locationId: b.room?.location_id ? String(b.room.location_id) : null,
