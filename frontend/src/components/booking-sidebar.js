@@ -1,6 +1,6 @@
 // src/components/booking-sidebar.js
 import { LitElement, html, css } from 'lit';
-import '/src/components/booking-card.js';
+import '/src/components/hour-slot.js';
 import '/src/components/app-dropdown.js';
 
 class BookingSidebar extends LitElement {
@@ -99,54 +99,6 @@ class BookingSidebar extends LitElement {
       padding-right: 0.5rem;
     }
 
-    .time-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    .time-row:last-child {
-      border-bottom: none;
-    }
-
-    .time-label {
-      flex-shrink: 0;
-      width: 48px;
-      text-align: right;
-      padding-right: 0.25rem;
-    }
-
-    .time-label span {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #aaa;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      line-height: 1;
-    }
-
-    .time-row.has-booking .time-label span {
-      color: #333;
-    }
-
-    .time-card {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .time-empty {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .time-empty-text {
-      font-size: 0.65rem;
-      color: #ccc;
-      font-weight: 500;
-      font-style: italic;
-    }
 
     .bookings-list::-webkit-scrollbar {
       width: 6px;
@@ -233,12 +185,6 @@ class BookingSidebar extends LitElement {
       const timeB = b.time || '00:00';
       return timeA.localeCompare(timeB);
     });
-  }
-
-  _formatHour(hour) {
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12} ${ampm}`;
   }
 
   _getHourSlots(bookings) {
@@ -339,21 +285,11 @@ class BookingSidebar extends LitElement {
 
         <div class="bookings-list">
           ${hourSlots.map(slot => html`
-            <div class="time-row ${slot.bookings.length ? 'has-booking' : ''}">
-              <div class="time-label">
-                <span>${this._formatHour(slot.hour)}</span>
-              </div>
-              ${slot.bookings.length ? html`
-                <div class="time-card">
-                  ${slot.bookings.map(booking => html`
-                    <booking-card
-                      .booking=${booking}
-                      @card-click=${this._handleCardClick}>
-                    </booking-card>
-                  `)}
-                </div>
-              ` : html`<div class="time-empty"><span class="time-empty-text">Available</span></div>`}
-            </div>
+            <hour-slot
+              .hour=${slot.hour}
+              .bookings=${slot.bookings}
+              @card-click=${this._handleCardClick}>
+            </hour-slot>
           `)}
         </div>
 
