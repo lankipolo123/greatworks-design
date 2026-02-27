@@ -108,29 +108,37 @@ class BookingSidebar extends LitElement {
 
     .time-label {
       flex-shrink: 0;
-      width: 52px;
+      width: 48px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 0.55rem;
+      padding-top: 0.1rem;
       position: relative;
     }
 
     .time-label span {
       font-size: 0.62rem;
       font-weight: 700;
-      color: #888;
+      color: #aaa;
       letter-spacing: 0.02em;
       white-space: nowrap;
       line-height: 1;
     }
 
+    .time-row.has-booking .time-label span {
+      color: #555;
+    }
+
     .time-line {
-      width: 2px;
+      width: 1.5px;
       flex: 1;
-      background: #e8e8e8;
-      margin-top: 6px;
+      background: #ebebeb;
+      margin-top: 5px;
       border-radius: 1px;
+    }
+
+    .time-row.has-booking .time-line {
+      background: #ffb300;
     }
 
     .time-row:last-child .time-line {
@@ -140,7 +148,14 @@ class BookingSidebar extends LitElement {
     .time-card {
       flex: 1;
       min-width: 0;
-      padding: 0.35rem 0;
+      padding: 0.2rem 0;
+    }
+
+    .time-empty {
+      flex: 1;
+      min-width: 0;
+      padding: 0.2rem 0;
+      min-height: 18px;
     }
 
     .bookings-list::-webkit-scrollbar {
@@ -230,13 +245,25 @@ class BookingSidebar extends LitElement {
     });
   }
 
-  _formatTime(time) {
-    if (!time) return '';
-    const [hours] = time.split(':');
-    const hour = parseInt(hours);
+  _formatHour(hour) {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
     return `${hour12} ${ampm}`;
+  }
+
+  _getHourSlots(bookings) {
+    const slotMap = {};
+    for (const b of bookings) {
+      const t = b.time || '00:00';
+      const hour = parseInt(t.split(':')[0]);
+      if (!slotMap[hour]) slotMap[hour] = [];
+      slotMap[hour].push(b);
+    }
+    const slots = [];
+    for (let h = 6; h <= 22; h++) {
+      slots.push({ hour: h, bookings: slotMap[h] || [] });
+    }
+    return slots;
   }
 
   _handleRoomTypeChange(e) {
@@ -298,7 +325,7 @@ class BookingSidebar extends LitElement {
       `;
     }
 
-    const sortedBookings = this._sortBookingsByTime(this.bookings);
+    const hourSlots = this._getHourSlots(this.bookings);
 
     return html`
       <div class="sidebar-container">
@@ -320,18 +347,22 @@ class BookingSidebar extends LitElement {
         </div>
 
         <div class="bookings-list">
-          ${sortedBookings.map(booking => html`
-            <div class="time-row">
+          ${hourSlots.map(slot => html`
+            <div class="time-row ${slot.bookings.length ? 'has-booking' : ''}">
               <div class="time-label">
-                <span>${this._formatTime(booking.time)}</span>
+                <span>${this._formatHour(slot.hour)}</span>
                 <div class="time-line"></div>
               </div>
-              <div class="time-card">
-                <booking-card
-                  .booking=${booking}
-                  @card-click=${this._handleCardClick}>
-                </booking-card>
-              </div>
+              ${slot.bookings.length ? html`
+                <div class="time-card">
+                  ${slot.bookings.map(booking => html`
+                    <booking-card
+                      .booking=${booking}
+                      @card-click=${this._handleCardClick}>
+                    </booking-card>
+                  `)}
+                </div>
+              ` : html`<div class="time-empty"></div>`}
             </div>
           `)}
         </div>
