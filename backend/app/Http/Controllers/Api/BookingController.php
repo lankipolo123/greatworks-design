@@ -229,9 +229,36 @@ class BookingController extends Controller
             $query->where('room_id', $request->room_id);
         }
 
+        // Filter by location
+        if ($request->has('location_id')) {
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('location_id', $request->location_id);
+            });
+        }
+
         $bookings = $query->get();
 
-        return response()->json($bookings);
+        // Build per-day summary for calendar coloring
+        $daySummary = [];
+        foreach ($bookings as $booking) {
+            $dateKey = $booking->date instanceof \DateTimeInterface
+                ? $booking->date->format('Y-m-d')
+                : (string) $booking->date;
+
+            if (!isset($daySummary[$dateKey])) {
+                $daySummary[$dateKey] = [
+                    'count' => 0,
+                    'guests' => 0,
+                ];
+            }
+            $daySummary[$dateKey]['count']++;
+            $daySummary[$dateKey]['guests'] += $booking->guests;
+        }
+
+        return response()->json([
+            'bookings' => $bookings,
+            'day_summary' => $daySummary,
+        ]);
     }
 
     /**
