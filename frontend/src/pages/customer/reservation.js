@@ -16,7 +16,7 @@ import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { reservations, payments } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { toast } from '@/utility/toast-controller.js';
+import { toast } from '/src/service/toast-widget.js';
 
 import '/src/components/stat-card.js';
 import '/src/components/app-button.js';

@@ -3,7 +3,7 @@ import { LitElement, html, css } from 'lit';
 import { paymentsTableConfig } from '/src/configs/payments-config.js';
 import { payments as paymentsApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { toast } from '@/utility/toast-controller.js';
+import { toast } from '/src/service/toast-widget.js';
 import '/src/components/app-button.js';
 import '/src/components/pagination.js';
 import '/src/components/search-bar.js';
