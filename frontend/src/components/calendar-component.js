@@ -138,7 +138,6 @@ class BookingCalendar extends LitElement {
       font-weight: 600;
       font-size: 0.9rem;
       color: #1a1a1a;
-      margin-bottom: 0.4rem;
     }
 
     .today .day-number {
@@ -195,21 +194,46 @@ class BookingCalendar extends LitElement {
       margin-left: 0.2rem;
     }
 
-    .day.occupancy-low {
-      background: #f0fdf4;
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.25rem;
     }
 
-    .day.occupancy-medium {
-      background: #fefce8;
+    .booking-count {
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: #fff;
+      background: #333;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.2rem;
+      line-height: 1;
     }
 
-    .day.occupancy-high {
-      background: #fff7ed;
+    .room-type-dots {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      margin-top: 0.15rem;
     }
 
-    .day.occupancy-full {
-      background: #fef2f2;
+    .room-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
+
+    .room-dot.co_working { background: #3b82f6; }
+    .room-dot.virtual_offices { background: #8b5cf6; }
+    .room-dot.private_offices { background: #f59e0b; }
+    .room-dot.events_meeting_room { background: #10b981; }
 
     .empty-day {
       opacity: 0.4;
@@ -315,14 +339,8 @@ class BookingCalendar extends LitElement {
     }));
   }
 
-  _getOccupancyClass(dateStr) {
-    const summary = this.daySummary?.[dateStr];
-    if (!summary || summary.count === 0) return '';
-    const count = summary.count;
-    if (count >= 10) return 'occupancy-full';
-    if (count >= 6) return 'occupancy-high';
-    if (count >= 3) return 'occupancy-medium';
-    return 'occupancy-low';
+  _getDaySummary(dateStr) {
+    return this.daySummary?.[dateStr] || null;
   }
 
   handleBranchChange(e) {
@@ -361,14 +379,25 @@ class BookingCalendar extends LitElement {
 
       const isToday = dateStr === todayStr;
       const isSelected = dateStr === this.selectedDate;
-      const occupancy = this._getOccupancyClass(dateStr);
+      const summary = this._getDaySummary(dateStr);
+      const roomTypes = summary?.room_types ? Object.keys(summary.room_types) : [];
 
       days.push(html`
         <div
-          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancy}"
+          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
           @click=${() => this.handleDayClick(dateStr, booked)}
         >
-          <div class="day-number">${d}</div>
+          <div class="day-header">
+            <div class="day-number">${d}</div>
+            ${summary?.count ? html`
+              <div class="booking-count">${summary.count}</div>
+            ` : ''}
+          </div>
+          ${roomTypes.length > 0 ? html`
+            <div class="room-type-dots">
+              ${roomTypes.map(type => html`<span class="room-dot ${type}"></span>`)}
+            </div>
+          ` : ''}
           ${booked.length > 0 ? html`
             <div class="avatars-container">
               ${visibleBookings.map(r => html`

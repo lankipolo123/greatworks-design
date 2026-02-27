@@ -238,7 +238,7 @@ class BookingController extends Controller
 
         $bookings = $query->get();
 
-        // Build per-day summary for calendar coloring
+        // Build per-day summary with room type breakdown for calendar coloring
         $daySummary = [];
         foreach ($bookings as $booking) {
             $dateKey = $booking->date instanceof \DateTimeInterface
@@ -249,10 +249,19 @@ class BookingController extends Controller
                 $daySummary[$dateKey] = [
                     'count' => 0,
                     'guests' => 0,
+                    'room_types' => [],
                 ];
             }
             $daySummary[$dateKey]['count']++;
             $daySummary[$dateKey]['guests'] += $booking->guests;
+
+            $roomType = $booking->room->type ?? null;
+            if ($roomType) {
+                if (!isset($daySummary[$dateKey]['room_types'][$roomType])) {
+                    $daySummary[$dateKey]['room_types'][$roomType] = 0;
+                }
+                $daySummary[$dateKey]['room_types'][$roomType]++;
+            }
         }
 
         return response()->json([
