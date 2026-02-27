@@ -232,11 +232,11 @@ class BookingSidebar extends LitElement {
 
   _formatTime(time) {
     if (!time) return '';
-    const [hours, minutes] = time.split(':');
+    const [hours] = time.split(':');
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    return `${hour12} ${ampm}`;
   }
 
   _handleRoomTypeChange(e) {
