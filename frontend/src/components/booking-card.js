@@ -1,7 +1,8 @@
 // src/components/booking-card.js
 import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
-import { ICONS } from '/src/components/dashboard-icons.js'; // <-- import ICONS
+import { ICONS } from '/src/components/dashboard-icons.js';
+import { hashId } from '@/utility/hash-id.js';
 
 class BookingCard extends LitElement {
   static properties = {
@@ -172,7 +173,7 @@ class BookingCard extends LitElement {
           </div>
         </div>
         <div class="meta">
-          <span>${id}</span>
+          <span>${hashId('BKG', id)}</span>
           <span>•</span>
           ${roomType ? html`<span class="room-type">${this._formatRoomType(roomType)}</span><span>•</span>` : ''}
           <span class="status ${status}">${status}</span>

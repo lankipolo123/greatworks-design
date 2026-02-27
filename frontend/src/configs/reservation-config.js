@@ -7,8 +7,8 @@ export const reservationTableConfig = {
     columns: [
         {
             key: 'id',
-            label: 'Reservation ID',
-            render: (value) => hashId('RES', value)
+            label: 'Booking ID',
+            render: (value) => hashId('BKG', value)
         },
         {
             key: 'userId',

@@ -441,8 +441,8 @@ class CustomerReservation extends LitElement {
     return html`
       <div class="details-content">
         <div class="detail-item">
-          <span class="detail-label">Reservation ID</span>
-          <span class="detail-value">${hashId('RES', r.id)}</span>
+          <span class="detail-label">Booking ID</span>
+          <span class="detail-value">${hashId('BKG', r.id)}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Status</span>

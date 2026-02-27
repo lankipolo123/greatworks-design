@@ -478,8 +478,8 @@ class CustomerPayments extends LitElement {
         </div>
         ${p.reservation_id ? html`
           <div class="payment-detail-item">
-            <span class="payment-detail-label">Reservation ID</span>
-            <span class="payment-detail-value">${hashId('RES', p.reservation_id)}</span>
+            <span class="payment-detail-label">Booking ID</span>
+            <span class="payment-detail-value">${hashId('BKG', p.reservation_id)}</span>
           </div>
         ` : ''}
         ${p.notes ? html`
