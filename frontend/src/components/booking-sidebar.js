@@ -101,23 +101,25 @@ class BookingSidebar extends LitElement {
 
     .time-row {
       display: flex;
-      align-items: stretch;
-      gap: 0;
-      min-height: 0;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .time-row:last-child {
+      border-bottom: none;
     }
 
     .time-label {
       flex-shrink: 0;
       width: 48px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 0.1rem;
-      position: relative;
+      text-align: right;
+      padding-right: 0.25rem;
     }
 
     .time-label span {
-      font-size: 0.62rem;
+      font-size: 0.65rem;
       font-weight: 700;
       color: #aaa;
       letter-spacing: 0.02em;
@@ -126,36 +128,24 @@ class BookingSidebar extends LitElement {
     }
 
     .time-row.has-booking .time-label span {
-      color: #555;
-    }
-
-    .time-line {
-      width: 1.5px;
-      flex: 1;
-      background: #ebebeb;
-      margin-top: 5px;
-      border-radius: 1px;
-    }
-
-    .time-row.has-booking .time-line {
-      background: #ffb300;
-    }
-
-    .time-row:last-child .time-line {
-      background: transparent;
+      color: #333;
     }
 
     .time-card {
       flex: 1;
       min-width: 0;
-      padding: 0.2rem 0;
     }
 
     .time-empty {
       flex: 1;
       min-width: 0;
-      padding: 0.2rem 0;
-      min-height: 18px;
+    }
+
+    .time-empty-text {
+      font-size: 0.65rem;
+      color: #ccc;
+      font-weight: 500;
+      font-style: italic;
     }
 
     .bookings-list::-webkit-scrollbar {
@@ -351,7 +341,6 @@ class BookingSidebar extends LitElement {
             <div class="time-row ${slot.bookings.length ? 'has-booking' : ''}">
               <div class="time-label">
                 <span>${this._formatHour(slot.hour)}</span>
-                <div class="time-line"></div>
               </div>
               ${slot.bookings.length ? html`
                 <div class="time-card">
@@ -362,7 +351,7 @@ class BookingSidebar extends LitElement {
                     </booking-card>
                   `)}
                 </div>
-              ` : html`<div class="time-empty"></div>`}
+              ` : html`<div class="time-empty"><span class="time-empty-text">Available</span></div>`}
             </div>
           `)}
         </div>
