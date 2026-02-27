@@ -1009,13 +1009,17 @@ class CustomerBooking extends LitElement {
     const endHour = form?.querySelector('[name="end_hour"]')?.value || '';
     const duration = this._calcDuration(startHour, endHour);
 
+    const filteredRooms = this.selectedLocation && this.selectedLocation !== 'all'
+      ? this.roomsList.filter(r => String(r.location_id) === this.selectedLocation)
+      : this.roomsList;
+
     return html`
       <form id="customer-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
         <div class="form-group">
           <label>Room *</label>
           <select name="room_id" required @change=${() => this._onBookFormChange()}>
             <option value="">Select room</option>
-            ${this.roomsList.map(r => html`
+            ${filteredRooms.map(r => html`
               <option value="${r.id}">${r.name} (cap: ${r.capacity})</option>
             `)}
           </select>
