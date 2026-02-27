@@ -6,7 +6,6 @@ class HourSlot extends LitElement {
   static properties = {
     hour: { type: Number },
     bookings: { type: Array },
-    expanded: { type: Boolean },
   };
 
   static styles = css`
@@ -99,7 +98,6 @@ class HourSlot extends LitElement {
     super();
     this.hour = 8;
     this.bookings = [];
-    this.expanded = false;
   }
 
   _formatHour(hour) {
@@ -116,15 +114,23 @@ class HourSlot extends LitElement {
     }));
   }
 
-  _toggleExpand() {
-    this.expanded = !this.expanded;
+  _handleShowMore() {
+    this.dispatchEvent(new CustomEvent('show-more', {
+      detail: {
+        hour: this.hour,
+        hourLabel: this._formatHour(this.hour),
+        bookings: this.bookings
+      },
+      bubbles: true,
+      composed: true
+    }));
   }
 
   render() {
     const hasBookings = this.bookings.length > 0;
     const maxVisible = 3;
     const overflow = this.bookings.length > maxVisible;
-    const visible = this.expanded ? this.bookings : this.bookings.slice(0, maxVisible);
+    const visible = this.bookings.slice(0, maxVisible);
     const remaining = this.bookings.length - maxVisible;
 
     return html`
@@ -140,21 +146,13 @@ class HourSlot extends LitElement {
                 @card-click=${this._handleCardClick}>
               </booking-card>
             `)}
-            ${overflow && !this.expanded ? html`
-              <button class="more-btn" @click=${this._toggleExpand}>
+            ${overflow ? html`
+              <button class="more-btn" @click=${this._handleShowMore}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
                 ${remaining} more booking${remaining > 1 ? 's' : ''}
-              </button>
-            ` : ''}
-            ${overflow && this.expanded ? html`
-              <button class="more-btn" @click=${this._toggleExpand}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Show less
               </button>
             ` : ''}
           </div>
