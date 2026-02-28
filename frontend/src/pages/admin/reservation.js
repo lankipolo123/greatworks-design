@@ -167,6 +167,7 @@ class AdminReservation extends LitElement {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
   `;
 
   constructor() {
@@ -735,6 +736,7 @@ class AdminReservation extends LitElement {
           </app-button>
         </div>
       </app-dialog>
+
     `;
   }
 }

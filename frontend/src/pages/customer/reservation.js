@@ -22,12 +22,17 @@ import '/src/components/stat-card.js';
 import '/src/components/app-button.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 
-// Customer only sees view action, no edit/delete
+// Customer sees view + change payment (for pending only)
 const customerTableConfig = {
   ...reservationTableConfig,
   actions: [
-    { key: 'view', label: 'View', icon: 'visibility' }
-  ]
+    { key: 'view', label: 'View', icon: 'visibility' },
+    { key: 'change_payment', label: 'Change Payment', icon: 'credit_card' }
+  ],
+  filterActions(actions, row) {
+    if (row.status === 'pending') return actions;
+    return actions.filter(a => a.key !== 'change_payment');
+  }
 };
 
 class CustomerReservation extends LitElement {
@@ -338,6 +343,8 @@ class CustomerReservation extends LitElement {
     if (action === 'view') {
       this.selectedReservation = item;
       this.showDetailsDialog = true;
+    } else if (action === 'change_payment') {
+      this._handleChangePaymentMethod(item);
     }
   }
 
@@ -484,7 +491,7 @@ class CustomerReservation extends LitElement {
       ${r.status === 'pending' ? html`
         <div class="details-actions">
           <app-button type="secondary" size="small" @click=${() => this._handleChangePaymentMethod(r)}>
-            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">swap_horiz</span>
+            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">credit_card</span>
             Change Payment Method
           </app-button>
         </div>

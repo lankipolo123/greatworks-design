@@ -1,6 +1,6 @@
 // customer-payments.js
 import { LitElement, html, css } from 'lit';
-import { paymentsTableConfig } from '/src/configs/payments-config.js';
+import { paymentsTableConfig as basePaymentsConfig } from '/src/configs/payments-config.js';
 import { payments as paymentsApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { toast } from '/src/service/toast-widget.js';
@@ -17,6 +17,19 @@ import '/src/components/stat-card.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
+
+// Customer sees view + change payment (for pending only)
+const paymentsTableConfig = {
+  ...basePaymentsConfig,
+  actions: [
+    { key: 'view', label: 'View', icon: 'visibility' },
+    { key: 'change_payment', label: 'Change Payment', icon: 'credit_card' }
+  ],
+  filterActions(actions, row) {
+    if (row.status?.toLowerCase() === 'pending') return actions;
+    return actions.filter(a => a.key !== 'change_payment');
+  }
+};
 
 class CustomerPayments extends LitElement {
   static properties = {
@@ -306,6 +319,9 @@ class CustomerPayments extends LitElement {
     if (action === 'view') {
       this.selectedPayment = item;
       this.showDetailsDialog = true;
+    } else if (action === 'change_payment') {
+      this.selectedPayment = item;
+      this._handleChangePaymentMethod(item);
     }
   }
 
@@ -493,7 +509,7 @@ class CustomerPayments extends LitElement {
       ${p.status?.toLowerCase() === 'pending' ? html`
         <div class="details-actions">
           <app-button type="secondary" size="small" @click=${() => this._handleChangePaymentMethod(p)}>
-            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">swap_horiz</span>
+            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">credit_card</span>
             Change Payment Method
           </app-button>
         </div>
