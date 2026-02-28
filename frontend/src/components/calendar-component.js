@@ -216,24 +216,50 @@ class BookingCalendar extends LitElement {
       line-height: 1;
     }
 
-    .room-type-dots {
-      display: flex;
-      gap: 3px;
-      flex-wrap: wrap;
-      margin-top: 0.15rem;
+    .day.occupancy-low {
+      background: #ecfdf5;
+    }
+    .day.occupancy-low:hover {
+      background: #d1fae5;
+    }
+    .day.selected.occupancy-low {
+      background: #d1fae5;
     }
 
-    .room-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .day.occupancy-medium {
+      background: #fefce8;
+    }
+    .day.occupancy-medium:hover {
+      background: #fef9c3;
+    }
+    .day.selected.occupancy-medium {
+      background: #fef9c3;
     }
 
-    .room-dot.co_working { background: #3b82f6; }
-    .room-dot.virtual_offices { background: #8b5cf6; }
-    .room-dot.private_offices { background: #f59e0b; }
-    .room-dot.events_meeting_room { background: #10b981; }
+    .day.occupancy-high {
+      background: #fff7ed;
+    }
+    .day.occupancy-high:hover {
+      background: #ffedd5;
+    }
+    .day.selected.occupancy-high {
+      background: #ffedd5;
+    }
+
+    .day.occupancy-full {
+      background: #fef2f2;
+    }
+    .day.occupancy-full:hover {
+      background: #fee2e2;
+    }
+    .day.selected.occupancy-full {
+      background: #fee2e2;
+    }
+
+    .avatar-wrapper.past-booking {
+      opacity: 0.4;
+      filter: grayscale(60%);
+    }
 
     .empty-day {
       opacity: 0.4;
@@ -380,28 +406,26 @@ class BookingCalendar extends LitElement {
       const isToday = dateStr === todayStr;
       const isSelected = dateStr === this.selectedDate;
       const summary = this._getDaySummary(dateStr);
-      const roomTypes = summary?.room_types ? Object.keys(summary.room_types) : [];
+      const count = summary?.count || 0;
+      const occupancyClass = count === 0 ? '' : count <= 2 ? 'occupancy-low' : count <= 5 ? 'occupancy-medium' : count <= 8 ? 'occupancy-high' : 'occupancy-full';
 
       days.push(html`
         <div
-          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}"
+          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancyClass}"
           @click=${() => this.handleDayClick(dateStr, booked)}
         >
           <div class="day-header">
             <div class="day-number">${d}</div>
-            ${summary?.count ? html`
-              <div class="booking-count">${summary.count}</div>
+            ${count ? html`
+              <div class="booking-count">${count}</div>
             ` : ''}
           </div>
-          ${roomTypes.length > 0 ? html`
-            <div class="room-type-dots">
-              ${roomTypes.map(type => html`<span class="room-dot ${type}"></span>`)}
-            </div>
-          ` : ''}
           ${booked.length > 0 ? html`
             <div class="avatars-container">
-              ${visibleBookings.map(r => html`
-                <div class="avatar-wrapper">
+              ${visibleBookings.map(r => {
+                const isPast = r.status === 'completed' || r.status === 'cancelled' || (r.date && new Date(r.date) < new Date(todayStr));
+                return html`
+                <div class="avatar-wrapper ${isPast ? 'past-booking' : ''}">
                   <user-avatar
                     .src=${r.avatar || ''}
                     .name=${r.userId}
@@ -409,7 +433,7 @@ class BookingCalendar extends LitElement {
                     size="30"
                   ></user-avatar>
                 </div>
-              `)}
+              `;})}
               ${remainingCount > 0 ? html`
                 <div class="more-count">+${remainingCount}</div>
               ` : ''}

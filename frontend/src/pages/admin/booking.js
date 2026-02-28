@@ -898,7 +898,6 @@ class AdminBooking extends LitElement {
         <calendar-section>
           <booking-calendar
             .reservations=${this.allBookings
-              .filter(b => b.status === 'confirmed' || b.status === 'pending')
               .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
               .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
             .daySummary=${this._daySummary}
