@@ -396,6 +396,12 @@ class AdminBooking extends LitElement {
     };
   }
 
+  _getLocationName(locationId) {
+    if (!locationId) return '';
+    const loc = this.locationsList.find(l => String(l.id) === String(locationId));
+    return loc?.name || '';
+  }
+
   _refreshSidebarBookings() {
     if (!this.selectedDate) return;
     this.selectedBookings = this.allBookings
@@ -863,6 +869,10 @@ class AdminBooking extends LitElement {
         <div class="detail-item">
           <span class="detail-label">Room</span>
           <span class="detail-value">${b.roomName}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Location</span>
+          <span class="detail-value">${this._getLocationName(b.locationId) || '-'}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>

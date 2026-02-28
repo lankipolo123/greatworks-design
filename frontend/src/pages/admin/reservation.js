@@ -19,7 +19,7 @@ import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
-import { reservations } from '/src/service/api.js';
+import { reservations, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class AdminReservation extends LitElement {
@@ -39,7 +39,8 @@ class AdminReservation extends LitElement {
     reservationLoading: { type: Boolean },
     editLoading: { type: Boolean },
     deleteLoading: { type: Boolean },
-    _loaded: { type: Boolean, state: true }
+    _loaded: { type: Boolean, state: true },
+    locationsList: { type: Array },
   };
 
   static styles = css`
@@ -187,6 +188,7 @@ class AdminReservation extends LitElement {
     this.editLoading = false;
     this.deleteLoading = false;
     this._loaded = false;
+    this.locationsList = [];
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Pending' },
@@ -199,6 +201,7 @@ class AdminReservation extends LitElement {
     this.handleTableAction = this.handleTableAction.bind(this);
 
     this._loadReservations();
+    this._loadLocations();
   }
 
   connectedCallback() {
@@ -235,6 +238,7 @@ class AdminReservation extends LitElement {
       user: r.user || null,
       roomId: r.room_id,
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
+      locationId: r.room?.location_id ? String(r.room.location_id) : null,
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
       time: typeof r.start_time === 'string' ? r.start_time.substring(0, 5) : (typeof r.time === 'string' ? r.time.substring(0, 5) : r.time),
       guests: r.guests,
@@ -243,6 +247,22 @@ class AdminReservation extends LitElement {
       user_id: r.user_id,
       room_id: r.room_id,
     };
+  }
+
+  async _loadLocations() {
+    try {
+      const response = await locations.getAll({ per_page: 100, status: 'active' });
+      const data = response.data || response;
+      this.locationsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.locationsList = [];
+    }
+  }
+
+  _getLocationName(locationId) {
+    if (!locationId) return '';
+    const loc = this.locationsList.find(l => String(l.id) === String(locationId));
+    return loc?.name || '';
   }
 
   get filteredReservations() {
@@ -513,6 +533,10 @@ class AdminReservation extends LitElement {
         <div class="detail-item">
           <span class="detail-label">Room</span>
           <span class="detail-value">${r.roomName || 'No room assigned'}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Location</span>
+          <span class="detail-value">${this._getLocationName(r.locationId) || '-'}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>

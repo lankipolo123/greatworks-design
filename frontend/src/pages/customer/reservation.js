@@ -14,7 +14,7 @@ import '/src/layouts/search-bar-wrapper.js';
 import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
-import { reservations, payments } from '/src/service/api.js';
+import { reservations, payments, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { toast } from '/src/service/toast-widget.js';
 
@@ -50,6 +50,7 @@ class CustomerReservation extends LitElement {
     _paymentLoading: { type: Boolean, state: true },
     _paymentReservation: { type: Object, state: true },
     _loaded: { type: Boolean, state: true },
+    locationsList: { type: Array },
   };
 
   static styles = css`
@@ -224,10 +225,13 @@ class CustomerReservation extends LitElement {
       { id: 'completed', label: 'Archived/Complete' }
     ];
 
+    this.locationsList = [];
+
     this.handlePageChange = this.handlePageChange.bind(this);
     this.handleTableAction = this.handleTableAction.bind(this);
 
     this._loadReservations();
+    this._loadLocations();
   }
 
   connectedCallback() {
@@ -262,6 +266,7 @@ class CustomerReservation extends LitElement {
       avatar: r.user?.profile_photo || '',
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
       roomType: r.room?.type || '',
+      locationId: r.room?.location_id ? String(r.room.location_id) : null,
       locationName: r.room?.location || '',
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
       time: typeof r.start_time === 'string' ? r.start_time.substring(0, 5) : (typeof r.time === 'string' ? r.time.substring(0, 5) : r.time),
@@ -269,6 +274,22 @@ class CustomerReservation extends LitElement {
       status: r.status,
       notes: r.notes || '',
     };
+  }
+
+  async _loadLocations() {
+    try {
+      const response = await locations.getAll({ per_page: 100, status: 'active' });
+      const data = response.data || response;
+      this.locationsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.locationsList = [];
+    }
+  }
+
+  _getLocationName(locationId) {
+    if (!locationId) return '';
+    const loc = this.locationsList.find(l => String(l.id) === String(locationId));
+    return loc?.name || '';
   }
 
   _formatRoomType(type) {
@@ -466,7 +487,7 @@ class CustomerReservation extends LitElement {
         </div>
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${r.locationName || '-'}</span>
+          <span class="detail-value">${this._getLocationName(r.locationId) || r.locationName || '-'}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>

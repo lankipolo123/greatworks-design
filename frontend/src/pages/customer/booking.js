@@ -729,6 +729,12 @@ class CustomerBooking extends LitElement {
     };
   }
 
+  _getLocationName(locationId) {
+    if (!locationId) return '';
+    const loc = this.locationsList.find(l => String(l.id) === String(locationId));
+    return loc?.name || '';
+  }
+
   _refreshSidebarBookings() {
     if (!this.selectedDate) return;
     this.selectedBookings = this.allBookings
@@ -892,7 +898,7 @@ class CustomerBooking extends LitElement {
         room_id: roomId,
         roomName: selectedRoom?.name || `Room #${roomId}`,
         roomType: selectedRoom?.type || '',
-        locationName: selectedRoom?.location || '',
+        locationName: this._getLocationName(selectedRoom?.location_id) || selectedRoom?.location || '',
         date: getValue('date'),
         start_time: startHour,
         end_time: endHour,
@@ -967,7 +973,7 @@ class CustomerBooking extends LitElement {
         </div>
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${b.locationName || '-'}</span>
+          <span class="detail-value">${this._getLocationName(b.locationId) || b.locationName || '-'}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>
@@ -1010,7 +1016,7 @@ class CustomerBooking extends LitElement {
       room_id: selectedRoom?.id || null,
       roomName: booking.roomName,
       roomType: booking.roomType || selectedRoom?.type || '',
-      locationName: booking.locationName || selectedRoom?.location || '',
+      locationName: this._getLocationName(booking.locationId) || booking.locationName || selectedRoom?.location || '',
       date: booking.date,
       start_time: booking.startTime || booking.time,
       duration_hours: booking.durationHours,
