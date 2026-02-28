@@ -3,7 +3,6 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/hour-slot.js';
 import '/src/components/booking-card.js';
 import '/src/components/app-dropdown.js';
-import '/src/components/app-dialog.js';
 
 class BookingSidebar extends LitElement {
   static properties = {
@@ -12,9 +11,6 @@ class BookingSidebar extends LitElement {
     selectedRoomType: { type: String },
     showBookNow: { type: Boolean },
     roomTypes: { type: Array },
-    _showMoreDialog: { type: Boolean, state: true },
-    _moreDialogHour: { type: String, state: true },
-    _moreDialogBookings: { type: Array, state: true },
   };
 
   static styles = css`
@@ -155,12 +151,6 @@ class BookingSidebar extends LitElement {
       width: 16px;
       height: 16px;
     }
-
-    .dialog-bookings-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
   `;
 
   constructor() {
@@ -170,9 +160,6 @@ class BookingSidebar extends LitElement {
     this.selectedRoomType = 'all';
     this.showBookNow = false;
     this.roomTypes = [];
-    this._showMoreDialog = false;
-    this._moreDialogHour = '';
-    this._moreDialogBookings = [];
   }
 
   _handleBookNow() {
@@ -230,18 +217,6 @@ class BookingSidebar extends LitElement {
       bubbles: true,
       composed: true
     }));
-  }
-
-  _handleShowMore(e) {
-    const { hourLabel, bookings } = e.detail;
-    this._moreDialogHour = hourLabel;
-    this._moreDialogBookings = bookings;
-    this._showMoreDialog = true;
-  }
-
-  _handleMoreDialogClose() {
-    this._showMoreDialog = false;
-    this._moreDialogBookings = [];
   }
 
   _handleClose() {
@@ -313,8 +288,7 @@ class BookingSidebar extends LitElement {
             <hour-slot
               .hour=${slot.hour}
               .bookings=${slot.bookings}
-              @card-click=${this._handleCardClick}
-              @show-more=${this._handleShowMore}>
+              @card-click=${this._handleCardClick}>
             </hour-slot>
           `)}
         </div>
@@ -333,25 +307,6 @@ class BookingSidebar extends LitElement {
           </button>
         ` : ''}
       </div>
-
-      <app-dialog
-        .isOpen=${this._showMoreDialog}
-        title="Bookings at ${this._moreDialogHour}"
-        description="${this._moreDialogBookings.length} bookings for this hour"
-        size="medium"
-        styleMode="compact"
-        .hideFooter=${true}
-        .closeOnOverlay=${true}
-        @dialog-close=${this._handleMoreDialogClose}>
-        <div class="dialog-bookings-list">
-          ${this._moreDialogBookings.map(booking => html`
-            <booking-card
-              .booking=${booking}
-              @card-click=${(e) => { this._handleMoreDialogClose(); this._handleCardClick(e); }}>
-            </booking-card>
-          `)}
-        </div>
-      </app-dialog>
     `;
   }
 }

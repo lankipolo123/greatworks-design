@@ -44,6 +44,9 @@ class CustomerBooking extends LitElement {
     selectedBranch: { type: String },
     _loaded: { type: Boolean, state: true },
     _daySummary: { type: Object, state: true },
+    _showMoreDialog: { type: Boolean, state: true },
+    _moreDialogHour: { type: String, state: true },
+    _moreDialogBookings: { type: Array, state: true },
   };
 
   static styles = css`
@@ -590,6 +593,9 @@ class CustomerBooking extends LitElement {
     this._lastBookTime = 0;
     this._loaded = false;
     this._daySummary = {};
+    this._showMoreDialog = false;
+    this._moreDialogHour = '';
+    this._moreDialogBookings = [];
 
     this._loadBookings();
     this._loadRooms();
@@ -771,6 +777,18 @@ class CustomerBooking extends LitElement {
   handleBookingSelect(e) {
     this.selectedBooking = e.detail.booking;
     this.showDetailsDialog = true;
+  }
+
+  handleShowMore(e) {
+    const { hourLabel, bookings } = e.detail;
+    this._moreDialogHour = hourLabel;
+    this._moreDialogBookings = bookings;
+    this._showMoreDialog = true;
+  }
+
+  handleMoreDialogClose() {
+    this._showMoreDialog = false;
+    this._moreDialogBookings = [];
   }
 
   handleDialogClose() {
@@ -1465,7 +1483,8 @@ class CustomerBooking extends LitElement {
             @booking-select=${this.handleBookingSelect}
             @room-type-change=${this.handleRoomTypeChange}
             @sidebar-close=${this.handleSidebarClose}
-            @book-now=${this.handleBookNow}>
+            @book-now=${this.handleBookNow}
+            @show-more=${this.handleShowMore}>
             <pagination-component
               slot="pagination"
               .currentPage=${this.currentPage}
@@ -1525,6 +1544,26 @@ class CustomerBooking extends LitElement {
         .hideFooter=${true}
         @dialog-close=${() => this.handleConfirmationDone()}>
         ${this._renderConfirmationDialog()}
+      </app-dialog>
+
+      <!-- Show More Bookings Dialog -->
+      <app-dialog
+        .isOpen=${this._showMoreDialog}
+        title="Bookings at ${this._moreDialogHour}"
+        description="${this._moreDialogBookings.length} bookings for this hour"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${() => this.handleMoreDialogClose()}>
+        <div style="display:flex;flex-direction:column;gap:0.35rem;">
+          ${this._moreDialogBookings.map(booking => html`
+            <booking-card
+              .booking=${booking}
+              @card-click=${(e) => { this.handleMoreDialogClose(); this.handleBookingSelect(e); }}>
+            </booking-card>
+          `)}
+        </div>
       </app-dialog>
     `;
   }
