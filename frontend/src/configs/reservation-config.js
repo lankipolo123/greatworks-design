@@ -15,6 +15,10 @@ export const reservationTableConfig = {
             label: 'User ID'
         },
         {
+            key: 'locationName',
+            label: 'Location'
+        },
+        {
             key: 'guests',
             label: '# of Guest'
         },

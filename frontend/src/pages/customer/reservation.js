@@ -281,9 +281,18 @@ class CustomerReservation extends LitElement {
       const response = await locations.getAll({ per_page: 100, status: 'active' });
       const data = response.data || response;
       this.locationsList = Array.isArray(data) ? data : [];
+      this._enrichWithLocationNames();
     } catch (e) {
       this.locationsList = [];
     }
+  }
+
+  _enrichWithLocationNames() {
+    if (!this.reservation?.length || !this.locationsList?.length) return;
+    this.reservation = this.reservation.map(r => ({
+      ...r,
+      locationName: this._getLocationName(r.locationId) || r.locationName || '',
+    }));
   }
 
   _getLocationName(locationId) {

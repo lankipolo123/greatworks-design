@@ -47,6 +47,8 @@ class CustomerBooking extends LitElement {
     _showMoreDialog: { type: Boolean, state: true },
     _moreDialogHour: { type: String, state: true },
     _moreDialogBookings: { type: Array, state: true },
+    _showLocationPicker: { type: Boolean, state: true },
+    _pendingLocation: { type: String, state: true },
   };
 
   static styles = css`
@@ -548,6 +550,113 @@ class CustomerBooking extends LitElement {
       to { transform: rotate(360deg); }
     }
 
+    .location-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .location-option {
+      display: block;
+      cursor: pointer;
+    }
+
+    .location-option input[type="radio"] {
+      display: none;
+    }
+
+    .location-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.2s;
+      background: #fff;
+    }
+
+    .location-option input:checked + .location-card {
+      border-color: #ffb300;
+      box-shadow: 0 0 0 3px #ffb30030;
+    }
+
+    .location-card:hover {
+      border-color: #ffb300;
+    }
+
+    .location-card-img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block;
+      background: #f5f5f5;
+    }
+
+    .location-card-placeholder {
+      width: 100%;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      color: #bbb;
+    }
+
+    .location-card-placeholder .material-symbols-outlined {
+      font-size: 2.5rem;
+    }
+
+    .location-card-body {
+      padding: 0.6rem 0.75rem;
+    }
+
+    .location-card-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .location-card-address {
+      font-size: 0.72rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .location-picker-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .fab-change-location {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.5rem 1rem;
+      background: #ffb300;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      transition: background 0.2s, box-shadow 0.2s;
+      z-index: 5;
+    }
+
+    .fab-change-location:hover {
+      background: #ffa000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+    }
+
+    .fab-change-location .material-symbols-outlined {
+      font-size: 1.1rem;
+    }
+
     @media (max-width: 1024px) {
       content-card {
         flex-direction: column;
@@ -580,6 +689,8 @@ class CustomerBooking extends LitElement {
     this.locationsList = [];
     this.selectedLocation = 'all';
     this.selectedBranch = 'all';
+    this._showLocationPicker = true;
+    this._pendingLocation = '';
 
     this.showBookDialog = false;
     this.bookLoading = false;
@@ -1463,6 +1574,54 @@ class CustomerBooking extends LitElement {
     }
   }
 
+  _confirmLocationPick() {
+    if (!this._pendingLocation) return;
+    this.selectedLocation = this._pendingLocation;
+    this._showLocationPicker = false;
+    this._loadCalendarSummary();
+    this._refreshSidebarBookings();
+  }
+
+  _openLocationPicker() {
+    this._pendingLocation = this.selectedLocation !== 'all' ? this.selectedLocation : '';
+    this._showLocationPicker = true;
+  }
+
+  get _selectedLocationName() {
+    if (!this.selectedLocation || this.selectedLocation === 'all') return '';
+    return this._getLocationName(this.selectedLocation);
+  }
+
+  _renderLocationPicker() {
+    return html`
+      <div class="location-picker-grid">
+        ${this.locationsList.map(loc => html`
+          <label class="location-option">
+            <input type="radio" name="pick-location" value="${loc.id}"
+              .checked=${this._pendingLocation === String(loc.id)}
+              @change=${() => { this._pendingLocation = String(loc.id); }} />
+            <div class="location-card">
+              ${loc.image
+                ? html`<img class="location-card-img" src="${loc.image}" alt="${loc.name}" />`
+                : html`<div class="location-card-placeholder"><span class="material-symbols-outlined">location_city</span></div>`}
+              <div class="location-card-body">
+                <div class="location-card-name">${loc.name}</div>
+                ${loc.address ? html`<div class="location-card-address">${loc.address}</div>` : ''}
+              </div>
+            </div>
+          </label>
+        `)}
+      </div>
+      <div class="location-picker-actions">
+        <app-button type="primary" size="small"
+          @click=${() => this._confirmLocationPick()}
+          ?disabled=${!this._pendingLocation}>
+          Continue
+        </app-button>
+      </div>
+    `;
+  }
+
   render() {
     if (!this._loaded) {
       return html`<div class="page-loader"><div class="spinner"></div></div>`;
@@ -1479,12 +1638,18 @@ class CustomerBooking extends LitElement {
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}
             .selectedBranch=${this.selectedBranch}
-            .locations=${this._locationDropdownOptions}
+            .locations=${[]}
             .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
-            @branch-change=${this.handleBranchChange}
-            @location-change=${this.handleLocationChange}>
+            @branch-change=${this.handleBranchChange}>
           </booking-calendar>
+
+          ${this.selectedLocation !== 'all' ? html`
+            <button class="fab-change-location" @click=${() => this._openLocationPicker()}>
+              <span class="material-symbols-outlined">location_on</span>
+              ${this._selectedLocationName || 'Change Location'}
+            </button>
+          ` : ''}
         </calendar-section>
 
         <sidebar-section class="${this.sidebarOpen ? '' : 'closed'}">
@@ -1509,6 +1674,18 @@ class CustomerBooking extends LitElement {
           </booking-sidebar>
         </sidebar-section>
       </content-card>
+
+      <!-- Location Picker Dialog -->
+      <app-dialog
+        .isOpen=${this._showLocationPicker}
+        title="Select Location"
+        description="Choose a location to view bookings"
+        size="large"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${this.selectedLocation !== 'all'}>
+        ${this._renderLocationPicker()}
+      </app-dialog>
 
       <!-- Booking Details Dialog -->
       <app-dialog
