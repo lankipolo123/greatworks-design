@@ -298,12 +298,8 @@ class AdminBooking extends LitElement {
       const data = response.data || response;
       this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
 
-      // Re-filter for selected date if any
-      if (this.selectedDate) {
-        this.selectedBookings = this.allBookings.filter(b => b.date === this.selectedDate);
-        this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
-        localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
-      }
+      // Re-filter for selected date, location, and branch
+      this._refreshSidebarBookings();
     } catch (e) {
       console.error('Failed to load bookings:', e.message || e);
       this.allBookings = [];
@@ -400,6 +396,17 @@ class AdminBooking extends LitElement {
     };
   }
 
+  _refreshSidebarBookings() {
+    if (!this.selectedDate) return;
+    this.selectedBookings = this.allBookings
+      .filter(b => b.date === this.selectedDate)
+      .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)
+      .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch);
+    this.currentPage = 1;
+    this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
+    localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
+  }
+
   get paginatedBookings() {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     return this.selectedBookings.slice(start, start + this.itemsPerPage);
@@ -420,26 +427,22 @@ class AdminBooking extends LitElement {
   handleBranchChange(e) {
     this.selectedBranch = e.detail.branch;
     this._loadCalendarSummary();
+    this._refreshSidebarBookings();
   }
 
   handleLocationChange(e) {
     if (this._isModerator) return; // locked to assigned location
     this.selectedLocation = e.detail.location;
     this._loadCalendarSummary();
+    this._refreshSidebarBookings();
   }
 
   handleDayClick(e) {
-    const { date, bookings: dayBookings } = e.detail;
+    const { date } = e.detail;
     this.selectedDate = date;
-
-    // Filter from allBookings for the selected date
-    this.selectedBookings = this.allBookings.filter(b => b.date === date);
-
-    this.currentPage = 1;
-    this.totalPages = getTotalPages(this.selectedBookings.length, this.itemsPerPage);
-
     localStorage.setItem('booking-selected-date', date);
-    localStorage.setItem('booking-selected-bookings', JSON.stringify(this.selectedBookings));
+
+    this._refreshSidebarBookings();
 
     if (!this.sidebarOpen) {
       this.sidebarOpen = true;
