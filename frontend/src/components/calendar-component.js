@@ -405,8 +405,7 @@ class BookingCalendar extends LitElement {
 
       const isToday = dateStr === todayStr;
       const isSelected = dateStr === this.selectedDate;
-      const summary = this._getDaySummary(dateStr);
-      const count = summary?.count || 0;
+      const count = booked.length;
       const occupancyClass = count === 0 ? '' : count <= 2 ? 'occupancy-low' : count <= 5 ? 'occupancy-medium' : count <= 8 ? 'occupancy-high' : 'occupancy-full';
 
       days.push(html`

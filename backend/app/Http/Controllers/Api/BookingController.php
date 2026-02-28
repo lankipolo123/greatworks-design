@@ -236,6 +236,13 @@ class BookingController extends Controller
             });
         }
 
+        // Filter by room type
+        if ($request->has('room_type') && $request->room_type !== 'all') {
+            $query->whereHas('room', function ($q) use ($request) {
+                $q->where('type', $request->room_type);
+            });
+        }
+
         $bookings = $query->get();
 
         // Build per-day summary with room type breakdown for calendar coloring

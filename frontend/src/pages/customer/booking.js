@@ -656,6 +656,9 @@ class CustomerBooking extends LitElement {
       if (this.selectedLocation && this.selectedLocation !== 'all') {
         params.location_id = this.selectedLocation;
       }
+      if (this.selectedBranch && this.selectedBranch !== 'all') {
+        params.room_type = this.selectedBranch;
+      }
       const response = await bookings.getCalendar(params);
       this._daySummary = response.day_summary || {};
     } catch (e) {
@@ -698,6 +701,7 @@ class CustomerBooking extends LitElement {
 
   handleBranchChange(e) {
     this.selectedBranch = e.detail.branch;
+    this._loadCalendarSummary();
   }
 
   _mapApiBooking(b) {
