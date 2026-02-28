@@ -683,9 +683,10 @@ class CustomerBooking extends LitElement {
     this.selectedBooking = null;
 
     this.locationsList = [];
-    this.selectedLocation = 'all';
+    const savedLocation = localStorage.getItem('customer-booking-location');
+    this.selectedLocation = savedLocation || 'all';
     this.selectedBranch = 'all';
-    this._showLocationPicker = true;
+    this._showLocationPicker = !savedLocation;
     this._pendingLocation = '';
 
     this.showBookDialog = false;
@@ -727,7 +728,11 @@ class CustomerBooking extends LitElement {
 
   async _loadBookings() {
     try {
-      const response = await bookings.getAll({ per_page: 100 });
+      const params = { per_page: 100 };
+      if (this.selectedLocation && this.selectedLocation !== 'all') {
+        params.location_id = this.selectedLocation;
+      }
+      const response = await bookings.getAll(params);
       const data = response.data || response;
       this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
 
@@ -870,6 +875,8 @@ class CustomerBooking extends LitElement {
 
   handleLocationChange(e) {
     this.selectedLocation = e.detail.location;
+    localStorage.setItem('customer-booking-location', this.selectedLocation);
+    this._loadBookings();
     this._loadCalendarSummary();
     this._refreshSidebarBookings();
   }
@@ -1574,6 +1581,8 @@ class CustomerBooking extends LitElement {
     if (!this._pendingLocation) return;
     this.selectedLocation = this._pendingLocation;
     this._showLocationPicker = false;
+    localStorage.setItem('customer-booking-location', this.selectedLocation);
+    this._loadBookings();
     this._loadCalendarSummary();
     this._refreshSidebarBookings();
   }

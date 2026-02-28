@@ -372,7 +372,8 @@ class AdminBooking extends LitElement {
     const user = getUser();
     this._isModerator = isModerator();
     this._moderatorLocationId = this._isModerator && user?.location_id ? String(user.location_id) : null;
-    this.selectedLocation = this._moderatorLocationId || 'all';
+    const savedLocation = localStorage.getItem('admin-booking-location');
+    this.selectedLocation = this._moderatorLocationId || savedLocation || 'all';
     this._showLocationPicker = !this._isModerator && this.selectedLocation === 'all';
     this._pendingLocation = '';
     this._loaded = false;
@@ -546,6 +547,7 @@ class AdminBooking extends LitElement {
   handleLocationChange(e) {
     if (this._isModerator) return; // locked to assigned location
     this.selectedLocation = e.detail.location;
+    localStorage.setItem('admin-booking-location', this.selectedLocation);
     this._loadCalendarSummary();
     this._refreshSidebarBookings();
   }
@@ -1035,6 +1037,7 @@ class AdminBooking extends LitElement {
     if (!this._pendingLocation) return;
     this.selectedLocation = this._pendingLocation;
     this._showLocationPicker = false;
+    localStorage.setItem('admin-booking-location', this.selectedLocation);
     this._loadCalendarSummary();
     this._refreshSidebarBookings();
   }

@@ -48,7 +48,15 @@ class BookingController extends Controller
                 $query->where('user_id', $request->user_id);
             }
         } else {
-            $query->where('user_id', $request->user()->id);
+            // Customers: show all bookings at a location if location_id is provided,
+            // otherwise show only their own bookings
+            if ($request->has('location_id')) {
+                $query->whereHas('room', function ($q) use ($request) {
+                    $q->where('location_id', $request->location_id);
+                });
+            } else {
+                $query->where('user_id', $request->user()->id);
+            }
         }
 
         $bookings = $query->orderBy('date', 'desc')
