@@ -627,34 +627,30 @@ class CustomerBooking extends LitElement {
       margin-top: 1rem;
     }
 
-    .fab-change-location {
-      position: absolute;
-      bottom: 1rem;
-      right: 1rem;
+    .btn-change-location {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 0.5rem 1rem;
-      background: #ffb300;
-      color: #fff;
-      border: none;
-      border-radius: 24px;
-      font-size: 0.78rem;
+      gap: 4px;
+      padding: 0.35rem 0.7rem;
+      background: #fff;
+      color: #333;
+      border: 1.5px solid #2d2b2b20;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      transition: background 0.2s, box-shadow 0.2s;
-      z-index: 5;
+      transition: all 0.15s;
     }
 
-    .fab-change-location:hover {
-      background: #ffa000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+    .btn-change-location:hover {
+      border-color: #ffb300;
+      background: #fffdf5;
     }
 
-    .fab-change-location .material-symbols-outlined {
-      font-size: 1.1rem;
+    .btn-change-location .material-symbols-outlined {
+      font-size: 0.95rem;
+      color: #ffb300;
     }
 
     @media (max-width: 1024px) {
@@ -1642,14 +1638,13 @@ class CustomerBooking extends LitElement {
             .selectedLocation=${this.selectedLocation}
             @day-click=${this.handleDayClick}
             @branch-change=${this.handleBranchChange}>
+            ${this.selectedLocation !== 'all' ? html`
+              <button slot="controls" class="btn-change-location" @click=${() => this._openLocationPicker()}>
+                <span class="material-symbols-outlined">location_on</span>
+                ${this._selectedLocationName || 'Change'}
+              </button>
+            ` : ''}
           </booking-calendar>
-
-          ${this.selectedLocation !== 'all' ? html`
-            <button class="fab-change-location" @click=${() => this._openLocationPicker()}>
-              <span class="material-symbols-outlined">location_on</span>
-              ${this._selectedLocationName || 'Change Location'}
-            </button>
-          ` : ''}
         </calendar-section>
 
         <sidebar-section class="${this.sidebarOpen ? '' : 'closed'}">
