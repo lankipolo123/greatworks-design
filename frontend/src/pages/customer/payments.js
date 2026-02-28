@@ -509,7 +509,6 @@ class CustomerPayments extends LitElement {
       ${p.status?.toLowerCase() === 'pending' ? html`
         <div class="details-actions">
           <app-button type="secondary" size="small" @click=${() => this._handleChangePaymentMethod(p)}>
-            <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">credit_card</span>
             Change Payment Method
           </app-button>
         </div>
