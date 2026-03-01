@@ -1692,7 +1692,8 @@ class CustomerBooking extends LitElement {
         size="large"
         styleMode="compact"
         .hideFooter=${true}
-        .closeOnOverlay=${this.selectedLocation !== 'all'}>
+        .closeOnOverlay=${this.selectedLocation !== 'all'}
+        @dialog-close=${() => { this._showLocationPicker = false; }}>
         ${this._renderLocationPicker()}
       </app-dialog>
 

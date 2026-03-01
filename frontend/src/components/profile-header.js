@@ -90,11 +90,13 @@ export class ProfileHeader extends LitElement {
       justify-content: center;
       cursor: pointer;
       border: 2px solid #000;
-      font-family: 'Material Symbols Outlined';
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       color: black;
-      font-size: 18px;
       transition: all 0.2s ease;
+    }
+
+    .camera-icon svg {
+      width: 14px;
+      height: 14px;
     }
 
     .camera-icon:hover {
@@ -777,7 +779,7 @@ export class ProfileHeader extends LitElement {
 
             <div class="camera-icon ${this.isUploading ? 'uploading' : ''}"
                  @click=${this.changeAvatar}>
-              add_photo_alternate
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
 

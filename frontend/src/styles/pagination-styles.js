@@ -134,9 +134,14 @@ export const PaginationDesign = css`
   }
 
   .icon {
-    font-family: 'Material Symbols Outlined';
-    font-size: 18px;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
+  }
+
+  .icon svg {
+    width: 18px;
+    height: 18px;
   }
 `;
