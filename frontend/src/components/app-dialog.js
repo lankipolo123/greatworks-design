@@ -344,7 +344,7 @@ export class AppDialog extends LitElement {
     const s = status?.toLowerCase();
     if (s === 'open') return 'info';
     if (s === 'pending') return 'pending';
-    if (s === 'in_progress') return 'ongoing';
+    if (s === 'progress') return 'ongoing';
     if (s === 'closed') return 'completed';
     return 'primary';
   }
@@ -451,7 +451,7 @@ export class AppDialog extends LitElement {
             Decline
           </button>
         </div>
-      ` : ticket.status === 'in_progress' ? html`
+      ` : ticket.status === 'progress' ? html`
         <div class="ticket-actions">
           <button
             class="ticket-action-btn close"

@@ -26,13 +26,13 @@ export const ticketsTableConfig = {
                 const status = value?.toLowerCase();
 
                 const labelMap = {
-                    in_progress: 'In Progress',
+                    progress: 'In Progress',
                     closed: 'Closed',
                 };
 
                 const variant =
                     status === 'open' ? 'primary' :
-                        status === 'in_progress' ? 'warning' :
+                        status === 'progress' ? 'warning' :
                             status === 'closed' ? 'success' :
                                 'primary';
 

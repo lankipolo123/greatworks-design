@@ -61,7 +61,7 @@ class TicketController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:open,pending,in_progress,closed',
+            'status' => 'sometimes|in:open,pending,progress,closed',
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
@@ -109,7 +109,7 @@ class TicketController extends Controller
         $validated = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:open,pending,in_progress,closed',
+            'status' => 'sometimes|in:open,pending,progress,closed',
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
@@ -120,7 +120,7 @@ class TicketController extends Controller
         $action = 'updated';
         $description = "Updated ticket #{$ticket->id}";
         if (isset($validated['status']) && $oldValues['status'] !== $validated['status']) {
-            $statusLabels = ['open' => 'Open', 'pending' => 'Pending', 'in_progress' => 'In Progress', 'closed' => 'Closed'];
+            $statusLabels = ['open' => 'Open', 'pending' => 'Pending', 'progress' => 'In Progress', 'closed' => 'Closed'];
             $from = $statusLabels[$oldValues['status']] ?? $oldValues['status'];
             $to = $statusLabels[$validated['status']] ?? $validated['status'];
             $action = 'status_changed';
