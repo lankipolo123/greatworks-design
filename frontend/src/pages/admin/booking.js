@@ -23,7 +23,7 @@ import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency, getTimeRemaining } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining, getExpiredBookings } from '/src/utility/reservation-reminder.js';
 
 class AdminBooking extends LitElement {
   static properties = {
@@ -410,6 +410,9 @@ class AdminBooking extends LitElement {
       const data = response.data || response;
       this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
 
+      // Auto-complete expired confirmed bookings
+      this._autoCompleteExpired();
+
       // Re-filter for selected date, location, and branch
       this._refreshSidebarBookings();
     } catch (e) {
@@ -417,6 +420,28 @@ class AdminBooking extends LitElement {
       this.allBookings = [];
     } finally {
       this._loaded = true;
+    }
+  }
+
+  async _autoCompleteExpired() {
+    const expired = getExpiredBookings(this.allBookings);
+    if (!expired.length) return;
+
+    for (const b of expired) {
+      try {
+        await bookings.update(b.id, { status: 'completed' });
+      } catch (e) {
+        console.warn(`Auto-complete failed for booking ${b.id}:`, e.message || e);
+      }
+    }
+
+    if (expired.length) {
+      // Reload to reflect changes
+      const response = await bookings.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.allBookings = (Array.isArray(data) ? data : []).map(b => this._mapApiBooking(b));
+      this._refreshSidebarBookings();
+      this._loadCalendarSummary();
     }
   }
 

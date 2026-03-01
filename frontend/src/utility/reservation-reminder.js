@@ -70,6 +70,50 @@ export function getTimeRemaining(booking) {
 }
 
 /**
+ * Check if a confirmed booking's time is over (start + duration has passed).
+ * @param {Object} booking - { date, time/startTime, status, durationHours }
+ * @param {number} defaultDurationHours - fallback if no durationHours (1h for reservations)
+ * @returns {boolean}
+ */
+export function isBookingExpired(booking, defaultDurationHours = 1) {
+  if (!booking) return false;
+
+  const status = booking.status?.toLowerCase();
+  if (status !== 'confirmed') return false;
+
+  const bookingDate = booking.date;
+  if (!bookingDate) return false;
+
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  // Past dates — expired
+  if (bookingDate < todayStr) return true;
+
+  // Future dates — not expired
+  if (bookingDate > todayStr) return false;
+
+  // Today — check if start + duration has passed
+  const time = booking.startTime || booking.time;
+  if (!time) return false;
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const duration = booking.durationHours || defaultDurationHours;
+  const endTime = new Date(now);
+  endTime.setHours(hours, minutes, 0, 0);
+  endTime.setMinutes(endTime.getMinutes() + duration * 60);
+
+  return now >= endTime;
+}
+
+/**
+ * Find all expired confirmed bookings in a list.
+ */
+export function getExpiredBookings(bookings, defaultDurationHours = 1) {
+  return bookings.filter(b => isBookingExpired(b, defaultDurationHours));
+}
+
+/**
  * Returns a count of bookings that are upcoming/now from a list.
  */
 export function countUpcomingBookings(bookings, thresholdMinutes = 30) {

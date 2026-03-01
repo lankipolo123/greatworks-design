@@ -21,7 +21,7 @@ import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
 import { reservations, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency, getTimeRemaining } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining, getExpiredBookings } from '/src/utility/reservation-reminder.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -220,12 +220,36 @@ class AdminReservation extends LitElement {
       const response = await reservations.getAll({ per_page: 100 });
       const data = response.data || response;
       this.reservation = (Array.isArray(data) ? data : []).map(r => this._mapApiReservation(r));
+
+      // Auto-complete expired confirmed reservations
+      this._autoCompleteExpired();
+
       this.updatePagination();
     } catch (e) {
       console.error('Failed to load reservations:', e.message || e);
       this.reservation = [];
     } finally {
       this._loaded = true;
+    }
+  }
+
+  async _autoCompleteExpired() {
+    const expired = getExpiredBookings(this.reservation);
+    if (!expired.length) return;
+
+    for (const r of expired) {
+      try {
+        await reservations.update(r.id, { status: 'completed' });
+      } catch (e) {
+        console.warn(`Auto-complete failed for reservation ${r.id}:`, e.message || e);
+      }
+    }
+
+    if (expired.length) {
+      const response = await reservations.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.reservation = (Array.isArray(data) ? data : []).map(r => this._mapApiReservation(r));
+      this.updatePagination();
     }
   }
 
