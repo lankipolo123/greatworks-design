@@ -619,6 +619,14 @@ export const dialogAppearance = css`
       box-shadow: 0 3px 8px rgba(107, 114, 128, 0.25);
     }
 
+    /* Log Values Grid */
+    .log-values-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
     /* Generic Details View Mode */
     .details-grid {
       display: grid;

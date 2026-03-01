@@ -21,7 +21,8 @@ export class AppDialog extends LitElement {
     cameraActive: { type: Boolean },
     uploadMethod: { type: String },
     ticketData: { type: Object },
-    detailsData: { type: Object }
+    detailsData: { type: Object },
+    logData: { type: Object }
   };
 
   static styles = dialogAppearance;
@@ -47,6 +48,7 @@ export class AppDialog extends LitElement {
     this.videoStream = null;
     this.ticketData = null;
     this.detailsData = null;
+    this.logData = null;
   }
 
   updated(changedProperties) {
@@ -279,6 +281,123 @@ export class AppDialog extends LitElement {
       return value.toLocaleString();
     }
     return value.toString();
+  }
+
+  getActionLabel(action) {
+    const labels = {
+      created: 'Created',
+      status_changed: 'Status Changed',
+      updated: 'Updated',
+      deleted: 'Deleted',
+      role_changed: 'Role Changed',
+      logged_in: 'Logged In',
+      registered: 'Registered',
+      password_changed: 'Password Changed',
+      deactivated: 'Deactivated',
+    };
+    return labels[action] || action?.replace(/_/g, ' ') || '—';
+  }
+
+  getActionVariant(action) {
+    const variants = {
+      created: 'success',
+      status_changed: 'ongoing',
+      updated: 'info',
+      deleted: 'danger',
+      role_changed: 'warning',
+      logged_in: 'technical',
+      registered: 'success',
+      password_changed: 'pending',
+      deactivated: 'danger',
+    };
+    return variants[action] || 'primary';
+  }
+
+  renderLogView() {
+    if (!this.logData) return html`<p>No data available</p>`;
+
+    const log = this.logData;
+    const user = log.user || {};
+
+    return html`
+      <!-- User Profile Section -->
+      <div class="ticket-profile-section">
+        <div class="ticket-avatar">
+          ${user.profile_photo
+            ? html`<img src="${user.profile_photo}" alt="${user.name}" />`
+            : this.getInitials(user.name)
+          }
+        </div>
+        <div class="ticket-user-info">
+          <div class="ticket-user-name">${user.name || 'Unknown User'}</div>
+          <div class="ticket-user-email">${user.email || ''}</div>
+          <div class="ticket-user-badges">
+            ${user.role ? html`<badge-component variant="${this.getRoleVariant(user.role)}" size="small">${user.role}</badge-component>` : ''}
+            ${user.status ? html`<badge-component variant="${this.getUserStatusVariant(user.status)}" size="small">${user.status}</badge-component>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Details Grid -->
+      <div class="ticket-details-grid">
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Log ID</span>
+          <span class="ticket-detail-value">#${log.id}</span>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Action</span>
+          <badge-component variant="${this.getActionVariant(log.action)}" size="small">${this.getActionLabel(log.action)}</badge-component>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Module</span>
+          <badge-component variant="primary" size="small">${log.module || '—'}</badge-component>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">IP Address</span>
+          <span class="ticket-detail-value">${log.ip_address || '—'}</span>
+        </div>
+        <div class="ticket-detail-item">
+          <span class="ticket-detail-label">Date</span>
+          <span class="ticket-detail-value">${log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</span>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      ${log.description ? html`
+        <div class="ticket-request-section">
+          <div class="ticket-request-label">Description</div>
+          <div class="ticket-request-description">${log.description}</div>
+        </div>
+      ` : ''}
+
+      <!-- Old/New Values Section -->
+      ${log.old_values || log.new_values ? html`
+        <div class="ticket-request-section">
+          ${log.old_values ? html`
+            <div class="ticket-request-label">Previous Values</div>
+            <div class="log-values-grid">
+              ${Object.entries(log.old_values).map(([key, value]) => html`
+                <div class="ticket-detail-item">
+                  <span class="ticket-detail-label">${this.formatLabel(key)}</span>
+                  <span class="ticket-detail-value">${this.formatValue(value)}</span>
+                </div>
+              `)}
+            </div>
+          ` : ''}
+          ${log.new_values ? html`
+            <div class="ticket-request-label" style="margin-top: 12px;">New Values</div>
+            <div class="log-values-grid">
+              ${Object.entries(log.new_values).map(([key, value]) => html`
+                <div class="ticket-detail-item">
+                  <span class="ticket-detail-label">${this.formatLabel(key)}</span>
+                  <span class="ticket-detail-value">${this.formatValue(value)}</span>
+                </div>
+              `)}
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+    `;
   }
 
   renderDetailsView() {
@@ -610,7 +729,7 @@ export class AppDialog extends LitElement {
                 <p class="dialog-description">${this.description}</p>
               ` : ''}
             </div>
-            ${this.styleMode === 'compact' || this.mode === 'upload' || this.mode === 'ticket' || this.mode === 'details' ? html`
+            ${this.styleMode === 'compact' || this.mode === 'upload' || this.mode === 'ticket' || this.mode === 'log' || this.mode === 'details' ? html`
               <button class="close-btn" @click=${this.close}>×</button>
             ` : ''}
           </div>
@@ -619,11 +738,12 @@ export class AppDialog extends LitElement {
             ${this.mode === 'export' ? this.renderExportMode() :
         this.mode === 'upload' ? this.renderUploadMode() :
           this.mode === 'ticket' ? this.renderTicketView() :
-            this.mode === 'details' ? this.renderDetailsView() :
-              html`<slot></slot>`}
+            this.mode === 'log' ? this.renderLogView() :
+              this.mode === 'details' ? this.renderDetailsView() :
+                html`<slot></slot>`}
           </div>
 
-          ${!this.hideFooter && this.mode !== 'ticket' && this.mode !== 'details' ? html`
+          ${!this.hideFooter && this.mode !== 'ticket' && this.mode !== 'log' && this.mode !== 'details' ? html`
             <div class="dialog-footer">
               <button class="dialog-button cancel-button" @click="${this.handleCancel}">
                 ${this.cancelText}

@@ -220,12 +220,12 @@ class AdminLogs extends LitElement {
       <app-dialog
         .isOpen=${this.showDetailsDialog}
         title="Log Details"
-        mode="details"
+        mode="log"
         size="medium"
         styleMode="compact"
         .hideFooter=${true}
         .closeOnOverlay=${true}
-        .detailsData=${this.selectedLog}
+        .logData=${this.selectedLog}
         @dialog-close=${this.handleDialogClose}>
       </app-dialog>
     `;
