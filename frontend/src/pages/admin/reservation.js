@@ -19,7 +19,7 @@ import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
-import { reservations, locations } from '/src/service/api.js';
+import { reservations, locations, rooms } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { getBookingUrgency, getTimeRemaining, getExpiredBookings } from '/src/utility/reservation-reminder.js';
 
@@ -42,6 +42,7 @@ class AdminReservation extends LitElement {
     deleteLoading: { type: Boolean },
     _loaded: { type: Boolean, state: true },
     locationsList: { type: Array },
+    roomsList: { type: Array },
   };
 
   static styles = css`
@@ -190,6 +191,7 @@ class AdminReservation extends LitElement {
     this.deleteLoading = false;
     this._loaded = false;
     this.locationsList = [];
+    this.roomsList = [];
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Pending' },
@@ -203,6 +205,7 @@ class AdminReservation extends LitElement {
 
     this._loadReservations();
     this._loadLocations();
+    this._loadRooms();
   }
 
   connectedCallback() {
@@ -282,6 +285,16 @@ class AdminReservation extends LitElement {
       this._enrichWithLocationNames();
     } catch (e) {
       this.locationsList = [];
+    }
+  }
+
+  async _loadRooms() {
+    try {
+      const response = await rooms.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.roomsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.roomsList = [];
     }
   }
 
@@ -410,11 +423,19 @@ class AdminReservation extends LitElement {
       || e.target;
 
     const formData = new FormData(form);
+    const startHour = formData.get('start_hour') || formData.get('time') || '';
+    const endHour = formData.get('end_hour') || '';
+    const duration = (startHour && endHour)
+      ? parseInt(endHour.split(':')[0]) - parseInt(startHour.split(':')[0])
+      : parseInt(formData.get('duration') || '1');
+
     const data = {
       user_id: formData.get('userId') || formData.get('user_id'),
-      room_id: formData.get('roomId') || formData.get('room_id') || null,
+      room_id: formData.get('roomId') || formData.get('room_id') || formData.get('room_id') || null,
       date: formData.get('date'),
-      time: formData.get('time'),
+      time: startHour,
+      start_time: startHour,
+      duration_hours: duration || 1,
       guests: parseInt(formData.get('guests') || '1'),
       notes: formData.get('notes') || ''
     };
@@ -454,8 +475,16 @@ class AdminReservation extends LitElement {
     const date = formData.get('date');
     if (date) data.date = date;
 
-    const time = formData.get('time');
-    if (time) data.time = time;
+    const startHour = formData.get('start_hour') || formData.get('time');
+    if (startHour) {
+      data.time = startHour;
+      data.start_time = startHour;
+    }
+
+    const endHour = formData.get('end_hour') || '';
+    if (startHour && endHour) {
+      data.duration_hours = parseInt(endHour.split(':')[0]) - parseInt(startHour.split(':')[0]);
+    }
 
     const guests = formData.get('guests');
     if (guests) data.guests = parseInt(guests);
@@ -721,7 +750,7 @@ class AdminReservation extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form>
+        <book-someone-form .roomsList=${this.roomsList} .locationsList=${this.locationsList}>
           <app-button
             slot="actions"
             type="warning"
@@ -785,7 +814,7 @@ class AdminReservation extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .booking=${this.selectedReservation}>
+        <book-someone-form .roomsList=${this.roomsList} .locationsList=${this.locationsList} .booking=${this.selectedReservation}>
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel
           </app-button>

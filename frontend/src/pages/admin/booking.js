@@ -689,12 +689,18 @@ class AdminBooking extends LitElement {
       || e.target;
 
     const formData = new FormData(form);
+    const startHour = formData.get('start_hour') || formData.get('time') || '';
+    const endHour = formData.get('end_hour') || '';
+    const duration = (startHour && endHour)
+      ? parseInt(endHour.split(':')[0]) - parseInt(startHour.split(':')[0])
+      : parseInt(formData.get('duration') || '1');
+
     const data = {
       user_id: formData.get('userId') || formData.get('user_id'),
-      room_id: formData.get('roomId') || formData.get('room_id'),
+      room_id: formData.get('roomId') || formData.get('room_id') || formData.get('room_id'),
       date: formData.get('date'),
-      start_time: formData.get('time'),
-      duration_hours: parseInt(formData.get('duration') || '1'),
+      start_time: startHour,
+      duration_hours: duration || 1,
       guests: parseInt(formData.get('guests') || '1'),
       notes: formData.get('notes') || ''
     };
@@ -837,11 +843,16 @@ class AdminBooking extends LitElement {
     const date = formData.get('date');
     if (date) data.date = date;
 
-    const time = formData.get('time');
-    if (time) data.start_time = time;
+    const startHour = formData.get('start_hour') || formData.get('time');
+    if (startHour) data.start_time = startHour;
 
-    const duration = formData.get('duration');
-    if (duration) data.duration_hours = parseInt(duration);
+    const endHour = formData.get('end_hour') || '';
+    if (startHour && endHour) {
+      data.duration_hours = parseInt(endHour.split(':')[0]) - parseInt(startHour.split(':')[0]);
+    } else {
+      const duration = formData.get('duration');
+      if (duration) data.duration_hours = parseInt(duration);
+    }
 
     const guests = formData.get('guests');
     if (guests) data.guests = parseInt(guests);
@@ -1247,7 +1258,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .roomTypes=${this._roomTypeOptions}>
+        <book-someone-form .roomTypes=${this._roomTypeOptions} .roomsList=${this.roomsList} .locationsList=${this.locationsList}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
             Cancel
@@ -1366,7 +1377,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .roomTypes=${this._roomTypeOptions} .booking=${this.selectedBooking}>
+        <book-someone-form .roomTypes=${this._roomTypeOptions} .roomsList=${this.roomsList} .locationsList=${this.locationsList} .booking=${this.selectedBooking}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel
