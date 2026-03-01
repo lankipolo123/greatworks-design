@@ -13,6 +13,7 @@ import '/src/components/create-location-form.js';
 import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
+import { ICONS } from '/src/components/dashboard-icons.js';
 import { bookingFabOptions } from '/src/configs/fab-options-config.js';
 import { isAdmin, isModerator, getUser } from '/src/service/api-core.js';
 import { ROOM_TYPES } from '/src/configs/room-types-config.js';
@@ -257,8 +258,9 @@ class AdminBooking extends LitElement {
       color: #bbb;
     }
 
-    .location-card-placeholder .material-symbols-outlined {
-      font-size: 2.5rem;
+    .location-card-placeholder svg {
+      width: 2.5rem;
+      height: 2.5rem;
     }
 
     .location-card-body {
@@ -305,8 +307,9 @@ class AdminBooking extends LitElement {
       background: #fffdf5;
     }
 
-    .btn-change-location .material-symbols-outlined {
-      font-size: 0.95rem;
+    .btn-change-location svg {
+      width: 0.95rem;
+      height: 0.95rem;
       color: #ffb300;
     }
 
@@ -1063,7 +1066,7 @@ class AdminBooking extends LitElement {
             <div class="location-card">
               ${loc.image
                 ? html`<img class="location-card-img" src="${loc.image}" alt="${loc.name}" />`
-                : html`<div class="location-card-placeholder"><span class="material-symbols-outlined">location_city</span></div>`}
+                : html`<div class="location-card-placeholder">${ICONS.locationCity}</div>`}
               <div class="location-card-body">
                 <div class="location-card-name">${loc.name}</div>
                 ${loc.address ? html`<div class="location-card-address">${loc.address}</div>` : ''}
@@ -1104,7 +1107,7 @@ class AdminBooking extends LitElement {
             @branch-change=${this.handleBranchChange}>
             ${!this._isModerator && this.selectedLocation !== 'all' ? html`
               <button slot="controls" class="btn-change-location" @click=${() => this._openLocationPicker()}>
-                <span class="material-symbols-outlined">location_on</span>
+                ${ICONS.locationPin}
                 ${this._selectedLocationName || 'Change'}
               </button>
             ` : ''}

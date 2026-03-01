@@ -9,6 +9,7 @@ import '/src/components/app-button.js';
 import '/src/components/badge-component.js';
 import '/src/layouts/calendar-section.js';
 import '/src/layouts/calendar-sidebar-section.js';
+import { ICONS } from '/src/components/dashboard-icons.js';
 import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
@@ -204,8 +205,9 @@ class CustomerBooking extends LitElement {
       color: #333;
     }
 
-    .occupancy-bar .material-symbols-outlined {
-      font-size: 1.1rem;
+    .occupancy-bar svg {
+      width: 1.1rem;
+      height: 1.1rem;
       color: #ffb300;
     }
 
@@ -515,8 +517,9 @@ class CustomerBooking extends LitElement {
       background: #eee;
     }
 
-    .receipt-actions button .material-symbols-outlined {
-      font-size: 1rem;
+    .receipt-actions button svg {
+      width: 1rem;
+      height: 1rem;
     }
 
     .receipt-actions button.primary-action {
@@ -600,8 +603,9 @@ class CustomerBooking extends LitElement {
       color: #bbb;
     }
 
-    .location-card-placeholder .material-symbols-outlined {
-      font-size: 2.5rem;
+    .location-card-placeholder svg {
+      width: 2.5rem;
+      height: 2.5rem;
     }
 
     .location-card-body {
@@ -648,8 +652,9 @@ class CustomerBooking extends LitElement {
       background: #fffdf5;
     }
 
-    .btn-change-location .material-symbols-outlined {
-      font-size: 0.95rem;
+    .btn-change-location svg {
+      width: 0.95rem;
+      height: 0.95rem;
       color: #ffb300;
     }
 
@@ -1222,7 +1227,7 @@ class CustomerBooking extends LitElement {
 
         ${duration > 0 ? html`
           <div class="occupancy-bar">
-            <span class="material-symbols-outlined">schedule</span>
+            ${ICONS.schedule}
             <span>Occupancy: <span class="occ-times">${startHour} — ${endHour}</span></span>
             <span class="occ-duration">${duration} hour${duration > 1 ? 's' : ''}</span>
           </div>
@@ -1383,7 +1388,7 @@ class CustomerBooking extends LitElement {
     return html`
       <div class="confirmation-content">
         <div class="confirmation-icon">
-          <span class="material-symbols-outlined" style="font-size:48px;color:#4caf50;">check_circle</span>
+          <span style="color:#4caf50;display:flex;width:48px;height:48px;">${ICONS.checkCircle}</span>
         </div>
 
         <div class="receipt-header">
@@ -1455,11 +1460,11 @@ class CustomerBooking extends LitElement {
 
         <div class="receipt-actions">
           <button @click=${() => this._downloadReceipt()}>
-            <span class="material-symbols-outlined">download</span>
+            ${ICONS.download}
             Download
           </button>
           <button @click=${() => this._printReceipt()}>
-            <span class="material-symbols-outlined">print</span>
+            ${ICONS.print}
             Print
           </button>
           <button class="primary-action" @click=${() => this.handleConfirmationDone()}>
@@ -1608,7 +1613,7 @@ class CustomerBooking extends LitElement {
             <div class="location-card">
               ${loc.image
                 ? html`<img class="location-card-img" src="${loc.image}" alt="${loc.name}" />`
-                : html`<div class="location-card-placeholder"><span class="material-symbols-outlined">location_city</span></div>`}
+                : html`<div class="location-card-placeholder">${ICONS.locationCity}</div>`}
               <div class="location-card-body">
                 <div class="location-card-name">${loc.name}</div>
                 ${loc.address ? html`<div class="location-card-address">${loc.address}</div>` : ''}
@@ -1649,7 +1654,7 @@ class CustomerBooking extends LitElement {
             @branch-change=${this.handleBranchChange}>
             ${this.selectedLocation !== 'all' ? html`
               <button slot="controls" class="btn-change-location" @click=${() => this._openLocationPicker()}>
-                <span class="material-symbols-outlined">location_on</span>
+                ${ICONS.locationPin}
                 ${this._selectedLocationName || 'Change'}
               </button>
             ` : ''}

@@ -150,8 +150,9 @@ class CustomerTicket extends LitElement {
       color: #333;
     }
 
-    .occupancy-bar .material-symbols-outlined {
-      font-size: 1.1rem;
+    .occupancy-bar svg {
+      width: 1.1rem;
+      height: 1.1rem;
       color: #ffb300;
     }
 
@@ -453,8 +454,9 @@ class CustomerTicket extends LitElement {
       background: #eee;
     }
 
-    .receipt-actions button .material-symbols-outlined {
-      font-size: 1rem;
+    .receipt-actions button svg {
+      width: 1rem;
+      height: 1rem;
     }
 
     .receipt-actions button.primary-action {
@@ -989,7 +991,7 @@ class CustomerTicket extends LitElement {
     return html`
       <div class="confirmation-content">
         <div class="confirmation-icon">
-          <span class="material-symbols-outlined" style="font-size:48px;color:#4caf50;">check_circle</span>
+          <span style="color:#4caf50;display:flex;width:48px;height:48px;">${ICONS.checkCircle}</span>
         </div>
 
         <div class="receipt-header">
@@ -1061,11 +1063,11 @@ class CustomerTicket extends LitElement {
 
         <div class="receipt-actions">
           <button @click=${() => this._downloadReceipt()}>
-            <span class="material-symbols-outlined">download</span>
+            ${ICONS.download}
             Download
           </button>
           <button @click=${() => this._printReceipt()}>
-            <span class="material-symbols-outlined">print</span>
+            ${ICONS.print}
             Print
           </button>
           <button class="primary-action" @click=${() => this.handleConfirmationDone()}>
@@ -1184,7 +1186,7 @@ class CustomerTicket extends LitElement {
 
         ${duration > 0 ? html`
           <div class="occupancy-bar">
-            <span class="material-symbols-outlined">schedule</span>
+            ${ICONS.schedule}
             <span>Occupancy: <span class="occ-times">${startHour} — ${endHour}</span></span>
             <span class="occ-duration">${duration} hour${duration > 1 ? 's' : ''}</span>
           </div>
