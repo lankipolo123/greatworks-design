@@ -25,15 +25,20 @@ export const ticketsTableConfig = {
             render: (value) => {
                 const status = value?.toLowerCase();
 
+                const labelMap = {
+                    in_progress: 'In Progress',
+                    closed: 'Closed',
+                };
+
                 const variant =
                     status === 'open' ? 'primary' :
-                        status === 'progress' ? 'warning' :
-                            status === 'completed' ? 'success' :
+                        status === 'in_progress' ? 'warning' :
+                            status === 'closed' ? 'success' :
                                 'primary';
 
                 return html`
         <badge-component variant="${variant}" size="small">
-            ${value}
+            ${labelMap[status] || value}
         </badge-component>
     `;
             }

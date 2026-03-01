@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { hashId } from '@/utility/hash-id.js';
+import { getBookingUrgency } from '/src/utility/reservation-reminder.js';
 
 class BookingCard extends LitElement {
   static properties = {
@@ -166,6 +167,46 @@ class BookingCard extends LitElement {
       font-weight: 600;
       text-transform: uppercase;
     }
+
+    .card.urgency-upcoming {
+      border-left: 3px solid #f59e0b;
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    .card.urgency-now {
+      border-left: 3px solid #ef4444;
+      animation: pulse-border 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 transparent; }
+      50% { box-shadow: 0 0 6px 1px rgba(245, 158, 11, 0.25); }
+    }
+
+    .urgency-badge {
+      font-size: 0.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.1rem 0.3rem;
+      border-radius: 2px;
+      letter-spacing: 0.03em;
+      animation: fade-pulse 2s ease-in-out infinite;
+    }
+
+    .urgency-badge.upcoming {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .urgency-badge.now {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    @keyframes fade-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
   `;
 
   constructor() {
@@ -213,9 +254,10 @@ class BookingCard extends LitElement {
   render() {
     const { userId, time, guests, status, id, avatar, gender, roomType } = this.booking;
     const past = this._isPast();
+    const urgency = past ? null : getBookingUrgency(this.booking);
 
     return html`
-      <div class="card status-${status} ${past ? 'past' : ''}" @click=${this._handleClick}>
+      <div class="card status-${status} ${past ? 'past' : ''} ${urgency ? `urgency-${urgency}` : ''}" @click=${this._handleClick}>
         <div class="card-header">
           <user-avatar
             .src=${avatar || ''}
@@ -236,6 +278,8 @@ class BookingCard extends LitElement {
           <span>•</span>
           ${roomType ? html`<span class="room-type">${this._formatRoomType(roomType)}</span><span>•</span>` : ''}
           <span class="status ${status}">${status}</span>
+          ${urgency === 'upcoming' ? html`<span>•</span><span class="urgency-badge upcoming">Soon</span>` : ''}
+          ${urgency === 'now' ? html`<span>•</span><span class="urgency-badge now">Now</span>` : ''}
         </div>
       </div>
     `;

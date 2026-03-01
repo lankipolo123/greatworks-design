@@ -2,6 +2,8 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/users-avatar.js';
 import '/src/components/app-dropdown.js';
+import { notifBadgeInline } from '/src/utility/notification-badge.js';
+import { getLastSeen } from '/src/utility/notification-tracker.js';
 
 class BookingCalendar extends LitElement {
   static properties = {
@@ -408,6 +410,12 @@ class BookingCalendar extends LitElement {
       const count = booked.length;
       const occupancyClass = count === 0 ? '' : count <= 2 ? 'occupancy-low' : count <= 5 ? 'occupancy-medium' : count <= 8 ? 'occupancy-high' : 'occupancy-full';
 
+      // Count bookings created after last-seen timestamp
+      const lastSeen = getLastSeen('booking');
+      const newCount = lastSeen
+        ? booked.filter(r => r.created_at && new Date(r.created_at) > new Date(lastSeen)).length
+        : 0;
+
       days.push(html`
         <div
           class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancyClass}"
@@ -415,9 +423,10 @@ class BookingCalendar extends LitElement {
         >
           <div class="day-header">
             <div class="day-number">${d}</div>
-            ${count ? html`
-              <div class="booking-count">${count}</div>
-            ` : ''}
+            <div style="display:flex;align-items:center;gap:2px;">
+              ${newCount ? notifBadgeInline(newCount) : ''}
+              ${count ? html`<div class="booking-count">${count}</div>` : ''}
+            </div>
           </div>
           ${booked.length > 0 ? html`
             <div class="avatars-container">

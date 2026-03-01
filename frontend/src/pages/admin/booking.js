@@ -23,6 +23,7 @@ import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
+import { getBookingUrgency } from '/src/utility/reservation-reminder.js';
 
 class AdminBooking extends LitElement {
   static properties = {
@@ -885,6 +886,22 @@ class AdminBooking extends LitElement {
     }
   }
 
+  // ── Attendance check ──
+  async handleAttendance(type) {
+    if (!this.selectedBooking) return;
+    const status = type === 'showed_up' ? 'completed' : 'no_show';
+    try {
+      await bookings.update(this.selectedBooking.id, { status, attendance: type });
+      toast.success(type === 'showed_up' ? 'Marked as showed up' : 'Marked as no-show');
+      this.showDetailsDialog = false;
+      this.selectedBooking = null;
+      await this._loadBookings();
+      this._loadCalendarSummary();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update attendance');
+    }
+  }
+
   // ── Slot availability check ──
   async checkAvailability(roomId, date, startTime, durationHours) {
     if (!roomId || !date || !startTime || !durationHours) {
@@ -1009,6 +1026,22 @@ class AdminBooking extends LitElement {
           </div>
         ` : ''}
       </div>
+      ${getBookingUrgency(b) ? html`
+        <div style="margin-top:12px;padding:10px;border-radius:6px;background:${getBookingUrgency(b) === 'now' ? '#fef2f2' : '#fffbeb'};border:1px solid ${getBookingUrgency(b) === 'now' ? '#fecaca' : '#fde68a'};">
+          <div style="font-size:0.75rem;font-weight:700;color:${getBookingUrgency(b) === 'now' ? '#991b1b' : '#92400e'};margin-bottom:6px;">
+            ${getBookingUrgency(b) === 'now' ? 'Reservation is happening now' : 'Reservation starting soon'}
+          </div>
+          <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">Is the person who booked at the location?</div>
+          <div style="display:flex;gap:6px;">
+            <app-button type="success" size="small" @click=${() => this.handleAttendance('showed_up')}>
+              Showed Up
+            </app-button>
+            <app-button type="danger" size="small" @click=${() => this.handleAttendance('no_show')}>
+              Didn't Show
+            </app-button>
+          </div>
+        </div>
+      ` : ''}
       <div class="details-actions">
         ${b.status === 'pending' ? html`
           <app-button type="success" size="small" @click=${() => this.handleStatusChange('confirmed')}>

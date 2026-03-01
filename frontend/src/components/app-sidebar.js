@@ -3,13 +3,17 @@ import { LitElement, html, css } from 'lit';
 import { TooltipManager } from '/src/components/tool-tips.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import '/src/components/app-dialog.js';
+import { notifBadge } from '/src/utility/notification-badge.js';
+import { fetchNotificationCounts, getNotificationCounts, markSeen, invalidateNotificationCache } from '/src/utility/notification-tracker.js';
+import { appState } from '/src/utility/app-state.js';
 
 class AppSidebar extends LitElement {
   static properties = {
     activePage: { type: String },
     collapsed: { type: Boolean },
     showLogoutDialog: { type: Boolean },
-    userRole: { type: String }
+    userRole: { type: String },
+    _badgeCounts: { type: Object, state: true }
   };
 
   static styles = css`
@@ -123,6 +127,7 @@ class AppSidebar extends LitElement {
     this.collapsed = false;
     this.showLogoutDialog = false;
     this.userRole = 'customer';
+    this._badgeCounts = { booking: 0, reservation: 0, ticket: 0 };
   }
 
   connectedCallback() {
@@ -133,6 +138,33 @@ class AppSidebar extends LitElement {
         ? this.setAttribute('collapsed', '')
         : this.removeAttribute('collapsed');
     });
+
+    // Fetch badge counts on load and listen for changes
+    this._refreshBadges();
+    this._unsubData = appState.on('data-changed', () => {
+      invalidateNotificationCache();
+      this._refreshBadges();
+    });
+    this._unsubNotif = appState.on('notifications-changed', () => {
+      this._refreshBadges();
+    });
+    // Poll every 30s for new activity
+    this._pollInterval = setInterval(() => {
+      invalidateNotificationCache();
+      this._refreshBadges();
+    }, 30_000);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._unsubData) this._unsubData();
+    if (this._unsubNotif) this._unsubNotif();
+    if (this._pollInterval) clearInterval(this._pollInterval);
+  }
+
+  async _refreshBadges() {
+    await fetchNotificationCounts();
+    this._badgeCounts = getNotificationCounts();
   }
 
   get menuItems() {
@@ -157,6 +189,12 @@ class AppSidebar extends LitElement {
 
   handleNavClick(pageId) {
     this.activePage = pageId;
+    // Mark module as seen to clear its badge
+    if (['booking', 'reservation', 'ticket'].includes(pageId)) {
+      markSeen(pageId);
+      invalidateNotificationCache();
+      this._refreshBadges();
+    }
     this.dispatchEvent(new CustomEvent('page-change', {
       detail: { page: pageId },
       bubbles: true,
@@ -212,6 +250,7 @@ class AppSidebar extends LitElement {
           >
             <span class="nav-icon">${item.icon}</span>
             <span class="nav-item-text">${item.label}</span>
+            ${notifBadge(this._badgeCounts[item.id] || 0)}
           </div>
         `)}
       </nav>
