@@ -4,6 +4,7 @@ import '/src/components/users-avatar.js';
 import '/src/components/app-dropdown.js';
 import { notifBadgeInline } from '/src/utility/notification-badge.js';
 import { getLastSeen } from '/src/utility/notification-tracker.js';
+import { getBookingUrgency } from '/src/utility/reservation-reminder.js';
 
 class BookingCalendar extends LitElement {
   static properties = {
@@ -267,6 +268,36 @@ class BookingCalendar extends LitElement {
       opacity: 0.4;
     }
 
+    .day.has-urgency-now {
+      box-shadow: inset 0 -3px 0 0 #ef4444;
+    }
+
+    .day.has-urgency-upcoming {
+      box-shadow: inset 0 -3px 0 0 #f59e0b;
+    }
+
+    .urgency-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .urgency-dot.now {
+      background: #ef4444;
+      animation: urgency-pulse 1.5s ease-in-out infinite;
+    }
+
+    .urgency-dot.upcoming {
+      background: #f59e0b;
+      animation: urgency-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes urgency-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
     .calendar-wrapper {
       position: relative;
     }
@@ -416,14 +447,20 @@ class BookingCalendar extends LitElement {
         ? booked.filter(r => r.created_at && new Date(r.created_at) > new Date(lastSeen)).length
         : 0;
 
+      // Check if any booking on this day is starting soon or happening now
+      const hasNow = booked.some(r => getBookingUrgency(r) === 'now');
+      const hasUpcoming = booked.some(r => getBookingUrgency(r) === 'upcoming');
+      const urgencyClass = hasNow ? 'has-urgency-now' : hasUpcoming ? 'has-urgency-upcoming' : '';
+
       days.push(html`
         <div
-          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancyClass}"
+          class="day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${occupancyClass} ${urgencyClass}"
           @click=${() => this.handleDayClick(dateStr, booked)}
         >
           <div class="day-header">
             <div class="day-number">${d}</div>
             <div style="display:flex;align-items:center;gap:2px;">
+              ${hasNow ? html`<span class="urgency-dot now"></span>` : hasUpcoming ? html`<span class="urgency-dot upcoming"></span>` : ''}
               ${newCount ? notifBadgeInline(newCount) : ''}
               ${count ? html`<div class="booking-count">${count}</div>` : ''}
             </div>

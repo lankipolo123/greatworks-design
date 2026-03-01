@@ -36,6 +36,8 @@ class AdminReservation extends LitElement {
     showDetailsDialog: { type: Boolean },
     showEditDialog: { type: Boolean },
     showDeleteDialog: { type: Boolean },
+    showAttendanceDialog: { type: Boolean },
+    _attendanceType: { type: String, state: true },
     selectedReservation: { type: Object },
     reservationLoading: { type: Boolean },
     editLoading: { type: Boolean },
@@ -184,6 +186,8 @@ class AdminReservation extends LitElement {
     this.showDetailsDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
+    this.showAttendanceDialog = false;
+    this._attendanceType = null;
     this.selectedReservation = null;
     this.reservationLoading = false;
     this.editLoading = false;
@@ -346,6 +350,9 @@ class AdminReservation extends LitElement {
       this.showEditDialog = true;
     } else if (action === 'delete') {
       this.showDeleteDialog = true;
+    } else if (action === 'showed_up' || action === 'no_show') {
+      this._attendanceType = action;
+      this.showAttendanceDialog = true;
     }
   }
 
@@ -368,6 +375,8 @@ class AdminReservation extends LitElement {
     this.showDetailsDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
+    this.showAttendanceDialog = false;
+    this._attendanceType = null;
     this.selectedReservation = null;
   }
 
@@ -375,6 +384,8 @@ class AdminReservation extends LitElement {
     this.showAddDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
+    this.showAttendanceDialog = false;
+    this._attendanceType = null;
   }
 
   // ── Create ──
@@ -800,6 +811,48 @@ class AdminReservation extends LitElement {
             ${this.deleteLoading ? 'Deleting...' : 'Delete'}
           </app-button>
         </div>
+      </app-dialog>
+
+      <!-- Attendance Confirmation Dialog -->
+      <app-dialog
+        .isOpen=${this.showAttendanceDialog}
+        title="${this._attendanceType === 'showed_up' ? 'Confirm Attendance' : 'Mark No-Show'}"
+        size="small"
+        styleMode="clean"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${this.handleDialogClose}>
+        ${this.selectedReservation ? html`
+          <div style="text-align:center;padding:0.5rem 0;">
+            <div style="width:56px;height:56px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+              background:${this._attendanceType === 'showed_up' ? '#d1fae5' : '#fee2e2'};
+              color:${this._attendanceType === 'showed_up' ? '#065f46' : '#991b1b'};">
+              ${this._attendanceType === 'showed_up' ? html`
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28"><polyline points="20 6 9 17 4 12"/></svg>
+              ` : html`
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              `}
+            </div>
+            <p style="font-size:0.9rem;font-weight:600;color:#1a1a1a;margin:0 0 4px;">
+              ${this._attendanceType === 'showed_up' ? 'Did this person show up?' : 'Mark as no-show?'}
+            </p>
+            <p style="font-size:0.8rem;color:#666;margin:0 0 6px;">
+              <strong>${this.selectedReservation.userName || this.selectedReservation.userId}</strong>
+            </p>
+            <p style="font-size:0.75rem;color:#888;margin:0 0 16px;">
+              ${this.selectedReservation.date ? new Date(this.selectedReservation.date).toLocaleDateString() : ''} at ${this.selectedReservation.time || ''}
+            </p>
+            <div style="display:flex;gap:8px;justify-content:center;">
+              <app-button type="secondary" size="medium" @click=${this.handleCancelDialog}>
+                Cancel
+              </app-button>
+              <app-button type="${this._attendanceType === 'showed_up' ? 'success' : 'danger'}" size="medium"
+                @click=${() => this.handleAttendance(this._attendanceType)}>
+                ${this._attendanceType === 'showed_up' ? 'Yes, Showed Up' : 'Confirm No-Show'}
+              </app-button>
+            </div>
+          </div>
+        ` : ''}
       </app-dialog>
 
     `;
