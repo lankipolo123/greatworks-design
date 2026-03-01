@@ -23,7 +23,7 @@ import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining } from '/src/utility/reservation-reminder.js';
 
 class AdminBooking extends LitElement {
   static properties = {
@@ -889,10 +889,10 @@ class AdminBooking extends LitElement {
   // ── Attendance check ──
   async handleAttendance(type) {
     if (!this.selectedBooking) return;
-    const status = type === 'showed_up' ? 'completed' : 'no_show';
+    const status = type === 'showed_up' ? 'completed' : 'cancelled';
     try {
-      await bookings.update(this.selectedBooking.id, { status, attendance: type });
-      toast.success(type === 'showed_up' ? 'Marked as showed up' : 'Marked as no-show');
+      await bookings.update(this.selectedBooking.id, { status });
+      toast.success(type === 'showed_up' ? 'Marked as showed up' : 'Marked as didn\'t show');
       this.showDetailsDialog = false;
       this.selectedBooking = null;
       await this._loadBookings();
@@ -1028,8 +1028,11 @@ class AdminBooking extends LitElement {
       </div>
       ${getBookingUrgency(b) ? html`
         <div style="margin-top:12px;padding:10px;border-radius:6px;background:${getBookingUrgency(b) === 'now' ? '#fef2f2' : '#fffbeb'};border:1px solid ${getBookingUrgency(b) === 'now' ? '#fecaca' : '#fde68a'};">
-          <div style="font-size:0.75rem;font-weight:700;color:${getBookingUrgency(b) === 'now' ? '#991b1b' : '#92400e'};margin-bottom:6px;">
-            ${getBookingUrgency(b) === 'now' ? 'Reservation is happening now' : 'Reservation starting soon'}
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${getBookingUrgency(b) === 'now' ? '#ef4444' : '#f59e0b'};animation:pulse 1.5s ease-in-out infinite;"></span>
+            <span style="font-size:0.8rem;font-weight:700;color:${getBookingUrgency(b) === 'now' ? '#991b1b' : '#92400e'};">
+              ${getTimeRemaining(b)}
+            </span>
           </div>
           <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">Is the person who booked at the location?</div>
           <div style="display:flex;gap:6px;">

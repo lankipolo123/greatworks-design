@@ -31,8 +31,7 @@ export const reservationTableConfig = {
                 const variant = value?.toLowerCase() === 'confirmed' || value?.toLowerCase() === 'ongoing' ? 'confirmed' :
                     value?.toLowerCase() === 'completed' ? 'completed' :
                         value?.toLowerCase() === 'pending' || value?.toLowerCase() === 'upcoming' ? 'pending' :
-                            value?.toLowerCase() === 'cancelled' ? 'cancelled' :
-                                value?.toLowerCase() === 'no_show' ? 'danger' : 'primary';
+                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
                 return html`
                     <span style="display:inline-flex;align-items:center;gap:4px;">
                         <badge-component variant="${variant}" size="small">
@@ -57,16 +56,19 @@ export const reservationTableConfig = {
 
     actions: [
         { key: 'view', label: 'View', icon: 'visibility' },
-        { key: 'showed_up', label: 'Showed Up', icon: 'check' },
-        { key: 'no_show', label: 'Didn\'t Show', icon: 'close', danger: true },
         { key: 'edit', label: 'Edit', icon: 'edit' },
         { key: 'delete', label: 'Delete', icon: 'delete', danger: true }
     ],
 
+    // Add a badge to the View action when booking is upcoming/now
     filterActions(actions, row) {
         const urgency = getBookingUrgency(row);
-        if (urgency) return actions;
-        // Hide attendance actions when not upcoming/now
-        return actions.filter(a => a.key !== 'showed_up' && a.key !== 'no_show');
+        if (!urgency) return actions;
+        return actions.map(a => {
+            if (a.key === 'view') {
+                return { ...a, badge: urgency === 'now' ? '!' : '•' };
+            }
+            return a;
+        });
     }
 };

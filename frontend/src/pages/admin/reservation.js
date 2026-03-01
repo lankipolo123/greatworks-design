@@ -21,7 +21,7 @@ import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
 import { reservations, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining } from '/src/utility/reservation-reminder.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -36,8 +36,6 @@ class AdminReservation extends LitElement {
     showDetailsDialog: { type: Boolean },
     showEditDialog: { type: Boolean },
     showDeleteDialog: { type: Boolean },
-    showAttendanceDialog: { type: Boolean },
-    _attendanceType: { type: String, state: true },
     selectedReservation: { type: Object },
     reservationLoading: { type: Boolean },
     editLoading: { type: Boolean },
@@ -186,8 +184,6 @@ class AdminReservation extends LitElement {
     this.showDetailsDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
-    this.showAttendanceDialog = false;
-    this._attendanceType = null;
     this.selectedReservation = null;
     this.reservationLoading = false;
     this.editLoading = false;
@@ -350,9 +346,6 @@ class AdminReservation extends LitElement {
       this.showEditDialog = true;
     } else if (action === 'delete') {
       this.showDeleteDialog = true;
-    } else if (action === 'showed_up' || action === 'no_show') {
-      this._attendanceType = action;
-      this.showAttendanceDialog = true;
     }
   }
 
@@ -375,8 +368,6 @@ class AdminReservation extends LitElement {
     this.showDetailsDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
-    this.showAttendanceDialog = false;
-    this._attendanceType = null;
     this.selectedReservation = null;
   }
 
@@ -384,8 +375,6 @@ class AdminReservation extends LitElement {
     this.showAddDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
-    this.showAttendanceDialog = false;
-    this._attendanceType = null;
   }
 
   // ── Create ──
@@ -504,10 +493,10 @@ class AdminReservation extends LitElement {
   // ── Attendance check ──
   async handleAttendance(type) {
     if (!this.selectedReservation) return;
-    const status = type === 'showed_up' ? 'completed' : 'no_show';
+    const status = type === 'showed_up' ? 'completed' : 'cancelled';
     try {
-      await reservations.update(this.selectedReservation.id, { status, attendance: type });
-      toast.success(type === 'showed_up' ? 'Marked as showed up' : 'Marked as no-show');
+      await reservations.update(this.selectedReservation.id, { status });
+      toast.success(type === 'showed_up' ? 'Marked as showed up' : 'Marked as didn\'t show');
       this.showDetailsDialog = false;
       this.selectedReservation = null;
       await this._loadReservations();
@@ -595,8 +584,11 @@ class AdminReservation extends LitElement {
       </div>
       ${getBookingUrgency(r) ? html`
         <div style="margin-top:12px;padding:10px;border-radius:6px;background:${getBookingUrgency(r) === 'now' ? '#fef2f2' : '#fffbeb'};border:1px solid ${getBookingUrgency(r) === 'now' ? '#fecaca' : '#fde68a'};">
-          <div style="font-size:0.75rem;font-weight:700;color:${getBookingUrgency(r) === 'now' ? '#991b1b' : '#92400e'};margin-bottom:6px;">
-            ${getBookingUrgency(r) === 'now' ? 'Reservation is happening now' : 'Reservation starting soon'}
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${getBookingUrgency(r) === 'now' ? '#ef4444' : '#f59e0b'};animation:pulse 1.5s ease-in-out infinite;"></span>
+            <span style="font-size:0.8rem;font-weight:700;color:${getBookingUrgency(r) === 'now' ? '#991b1b' : '#92400e'};">
+              ${getTimeRemaining(r)}
+            </span>
           </div>
           <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">Is the person who booked at the location?</div>
           <div style="display:flex;gap:6px;">
@@ -811,48 +803,6 @@ class AdminReservation extends LitElement {
             ${this.deleteLoading ? 'Deleting...' : 'Delete'}
           </app-button>
         </div>
-      </app-dialog>
-
-      <!-- Attendance Confirmation Dialog -->
-      <app-dialog
-        .isOpen=${this.showAttendanceDialog}
-        title="${this._attendanceType === 'showed_up' ? 'Confirm Attendance' : 'Mark No-Show'}"
-        size="small"
-        styleMode="clean"
-        .hideFooter=${true}
-        .closeOnOverlay=${true}
-        @dialog-close=${this.handleDialogClose}>
-        ${this.selectedReservation ? html`
-          <div style="text-align:center;padding:0.5rem 0;">
-            <div style="width:56px;height:56px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;
-              background:${this._attendanceType === 'showed_up' ? '#d1fae5' : '#fee2e2'};
-              color:${this._attendanceType === 'showed_up' ? '#065f46' : '#991b1b'};">
-              ${this._attendanceType === 'showed_up' ? html`
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28"><polyline points="20 6 9 17 4 12"/></svg>
-              ` : html`
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              `}
-            </div>
-            <p style="font-size:0.9rem;font-weight:600;color:#1a1a1a;margin:0 0 4px;">
-              ${this._attendanceType === 'showed_up' ? 'Did this person show up?' : 'Mark as no-show?'}
-            </p>
-            <p style="font-size:0.8rem;color:#666;margin:0 0 6px;">
-              <strong>${this.selectedReservation.userName || this.selectedReservation.userId}</strong>
-            </p>
-            <p style="font-size:0.75rem;color:#888;margin:0 0 16px;">
-              ${this.selectedReservation.date ? new Date(this.selectedReservation.date).toLocaleDateString() : ''} at ${this.selectedReservation.time || ''}
-            </p>
-            <div style="display:flex;gap:8px;justify-content:center;">
-              <app-button type="secondary" size="medium" @click=${this.handleCancelDialog}>
-                Cancel
-              </app-button>
-              <app-button type="${this._attendanceType === 'showed_up' ? 'success' : 'danger'}" size="medium"
-                @click=${() => this.handleAttendance(this._attendanceType)}>
-                ${this._attendanceType === 'showed_up' ? 'Yes, Showed Up' : 'Confirm No-Show'}
-              </app-button>
-            </div>
-          </div>
-        ` : ''}
       </app-dialog>
 
     `;

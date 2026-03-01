@@ -67,8 +67,8 @@ export async function fetchNotificationCounts() {
       // Skip own actions
       if (log.user_id === userId || log.user?.id === userId) continue;
 
-      // Only count create/delete/status_changed
-      if (!['created', 'deleted', 'status_changed'].includes(log.action)) continue;
+      // Only count meaningful actions — skip logins, password changes, etc.
+      if (!['created', 'deleted', 'status_changed', 'updated'].includes(log.action)) continue;
 
       const mod = (log.module || '').toLowerCase();
       let key = null;

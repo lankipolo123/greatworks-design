@@ -42,6 +42,34 @@ export function getBookingUrgency(booking, thresholdMinutes = 30) {
 }
 
 /**
+ * Returns a human-readable time remaining string for a booking.
+ * e.g. "25 min", "1 min", "Started 10 min ago"
+ * Returns null if not today or not applicable.
+ */
+export function getTimeRemaining(booking) {
+  if (!booking) return null;
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  if (booking.date !== todayStr) return null;
+
+  const time = booking.startTime || booking.time;
+  if (!time) return null;
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const bookingTime = new Date(today);
+  bookingTime.setHours(hours, minutes, 0, 0);
+
+  const diffMs = bookingTime - today;
+  const diffMin = Math.round(diffMs / 60_000);
+
+  if (diffMin > 0) return `Starts in ${diffMin} min`;
+  if (diffMin === 0) return 'Starting now';
+  if (diffMin >= -60) return `Started ${Math.abs(diffMin)} min ago`;
+  return null;
+}
+
+/**
  * Returns a count of bookings that are upcoming/now from a list.
  */
 export function countUpcomingBookings(bookings, thresholdMinutes = 30) {
