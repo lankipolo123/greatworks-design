@@ -67,14 +67,16 @@ class TicketController extends Controller
 
         $ticket = Ticket::create($validated);
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'created',
-            'module' => 'tickets',
-            'description' => "Created ticket #{$ticket->id}: {$ticket->subject}",
-            'new_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'created',
+                'module' => 'tickets',
+                'description' => "Created ticket #{$ticket->id}: {$ticket->subject}",
+                'new_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Ticket created successfully',
@@ -127,15 +129,17 @@ class TicketController extends Controller
             $description = "Changed ticket #{$ticket->id} status from {$from} to {$to}";
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => $action,
-            'module' => 'tickets',
-            'description' => $description,
-            'old_values' => $oldValues,
-            'new_values' => $validated,
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => $action,
+                'module' => 'tickets',
+                'description' => $description,
+                'old_values' => $oldValues,
+                'new_values' => $validated,
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Ticket updated successfully',
@@ -152,14 +156,16 @@ class TicketController extends Controller
             }
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'deleted',
-            'module' => 'tickets',
-            'description' => "Deleted ticket #{$ticket->id}: {$ticket->subject}",
-            'old_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'deleted',
+                'module' => 'tickets',
+                'description' => "Deleted ticket #{$ticket->id}: {$ticket->subject}",
+                'old_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         $ticket->delete();
 

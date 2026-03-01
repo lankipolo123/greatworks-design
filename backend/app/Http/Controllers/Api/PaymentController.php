@@ -96,14 +96,16 @@ class PaymentController extends Controller
 
         $payment = Payment::create($validated);
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'created',
-            'module' => 'payments',
-            'description' => "Created payment #{$payment->id} of {$payment->amount} via {$payment->method}",
-            'new_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'created',
+                'module' => 'payments',
+                'description' => "Created payment #{$payment->id} of {$payment->amount} via {$payment->method}",
+                'new_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Payment created successfully',
@@ -152,15 +154,17 @@ class PaymentController extends Controller
             $description = "Changed payment #{$payment->id} status from {$oldValues['status']} to {$validated['status']}";
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => $action,
-            'module' => 'payments',
-            'description' => $description,
-            'old_values' => $oldValues,
-            'new_values' => $validated,
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => $action,
+                'module' => 'payments',
+                'description' => $description,
+                'old_values' => $oldValues,
+                'new_values' => $validated,
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Payment updated successfully',
@@ -178,14 +182,16 @@ class PaymentController extends Controller
             }
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'deleted',
-            'module' => 'payments',
-            'description' => "Deleted payment #{$payment->id} of {$payment->amount}",
-            'old_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'deleted',
+                'module' => 'payments',
+                'description' => "Deleted payment #{$payment->id} of {$payment->amount}",
+                'old_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         $payment->delete();
 

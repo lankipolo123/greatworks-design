@@ -107,14 +107,16 @@ class BookingController extends Controller
 
         $booking = Booking::create($validated);
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'created',
-            'module' => 'bookings',
-            'description' => "Created booking #{$booking->id} for {$validated['date']} at {$validated['start_time']}",
-            'new_values' => ['date' => $validated['date'], 'start_time' => $validated['start_time'], 'guests' => $validated['guests'], 'status' => $booking->status],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'created',
+                'module' => 'bookings',
+                'description' => "Created booking #{$booking->id} for {$validated['date']} at {$validated['start_time']}",
+                'new_values' => ['date' => $validated['date'], 'start_time' => $validated['start_time'], 'guests' => $validated['guests'], 'status' => $booking->status],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Booking created successfully',
@@ -213,15 +215,17 @@ class BookingController extends Controller
             $description = "Changed booking #{$booking->id} status from {$oldValues['status']} to {$validated['status']}";
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => $action,
-            'module' => 'bookings',
-            'description' => $description,
-            'old_values' => $oldValues,
-            'new_values' => $validated,
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => $action,
+                'module' => 'bookings',
+                'description' => $description,
+                'old_values' => $oldValues,
+                'new_values' => $validated,
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Booking updated successfully',
@@ -239,14 +243,16 @@ class BookingController extends Controller
             }
         }
 
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => 'deleted',
-            'module' => 'bookings',
-            'description' => "Deleted booking #{$booking->id} on {$booking->date}",
-            'old_values' => ['date' => $booking->date, 'status' => $booking->status, 'guests' => $booking->guests],
-            'ip_address' => $request->ip(),
-        ]);
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'deleted',
+                'module' => 'bookings',
+                'description' => "Deleted booking #{$booking->id} on {$booking->date}",
+                'old_values' => ['date' => $booking->date, 'status' => $booking->status, 'guests' => $booking->guests],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         $booking->delete();
 
