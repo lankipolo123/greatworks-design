@@ -138,7 +138,7 @@ class AdminTicket extends LitElement {
     let filtered = this.tickets;
 
     if (this.activeTab !== 'all') {
-      const statusMap = { open: 'open', progress: 'in_progress', completed: 'closed' };
+      const statusMap = { open: 'open', progress: 'progress', completed: 'closed' };
       const status = statusMap[this.activeTab] || this.activeTab;
       filtered = filtered.filter(t => t.status === status);
     }
@@ -211,7 +211,7 @@ class AdminTicket extends LitElement {
     const { action, ticket } = e.detail;
     this.showTicketDialog = false;
 
-    const statusMap = { accept: 'in_progress', decline: 'closed', close: 'closed' };
+    const statusMap = { accept: 'progress', decline: 'closed', close: 'closed' };
     const newStatus = statusMap[action];
     if (!newStatus) return;
 

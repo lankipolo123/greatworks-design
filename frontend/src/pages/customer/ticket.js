@@ -499,7 +499,7 @@ class CustomerTicket extends LitElement {
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'open', label: 'Open' },
-      { id: 'in_progress', label: 'In Progress' },
+      { id: 'progress', label: 'In Progress' },
       { id: 'closed', label: 'Closed' }
     ];
 
@@ -1218,7 +1218,7 @@ class CustomerTicket extends LitElement {
 
   get _totalCount() { return this.tickets.length; }
   get _openCount() { return this.tickets.filter(t => t.status === 'open').length; }
-  get _inProgressCount() { return this.tickets.filter(t => t.status === 'in_progress').length; }
+  get _inProgressCount() { return this.tickets.filter(t => t.status === 'progress').length; }
   get _closedCount() { return this.tickets.filter(t => t.status === 'closed').length; }
 
   render() {
