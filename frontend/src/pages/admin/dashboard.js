@@ -7,9 +7,9 @@ import '/src/components/dashboard-chart.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { ticketsTableConfig } from '/src/configs/tickets-config.js';
+import { logsTableConfig } from '/src/configs/logs-config.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
-import { tickets as ticketsApi, users as usersApi, bookings as bookingsApi } from '/src/service/api.js';
+import { tickets as ticketsApi, users as usersApi, bookings as bookingsApi, activityLogs } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 class AdminDashboard extends LitElement {
@@ -17,7 +17,7 @@ class AdminDashboard extends LitElement {
     tickets: { type: Array },
     users: { type: Array },
     reservations: { type: Array },
-    recentTickets: { type: Array },
+    recentActivity: { type: Array },
     stats: { type: Object },
     _loaded: { type: Boolean, state: true }
   };
@@ -42,7 +42,7 @@ class AdminDashboard extends LitElement {
     this.tickets = [];
     this.users = [];
     this.reservations = [];
-    this.recentTickets = [];
+    this.recentActivity = [];
     this.stats = {
       monthlyUsers: 0,
       totalUsers: 0,
@@ -51,12 +51,9 @@ class AdminDashboard extends LitElement {
     };
     this._loaded = false;
 
-    // ✅ ONLY ADDITION: Override actions for dashboard table
-    this.dashboardTicketsConfig = {
-      ...ticketsTableConfig,
-      actions: [
-        { key: 'ticketView', label: 'Look at Ticket', icon: 'visibility' }
-      ]
+    this.dashboardLogsConfig = {
+      ...logsTableConfig,
+      actions: []
     };
   }
 
@@ -73,27 +70,26 @@ class AdminDashboard extends LitElement {
 
   async fetchData() {
     try {
-      const [ticketRes, userRes, bookingRes] = await Promise.all([
+      const [ticketRes, userRes, bookingRes, logsRes] = await Promise.all([
         ticketsApi.getAll({ per_page: 100 }),
         usersApi.getAll({ per_page: 100 }),
         bookingsApi.getAll({ per_page: 100 }),
+        activityLogs.getAll({ per_page: 10 }),
       ]);
 
       this.tickets = ticketRes.data || ticketRes;
       this.users = userRes.data || userRes;
       this.reservations = bookingRes.data || bookingRes;
 
-      this.updateDashboard();
+      const logs = logsRes.data || logsRes;
+      this.recentActivity = logs.slice(0, 7);
+
+      this.computeStats();
       this._loaded = true;
     } catch (e) {
       console.error('Failed to fetch dashboard data:', e);
       this._loaded = true;
     }
-  }
-
-  updateDashboard() {
-    this.computeStats();
-    this.computeRecentTickets();
   }
 
   computeStats() {
@@ -104,29 +100,9 @@ class AdminDashboard extends LitElement {
     });
   }
 
-  computeRecentTickets() {
-    this.recentTickets = [...this.tickets]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 5);
-  }
-
-  handleTableAction(e) {
-    const { action, item } = e.detail;
-
-    if (action === 'ticketView') {
-      this.dispatchEvent(new CustomEvent('page-change', {
-        detail: { page: 'ticket', ticketId: item.id },
-        bubbles: true,
-        composed: true
-      }));
-    }
-
-    console.log('Table action:', action, item);
-  }
-
-  handleViewMoreTickets() {
+  handleViewMoreLogs() {
     this.dispatchEvent(new CustomEvent('page-change', {
-      detail: { page: 'ticket' },
+      detail: { page: 'logs' },
       bubbles: true,
       composed: true
     }));
@@ -177,16 +153,16 @@ class AdminDashboard extends LitElement {
 
           <dashboard-table-wrapper
             slot="table"
-            title="Recent Tickets"
-            .icon=${ICONS.ticket}
-            viewMoreText="View more on Tickets"
-            @view-more=${this.handleViewMoreTickets}
+            title="Recent Activity"
+            .icon=${ICONS.activity}
+            viewMoreText="View all activity logs"
+            @view-more=${this.handleViewMoreLogs}
           >
             <data-table
-              .data=${this.recentTickets}
-              .conf=${this.dashboardTicketsConfig} 
+              .data=${this.recentActivity}
+              .conf=${this.dashboardLogsConfig}
+              .loading=${!this._loaded}
               mode="3"
-              @table-action=${this.handleTableAction}
             ></data-table>
           </dashboard-table-wrapper>
 

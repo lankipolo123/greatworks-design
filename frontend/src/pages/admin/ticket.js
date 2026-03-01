@@ -4,6 +4,7 @@ import { ticketsTableConfig } from '/src/configs/tickets-config';
 import { tickets as ticketsApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
+import { toast } from '/src/service/toast-widget.js';
 import '@/components/data-table.js';
 import '@/components/tabs-component.js';
 import '@/components/search-bar.js';
@@ -137,7 +138,9 @@ class AdminTicket extends LitElement {
     let filtered = this.tickets;
 
     if (this.activeTab !== 'all') {
-      filtered = filtered.filter(t => t.status === this.activeTab);
+      const statusMap = { open: 'open', progress: 'in_progress', completed: 'closed' };
+      const status = statusMap[this.activeTab] || this.activeTab;
+      filtered = filtered.filter(t => t.status === status);
     }
 
     if (this.searchValue) {
@@ -204,28 +207,22 @@ class AdminTicket extends LitElement {
     this.showExportDialog = false;
   }
 
-  handleTicketAction(e) {
+  async handleTicketAction(e) {
     const { action, ticket } = e.detail;
-    console.log(`Ticket ${action}:`, ticket);
-
-    // Update ticket status based on action
-    if (action === 'accept') {
-      // Update ticket status to in_progress
-      const index = this.tickets.findIndex(t => t.id === ticket.id);
-      if (index !== -1) {
-        this.tickets[index].status = 'in_progress';
-        this.requestUpdate();
-      }
-    } else if (action === 'close') {
-      // Update ticket status to closed
-      const index = this.tickets.findIndex(t => t.id === ticket.id);
-      if (index !== -1) {
-        this.tickets[index].status = 'closed';
-        this.requestUpdate();
-      }
-    }
-
     this.showTicketDialog = false;
+
+    const statusMap = { accept: 'in_progress', decline: 'closed', close: 'closed' };
+    const newStatus = statusMap[action];
+    if (!newStatus) return;
+
+    try {
+      await ticketsApi.update(ticket.id, { status: newStatus });
+      toast.success(`Ticket #${ticket.id} ${action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'closed'}`);
+      await this.fetchTickets();
+    } catch (err) {
+      console.error('Failed to update ticket:', err);
+      toast.error(err.message || 'Failed to update ticket');
+    }
   }
 
   handleDialogClose() {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,15 @@ class TicketController extends Controller
 
         $ticket = Ticket::create($validated);
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'created',
+            'module' => 'tickets',
+            'description' => "Created ticket #{$ticket->id}: {$ticket->subject}",
+            'new_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json([
             'message' => 'Ticket created successfully',
             'ticket' => $ticket->load('user'),
@@ -103,7 +113,29 @@ class TicketController extends Controller
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
+        $oldValues = $ticket->only(array_keys($validated));
         $ticket->update($validated);
+
+        // Determine the action description
+        $action = 'updated';
+        $description = "Updated ticket #{$ticket->id}";
+        if (isset($validated['status']) && $oldValues['status'] !== $validated['status']) {
+            $statusLabels = ['open' => 'Open', 'pending' => 'Pending', 'in_progress' => 'In Progress', 'closed' => 'Closed'];
+            $from = $statusLabels[$oldValues['status']] ?? $oldValues['status'];
+            $to = $statusLabels[$validated['status']] ?? $validated['status'];
+            $action = 'status_changed';
+            $description = "Changed ticket #{$ticket->id} status from {$from} to {$to}";
+        }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => $action,
+            'module' => 'tickets',
+            'description' => $description,
+            'old_values' => $oldValues,
+            'new_values' => $validated,
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Ticket updated successfully',
@@ -119,6 +151,15 @@ class TicketController extends Controller
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
         }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'deleted',
+            'module' => 'tickets',
+            'description' => "Deleted ticket #{$ticket->id}: {$ticket->subject}",
+            'old_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
+            'ip_address' => $request->ip(),
+        ]);
 
         $ticket->delete();
 

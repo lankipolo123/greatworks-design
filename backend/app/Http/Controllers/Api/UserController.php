@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\WelcomeMail;
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\CloudinaryService;
 use Illuminate\Http\JsonResponse;
@@ -70,6 +71,15 @@ class UserController extends Controller
 
         $user = User::create($validated);
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'created',
+            'module' => 'users',
+            'description' => "Created user {$user->name} ({$user->email}) with role {$user->role}",
+            'new_values' => ['name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'status' => $user->status],
+            'ip_address' => $request->ip(),
+        ]);
+
         $response = [
             'message' => 'User created successfully',
             'user' => $user,
@@ -110,7 +120,28 @@ class UserController extends Controller
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
+        $oldValues = $user->only(array_keys($validated));
         $user->update($validated);
+
+        $action = 'updated';
+        $description = "Updated user {$user->name}";
+        if (isset($validated['role']) && ($oldValues['role'] ?? null) !== $validated['role']) {
+            $action = 'role_changed';
+            $description = "Changed {$user->name}'s role from {$oldValues['role']} to {$validated['role']}";
+        } elseif (isset($validated['status']) && ($oldValues['status'] ?? null) !== $validated['status']) {
+            $action = 'status_changed';
+            $description = "Changed {$user->name}'s status from {$oldValues['status']} to {$validated['status']}";
+        }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => $action,
+            'module' => 'users',
+            'description' => $description,
+            'old_values' => $oldValues,
+            'new_values' => $validated,
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -135,6 +166,15 @@ class UserController extends Controller
                 'message' => 'Moderators can only remove customer and temporary accounts.',
             ], 403);
         }
+
+        ActivityLog::create([
+            'user_id' => $currentUser->id,
+            'action' => 'deleted',
+            'module' => 'users',
+            'description' => "Deleted user {$user->name} ({$user->email})",
+            'old_values' => ['name' => $user->name, 'email' => $user->email, 'role' => $user->role],
+            'ip_address' => $request->ip(),
+        ]);
 
         $user->tokens()->delete();
         $user->delete();

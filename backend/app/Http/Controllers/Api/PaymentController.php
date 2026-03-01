@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
@@ -95,6 +96,15 @@ class PaymentController extends Controller
 
         $payment = Payment::create($validated);
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'created',
+            'module' => 'payments',
+            'description' => "Created payment #{$payment->id} of {$payment->amount} via {$payment->method}",
+            'new_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json([
             'message' => 'Payment created successfully',
             'payment' => $payment->load(['user', 'booking']),
@@ -132,7 +142,25 @@ class PaymentController extends Controller
             'reference_number' => 'nullable|string|max:100',
         ]);
 
+        $oldValues = $payment->only(array_keys($validated));
         $payment->update($validated);
+
+        $action = 'updated';
+        $description = "Updated payment #{$payment->id}";
+        if (isset($validated['status']) && ($oldValues['status'] ?? null) !== $validated['status']) {
+            $action = 'status_changed';
+            $description = "Changed payment #{$payment->id} status from {$oldValues['status']} to {$validated['status']}";
+        }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => $action,
+            'module' => 'payments',
+            'description' => $description,
+            'old_values' => $oldValues,
+            'new_values' => $validated,
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Payment updated successfully',
@@ -149,6 +177,15 @@ class PaymentController extends Controller
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
         }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'deleted',
+            'module' => 'payments',
+            'description' => "Deleted payment #{$payment->id} of {$payment->amount}",
+            'old_values' => ['amount' => $payment->amount, 'method' => $payment->method, 'status' => $payment->status],
+            'ip_address' => $request->ip(),
+        ]);
 
         $payment->delete();
 

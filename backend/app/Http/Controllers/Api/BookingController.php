@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Room;
 use Illuminate\Http\JsonResponse;
@@ -106,6 +107,15 @@ class BookingController extends Controller
 
         $booking = Booking::create($validated);
 
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'created',
+            'module' => 'bookings',
+            'description' => "Created booking #{$booking->id} for {$validated['date']} at {$validated['start_time']}",
+            'new_values' => ['date' => $validated['date'], 'start_time' => $validated['start_time'], 'guests' => $validated['guests'], 'status' => $booking->status],
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json([
             'message' => 'Booking created successfully',
             'booking' => $booking->load(['user', 'room']),
@@ -193,7 +203,25 @@ class BookingController extends Controller
             }
         }
 
+        $oldValues = $booking->only(array_keys($validated));
         $booking->update($validated);
+
+        $action = 'updated';
+        $description = "Updated booking #{$booking->id}";
+        if (isset($validated['status']) && ($oldValues['status'] ?? null) !== $validated['status']) {
+            $action = 'status_changed';
+            $description = "Changed booking #{$booking->id} status from {$oldValues['status']} to {$validated['status']}";
+        }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => $action,
+            'module' => 'bookings',
+            'description' => $description,
+            'old_values' => $oldValues,
+            'new_values' => $validated,
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Booking updated successfully',
@@ -210,6 +238,15 @@ class BookingController extends Controller
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
         }
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'deleted',
+            'module' => 'bookings',
+            'description' => "Deleted booking #{$booking->id} on {$booking->date}",
+            'old_values' => ['date' => $booking->date, 'status' => $booking->status, 'guests' => $booking->guests],
+            'ip_address' => $request->ip(),
+        ]);
 
         $booking->delete();
 
