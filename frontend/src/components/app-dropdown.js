@@ -109,10 +109,6 @@ export class AppDropdown extends LitElement {
       color: #ffffff;
     }
 
-    .primary:hover:not(:disabled) {
-      background-color: #e69d0a;
-      border-color: #d08c00;
-    }
 
     .primary:focus {
       border-color: #ffae0b;

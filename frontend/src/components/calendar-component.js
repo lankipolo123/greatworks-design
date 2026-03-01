@@ -468,8 +468,8 @@ class BookingCalendar extends LitElement {
           ${booked.length > 0 ? html`
             <div class="avatars-container">
               ${visibleBookings.map(r => {
-                const isPast = r.status === 'completed' || r.status === 'cancelled' || (r.date && new Date(r.date) < new Date(todayStr));
-                return html`
+        const isPast = r.status === 'completed' || r.status === 'cancelled' || (r.date && new Date(r.date) < new Date(todayStr));
+        return html`
                 <div class="avatar-wrapper ${isPast ? 'past-booking' : ''}">
                   <user-avatar
                     .src=${r.avatar || ''}
@@ -478,7 +478,8 @@ class BookingCalendar extends LitElement {
                     size="30"
                   ></user-avatar>
                 </div>
-              `;})}
+              `;
+      })}
               ${remainingCount > 0 ? html`
                 <div class="more-count">+${remainingCount}</div>
               ` : ''}
@@ -505,16 +506,9 @@ class BookingCalendar extends LitElement {
 
           <div class="header-right">
             ${this.locations.length > 0 ? html`
-              <app-dropdown
-                variant="primary"
-                size="small"
-                .options=${this.locations}
-                .value=${this.selectedLocation}
-                @change=${this.handleLocationChange}
-              ></app-dropdown>
             ` : ''}
             <app-dropdown
-              variant="light"
+              variant="primary"
               size="small"
               placeholder="Room Type"
               .options=${this.branches}

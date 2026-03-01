@@ -13,7 +13,7 @@ export const reservationTableConfig = {
         },
         {
             key: 'userId',
-            label: 'User ID'
+            label: 'Occupant'
         },
         {
             key: 'locationName',

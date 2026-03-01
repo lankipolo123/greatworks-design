@@ -1126,8 +1126,8 @@ class AdminBooking extends LitElement {
               @change=${() => { this._pendingLocation = String(loc.id); }} />
             <div class="location-card">
               ${loc.image
-                ? html`<img class="location-card-img" src="${loc.image}" alt="${loc.name}" />`
-                : html`<div class="location-card-placeholder">${ICONS.locationCity}</div>`}
+        ? html`<img class="location-card-img" src="${loc.image}" alt="${loc.name}" />`
+        : html`<div class="location-card-placeholder">${ICONS.locationCity}</div>`}
               <div class="location-card-body">
                 <div class="location-card-name">${loc.name}</div>
                 ${loc.address ? html`<div class="location-card-address">${loc.address}</div>` : ''}
@@ -1156,8 +1156,8 @@ class AdminBooking extends LitElement {
         <calendar-section>
           <booking-calendar
             .reservations=${this.allBookings
-              .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
-              .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
+        .filter(b => this.selectedBranch === 'all' || b.roomType === this.selectedBranch)
+        .filter(b => this.selectedLocation === 'all' || b.locationId === this.selectedLocation)}
             .daySummary=${this._daySummary}
             .selectedDate=${this.selectedDate}
             .branches=${this.branches}

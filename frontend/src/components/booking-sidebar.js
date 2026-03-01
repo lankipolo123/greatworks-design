@@ -270,13 +270,6 @@ class BookingSidebar extends LitElement {
           <div class="header-top">
             <div class="title">Booking Details</div>
             <div style="display:flex;align-items:center;gap:0.5rem;">
-            <app-dropdown
-              variant="dark"
-              size="small"
-              .options=${[{ value: 'all', label: 'All Types' }, ...this.roomTypes]}
-              .value=${this.selectedRoomType}
-              @change=${this._handleRoomTypeChange}
-            ></app-dropdown>
             ${closeBtn}
             </div>
           </div>
