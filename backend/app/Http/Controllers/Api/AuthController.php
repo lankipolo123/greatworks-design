@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,14 +34,6 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
-
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'registered',
-            'module' => 'auth',
-            'description' => "New user registered: {$user->name} ({$user->email})",
-            'ip_address' => $request->ip(),
-        ]);
 
         return response()->json([
             'message' => 'Registration successful',
@@ -85,14 +76,6 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
-
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'logged_in',
-            'module' => 'auth',
-            'description' => "{$user->name} logged in",
-            'ip_address' => $request->ip(),
-        ]);
 
         return response()->json([
             'message' => 'Login successful',
@@ -153,14 +136,6 @@ class AuthController extends Controller
             'password' => $validated['password'],
         ]);
 
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'password_changed',
-            'module' => 'auth',
-            'description' => "{$user->name} changed their password",
-            'ip_address' => $request->ip(),
-        ]);
-
         return response()->json([
             'message' => 'Password changed successfully',
         ]);
@@ -202,14 +177,6 @@ class AuthController extends Controller
                 'password' => ['The password is incorrect.'],
             ]);
         }
-
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => 'deactivated',
-            'module' => 'auth',
-            'description' => "{$user->name} deactivated their account",
-            'ip_address' => $request->ip(),
-        ]);
 
         $user->update(['status' => 'inactive']);
         $user->tokens()->delete();
