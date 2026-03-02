@@ -114,6 +114,39 @@ export function getExpiredBookings(bookings, defaultDurationHours = 1) {
 }
 
 /**
+ * Check if a pending booking's date has passed (should be auto-cancelled).
+ * @param {Object} booking - { date, status }
+ * @returns {boolean}
+ */
+export function isPendingExpired(booking) {
+  if (!booking) return false;
+  const status = booking.status?.toLowerCase();
+  if (status !== 'pending') return false;
+  const bookingDate = booking.date;
+  if (!bookingDate) return false;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return bookingDate < todayStr;
+}
+
+/**
+ * Find all pending bookings whose date has passed.
+ */
+export function getExpiredPendingBookings(bookings) {
+  return bookings.filter(b => isPendingExpired(b));
+}
+
+/**
+ * Check if a booking's date is in the past (regardless of status).
+ */
+export function isBookingPastDate(booking) {
+  if (!booking) return false;
+  const bookingDate = booking.date;
+  if (!bookingDate) return false;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return bookingDate < todayStr;
+}
+
+/**
  * Returns a count of bookings that are upcoming/now from a list.
  */
 export function countUpcomingBookings(bookings, thresholdMinutes = 30) {

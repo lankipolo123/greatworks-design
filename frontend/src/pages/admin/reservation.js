@@ -21,7 +21,7 @@ import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
 import { reservations, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency, getTimeRemaining, getExpiredBookings } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining, getExpiredBookings, getExpiredPendingBookings, isBookingPastDate } from '/src/utility/reservation-reminder.js';
 
 class AdminReservation extends LitElement {
   static properties = {
@@ -235,7 +235,8 @@ class AdminReservation extends LitElement {
 
   async _autoCompleteExpired() {
     const expired = getExpiredBookings(this.reservation);
-    if (!expired.length) return;
+    const expiredPending = getExpiredPendingBookings(this.reservation);
+    if (!expired.length && !expiredPending.length) return;
 
     for (const r of expired) {
       try {
@@ -245,7 +246,15 @@ class AdminReservation extends LitElement {
       }
     }
 
-    if (expired.length) {
+    for (const r of expiredPending) {
+      try {
+        await reservations.update(r.id, { status: 'cancelled' });
+      } catch (e) {
+        console.warn(`Auto-cancel failed for pending reservation ${r.id}:`, e.message || e);
+      }
+    }
+
+    if (expired.length || expiredPending.length) {
       const response = await reservations.getAll({ per_page: 100 });
       const data = response.data || response;
       this.reservation = (Array.isArray(data) ? data : []).map(r => this._mapApiReservation(r));
@@ -819,6 +828,19 @@ class AdminReservation extends LitElement {
           ` : ''}
           <p style="font-size: 0.75rem; color: #888;">This action cannot be undone.</p>
         </div>
+        ${this.selectedReservation && isBookingPastDate(this.selectedReservation) ? html`
+          <div style="margin-top:10px;padding:10px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;">
+            <div style="font-size:0.78rem;font-weight:600;color:#991b1b;margin-bottom:8px;">This reservation's date has passed. Did the user show up?</div>
+            <div style="display:flex;gap:6px;">
+              <app-button type="success" size="small" @click=${() => { this.handleAttendance('showed_up'); this.showDeleteDialog = false; }} ?disabled=${this.deleteLoading}>
+                Showed Up
+              </app-button>
+              <app-button type="warning" size="small" @click=${() => { this.handleAttendance('no_show'); this.showDeleteDialog = false; }} ?disabled=${this.deleteLoading}>
+                Didn't Show
+              </app-button>
+            </div>
+          </div>
+        ` : ''}
         <div class="delete-actions">
           <app-button type="secondary" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.deleteLoading}>
             Cancel

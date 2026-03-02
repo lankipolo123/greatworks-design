@@ -23,7 +23,7 @@ import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { bookings, rooms, locations } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
-import { getBookingUrgency, getTimeRemaining, getExpiredBookings } from '/src/utility/reservation-reminder.js';
+import { getBookingUrgency, getTimeRemaining, getExpiredBookings, getExpiredPendingBookings, isBookingPastDate } from '/src/utility/reservation-reminder.js';
 
 class AdminBooking extends LitElement {
   static properties = {
@@ -425,7 +425,8 @@ class AdminBooking extends LitElement {
 
   async _autoCompleteExpired() {
     const expired = getExpiredBookings(this.allBookings);
-    if (!expired.length) return;
+    const expiredPending = getExpiredPendingBookings(this.allBookings);
+    if (!expired.length && !expiredPending.length) return;
 
     for (const b of expired) {
       try {
@@ -435,7 +436,15 @@ class AdminBooking extends LitElement {
       }
     }
 
-    if (expired.length) {
+    for (const b of expiredPending) {
+      try {
+        await bookings.update(b.id, { status: 'cancelled' });
+      } catch (e) {
+        console.warn(`Auto-cancel failed for pending booking ${b.id}:`, e.message || e);
+      }
+    }
+
+    if (expired.length || expiredPending.length) {
       // Reload to reflect changes
       const response = await bookings.getAll({ per_page: 100 });
       const data = response.data || response;
@@ -1401,6 +1410,19 @@ class AdminBooking extends LitElement {
           ` : ''}
           <p style="font-size: 0.75rem; color: #888;">This action cannot be undone.</p>
         </div>
+        ${this.selectedBooking && isBookingPastDate(this.selectedBooking) ? html`
+          <div style="margin-top:10px;padding:10px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;">
+            <div style="font-size:0.78rem;font-weight:600;color:#991b1b;margin-bottom:8px;">This booking's date has passed. Did the user show up?</div>
+            <div style="display:flex;gap:6px;">
+              <app-button type="success" size="small" @click=${() => { this.handleAttendance('showed_up'); this.showDeleteDialog = false; }} ?disabled=${this.deleteLoading}>
+                Showed Up
+              </app-button>
+              <app-button type="warning" size="small" @click=${() => { this.handleAttendance('no_show'); this.showDeleteDialog = false; }} ?disabled=${this.deleteLoading}>
+                Didn't Show
+              </app-button>
+            </div>
+          </div>
+        ` : ''}
         <div class="delete-actions">
           <app-button type="secondary" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.deleteLoading}>
             Cancel
