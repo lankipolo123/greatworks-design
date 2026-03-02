@@ -7,7 +7,7 @@ import '/src/components/dashboard-chart.js';
 import '/src/components/data-table.js';
 import '/src/layouts/dashboard-table-wrapper.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { ticketsTableConfig } from '/src/configs/tickets-config.js';
+import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
 import { DashboardStats } from '/src/utility/dashboard-stats.js';
 import { tickets as ticketsApi, users as usersApi, bookings as bookingsApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
@@ -51,10 +51,7 @@ class AdminDashboard extends LitElement {
     };
     this._loaded = false;
 
-    this.dashboardTicketsConfig = {
-      ...ticketsTableConfig,
-      actions: []
-    };
+    this.dashboardTicketsConfig = dasboardTicketConfig;
   }
 
   connectedCallback() {
@@ -98,6 +95,17 @@ class AdminDashboard extends LitElement {
       tickets: this.tickets,
       reservations: this.reservations
     });
+  }
+
+  handleTableAction(e) {
+    const { action, item } = e.detail;
+    if (action === 'ticketView') {
+      this.dispatchEvent(new CustomEvent('page-change', {
+        detail: { page: 'ticket', ticketId: item.id },
+        bubbles: true,
+        composed: true
+      }));
+    }
   }
 
   handleViewMoreTickets() {
@@ -163,6 +171,7 @@ class AdminDashboard extends LitElement {
               .conf=${this.dashboardTicketsConfig}
               .loading=${!this._loaded}
               mode="3"
+              @table-action=${this.handleTableAction}
             ></data-table>
           </dashboard-table-wrapper>
 

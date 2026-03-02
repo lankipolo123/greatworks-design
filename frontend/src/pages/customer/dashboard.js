@@ -7,7 +7,7 @@ import '/src/layouts/dashboard-table-wrapper.js';
 import '/src/layouts/dashboard-page-layout.js';
 import '/src/components/welcome-banner.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
-import { ticketsTableConfig } from '/src/configs/tickets-config.js';
+import { dasboardTicketConfig } from '/src/configs/dashboard-ticket-configs.js';
 import { getUser, tickets as ticketsApi, payments as paymentsApi, bookings as bookingsApi, reservations as reservationsApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
@@ -120,7 +120,7 @@ class CustomerDashboard extends LitElement {
   handleTableAction(e) {
     const { action, item } = e.detail;
 
-    if (action === 'view') {
+    if (action === 'ticketView') {
       this.dispatchEvent(new CustomEvent('page-change', {
         detail: { page: 'ticket', ticketId: item.id },
         bubbles: true,
@@ -190,7 +190,7 @@ class CustomerDashboard extends LitElement {
           >
             <data-table
               .data=${this.recentTickets}
-              .conf=${ticketsTableConfig}
+              .conf=${dasboardTicketConfig}
               mode="3"
               @table-action=${this.handleTableAction}
             ></data-table>
