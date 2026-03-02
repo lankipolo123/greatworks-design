@@ -50,6 +50,7 @@ class CustomerBooking extends LitElement {
     _moreDialogBookings: { type: Array, state: true },
     _showLocationPicker: { type: Boolean, state: true },
     _pendingLocation: { type: String, state: true },
+    _bookFormRoomType: { type: String, state: true },
   };
 
   static styles = css`
@@ -693,6 +694,7 @@ class CustomerBooking extends LitElement {
     this.selectedBranch = 'all';
     this._showLocationPicker = !savedLocation;
     this._pendingLocation = '';
+    this._bookFormRoomType = '';
 
     this.showBookDialog = false;
     this.bookLoading = false;
@@ -931,6 +933,7 @@ class CustomerBooking extends LitElement {
     this.showConfirmationDialog = false;
     this.selectedBooking = null;
     this.slotInfo = null;
+    this._bookFormRoomType = '';
   }
 
   handleRoomTypeChange(e) {
@@ -1182,16 +1185,30 @@ class CustomerBooking extends LitElement {
     const endHour = form?.querySelector('[name="end_hour"]')?.value || '';
     const duration = this._calcDuration(startHour, endHour);
 
-    const filteredRooms = this.selectedLocation && this.selectedLocation !== 'all'
+    let filteredRooms = this.selectedLocation && this.selectedLocation !== 'all'
       ? this.roomsList.filter(r => String(r.location_id) === this.selectedLocation)
       : this.roomsList;
+
+    if (this._bookFormRoomType) {
+      filteredRooms = filteredRooms.filter(r => r.type === this._bookFormRoomType);
+    }
 
     return html`
       <form id="customer-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
         <div class="form-group">
+          <label>Room Type *</label>
+          <select name="room_type" required @change=${(e) => { this._bookFormRoomType = e.target.value; this.requestUpdate(); }}>
+            <option value="">Select type</option>
+            ${this._roomTypeOptions.map(rt => html`
+              <option value="${rt.value}">${rt.label}</option>
+            `)}
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Room *</label>
-          <select name="room_id" required @change=${() => this._onBookFormChange()}>
-            <option value="">Select room</option>
+          <select name="room_id" required @change=${() => this._onBookFormChange()} ?disabled=${!this._bookFormRoomType}>
+            <option value="">${this._bookFormRoomType ? 'Select room' : 'Select room type first'}</option>
             ${filteredRooms.map(r => html`
               <option value="${r.id}">${r.name} (cap: ${r.capacity})</option>
             `)}

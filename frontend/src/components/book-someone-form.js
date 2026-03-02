@@ -8,13 +8,25 @@ class BookSomeoneForm extends LitElement {
 
   static properties = {
     booking: { type: Object },
-    roomTypes: { type: Array }
+    roomTypes: { type: Array },
+    rooms: { type: Array },
+    _selectedRoomType: { type: String, state: true },
   };
 
   constructor() {
     super();
     this.booking = null;
     this.roomTypes = null;
+    this.rooms = [];
+    this._selectedRoomType = '';
+  }
+
+  willUpdate(changed) {
+    if (changed.has('booking') && this.booking) {
+      if (this.booking.roomType && !this._selectedRoomType) {
+        this._selectedRoomType = this.booking.roomType;
+      }
+    }
   }
 
   static styles = css`
@@ -74,9 +86,23 @@ class BookSomeoneForm extends LitElement {
     }
   `;
 
+  _handleRoomTypeChange(e) {
+    this._selectedRoomType = e.target.value;
+    // Reset room selection when type changes
+    const roomSelect = this.shadowRoot?.querySelector('[name="roomId"]');
+    if (roomSelect) roomSelect.value = '';
+  }
+
+  get _filteredRooms() {
+    if (!this.rooms?.length) return [];
+    if (!this._selectedRoomType) return this.rooms;
+    return this.rooms.filter(r => r.type === this._selectedRoomType);
+  }
+
   render() {
     const b = this.booking;
     const types = this.roomTypes || ROOM_TYPES;
+    const filteredRooms = this._filteredRooms;
 
     return html`
       <form id="book-form">
@@ -140,10 +166,20 @@ class BookSomeoneForm extends LitElement {
 
           <div class="form-group">
             <label>Room Type *</label>
-            <select name="roomType" required>
+            <select name="roomType" required @change=${this._handleRoomTypeChange}>
               <option value="">Select type</option>
               ${types.map(rt => html`
-                <option value="${rt.value}" ?selected=${b?.roomType === rt.value}>${rt.label}</option>
+                <option value="${rt.value}" ?selected=${(this._selectedRoomType || b?.roomType) === rt.value}>${rt.label}</option>
+              `)}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Room *</label>
+            <select name="roomId" required ?disabled=${!this._selectedRoomType && !filteredRooms.length}>
+              <option value="">${this._selectedRoomType ? 'Select room' : 'Select room type first'}</option>
+              ${filteredRooms.map(r => html`
+                <option value="${r.id}" ?selected=${b?.roomId === r.id || b?.room_id === r.id}>${r.name} (cap: ${r.capacity})</option>
               `)}
             </select>
           </div>

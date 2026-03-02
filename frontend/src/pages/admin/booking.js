@@ -518,6 +518,14 @@ class AdminBooking extends LitElement {
     return [{ value: 'all', label: 'Select Room Type' }, ...this._roomTypeOptions];
   }
 
+  get _locationFilteredRooms() {
+    if (!this.roomsList?.length) return [];
+    if (this.selectedLocation && this.selectedLocation !== 'all') {
+      return this.roomsList.filter(r => String(r.location_id) === this.selectedLocation);
+    }
+    return this.roomsList;
+  }
+
   _mapApiBooking(b) {
     return {
       id: b.id,
@@ -1256,7 +1264,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .roomTypes=${this._roomTypeOptions}>
+        <book-someone-form .roomTypes=${this._roomTypeOptions} .rooms=${this._locationFilteredRooms}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
             Cancel
@@ -1375,7 +1383,7 @@ class AdminBooking extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .roomTypes=${this._roomTypeOptions} .booking=${this.selectedBooking}>
+        <book-someone-form .roomTypes=${this._roomTypeOptions} .rooms=${this._locationFilteredRooms} .booking=${this.selectedBooking}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel

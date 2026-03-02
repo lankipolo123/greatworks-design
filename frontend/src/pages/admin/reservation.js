@@ -19,7 +19,7 @@ import '/src/layouts/pagination-wrapper.js';
 import { getTotalPages } from '@/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
 import { toast } from '/src/service/toast-widget.js';
-import { reservations, locations } from '/src/service/api.js';
+import { reservations, locations, rooms } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { getBookingUrgency, getTimeRemaining, getExpiredBookings, getExpiredPendingBookings, isBookingPastDate } from '/src/utility/reservation-reminder.js';
 
@@ -42,6 +42,7 @@ class AdminReservation extends LitElement {
     deleteLoading: { type: Boolean },
     _loaded: { type: Boolean, state: true },
     locationsList: { type: Array },
+    roomsList: { type: Array },
   };
 
   static styles = css`
@@ -190,6 +191,7 @@ class AdminReservation extends LitElement {
     this.deleteLoading = false;
     this._loaded = false;
     this.locationsList = [];
+    this.roomsList = [];
     this.tabs = [
       { id: 'all', label: 'All' },
       { id: 'upcoming', label: 'Pending' },
@@ -203,11 +205,15 @@ class AdminReservation extends LitElement {
 
     this._loadReservations();
     this._loadLocations();
+    this._loadRooms();
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._unsub = appState.on('data-changed', () => this._loadReservations());
+    this._unsub = appState.on('data-changed', () => {
+      this._loadReservations();
+      this._loadRooms();
+    });
   }
 
   disconnectedCallback() {
@@ -291,6 +297,16 @@ class AdminReservation extends LitElement {
       this._enrichWithLocationNames();
     } catch (e) {
       this.locationsList = [];
+    }
+  }
+
+  async _loadRooms() {
+    try {
+      const response = await rooms.getAll({ per_page: 100 });
+      const data = response.data || response;
+      this.roomsList = Array.isArray(data) ? data : [];
+    } catch (e) {
+      this.roomsList = [];
     }
   }
 
@@ -730,7 +746,7 @@ class AdminReservation extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form>
+        <book-someone-form .rooms=${this.roomsList}>
           <app-button
             slot="actions"
             type="warning"
@@ -794,7 +810,7 @@ class AdminReservation extends LitElement {
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .booking=${this.selectedReservation}>
+        <book-someone-form .rooms=${this.roomsList} .booking=${this.selectedReservation}>
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.editLoading}>
             Cancel
           </app-button>
