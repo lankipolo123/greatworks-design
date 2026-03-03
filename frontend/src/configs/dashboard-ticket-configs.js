@@ -21,13 +21,19 @@ export const dasboardTicketConfig = {
             key: 'status',
             label: 'Status',
             render: (value) => {
-                const variant = value?.toLowerCase() === 'pending' ? 'pending' :
-                    value?.toLowerCase() === 'ongoing' ? 'ongoing' :
-                        value?.toLowerCase() === 'completed' || value?.toLowerCase() === 'closed' ? 'completed' :
-                            value?.toLowerCase() === 'cancelled' ? 'cancelled' : 'primary';
+                const status = value?.toLowerCase();
+                const labelMap = {
+                    progress: 'In Progress',
+                    closed: 'Closed',
+                };
+                const variant =
+                    status === 'open' ? 'primary' :
+                    status === 'progress' ? 'warning' :
+                    status === 'closed' ? 'success' :
+                    'primary';
                 return html`
                     <badge-component variant="${variant}" size="small">
-                        ${value}
+                        ${labelMap[status] || value}
                     </badge-component>
                 `;
             }
