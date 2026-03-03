@@ -5,25 +5,13 @@ import '/src/components/badge-component.js';
 const actionVariants = {
     created: 'success',
     status_changed: 'ongoing',
-    updated: 'info',
     deleted: 'danger',
-    role_changed: 'warning',
-    logged_in: 'technical',
-    registered: 'success',
-    password_changed: 'pending',
-    deactivated: 'danger',
 };
 
 const actionLabels = {
     created: 'Created',
     status_changed: 'Status Changed',
-    updated: 'Updated',
     deleted: 'Deleted',
-    role_changed: 'Role Changed',
-    logged_in: 'Logged In',
-    registered: 'Registered',
-    password_changed: 'Password Changed',
-    deactivated: 'Deactivated',
 };
 
 export const logsTableConfig = {

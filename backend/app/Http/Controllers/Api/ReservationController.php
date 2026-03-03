@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -117,7 +118,22 @@ class ReservationController extends Controller
             unset($validated['time']);
         }
 
+        $oldStatus = $reservation->status;
         $reservation->update($validated);
+
+        if (isset($validated['status']) && $oldStatus !== $validated['status']) {
+            if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'status_changed',
+                    'module' => 'bookings',
+                    'description' => "Changed reservation #{$reservation->id} status from {$oldStatus} to {$validated['status']}",
+                    'old_values' => ['status' => $oldStatus],
+                    'new_values' => ['status' => $validated['status']],
+                    'ip_address' => $request->ip(),
+                ]);
+            }
+        }
 
         return response()->json([
             'message' => 'Reservation updated successfully',
@@ -133,6 +149,17 @@ class ReservationController extends Controller
             if ($reservation->room->location_id !== $request->user()->location_id) {
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
+        }
+
+        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'deleted',
+                'module' => 'bookings',
+                'description' => "Deleted reservation #{$reservation->id} on {$reservation->date}",
+                'old_values' => ['date' => $reservation->date, 'status' => $reservation->status, 'guests' => $reservation->guests],
+                'ip_address' => $request->ip(),
+            ]);
         }
 
         $reservation->delete();

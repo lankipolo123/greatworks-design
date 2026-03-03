@@ -120,28 +120,7 @@ class UserController extends Controller
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
-        $oldValues = $user->only(array_keys($validated));
         $user->update($validated);
-
-        $action = 'updated';
-        $description = "Updated user {$user->name}";
-        if (isset($validated['role']) && ($oldValues['role'] ?? null) !== $validated['role']) {
-            $action = 'role_changed';
-            $description = "Changed {$user->name}'s role from {$oldValues['role']} to {$validated['role']}";
-        } elseif (isset($validated['status']) && ($oldValues['status'] ?? null) !== $validated['status']) {
-            $action = 'status_changed';
-            $description = "Changed {$user->name}'s status from {$oldValues['status']} to {$validated['status']}";
-        }
-
-        ActivityLog::create([
-            'user_id' => $request->user()->id,
-            'action' => $action,
-            'module' => 'users',
-            'description' => $description,
-            'old_values' => $oldValues,
-            'new_values' => $validated,
-            'ip_address' => $request->ip(),
-        ]);
 
         return response()->json([
             'message' => 'User updated successfully',

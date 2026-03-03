@@ -67,17 +67,6 @@ class TicketController extends Controller
 
         $ticket = Ticket::create($validated);
 
-        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
-            ActivityLog::create([
-                'user_id' => $request->user()->id,
-                'action' => 'created',
-                'module' => 'tickets',
-                'description' => "Created ticket #{$ticket->id}: {$ticket->subject}",
-                'new_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
-                'ip_address' => $request->ip(),
-            ]);
-        }
-
         return response()->json([
             'message' => 'Ticket created successfully',
             'ticket' => $ticket->load('user'),
@@ -115,30 +104,33 @@ class TicketController extends Controller
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
-        $oldValues = $ticket->only(array_keys($validated));
+        $oldStatus = $ticket->status;
         $ticket->update($validated);
 
-        // Determine the action description
-        $action = 'updated';
-        $description = "Updated ticket #{$ticket->id}";
-        if (isset($validated['status']) && $oldValues['status'] !== $validated['status']) {
-            $statusLabels = ['open' => 'Open', 'pending' => 'Pending', 'progress' => 'In Progress', 'closed' => 'Closed'];
-            $from = $statusLabels[$oldValues['status']] ?? $oldValues['status'];
-            $to = $statusLabels[$validated['status']] ?? $validated['status'];
-            $action = 'status_changed';
-            $description = "Changed ticket #{$ticket->id} status from {$from} to {$to}";
-        }
+        if (isset($validated['status']) && $oldStatus !== $validated['status']) {
+            $userName = $request->user()->name;
 
-        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
-            ActivityLog::create([
-                'user_id' => $request->user()->id,
-                'action' => $action,
-                'module' => 'tickets',
-                'description' => $description,
-                'old_values' => $oldValues,
-                'new_values' => $validated,
-                'ip_address' => $request->ip(),
-            ]);
+            if ($validated['status'] === 'progress') {
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'status_changed',
+                    'module' => 'tickets',
+                    'description' => "{$userName} accepted ticket #{$ticket->id}: {$ticket->subject}",
+                    'old_values' => ['status' => $oldStatus],
+                    'new_values' => ['status' => $validated['status']],
+                    'ip_address' => $request->ip(),
+                ]);
+            } elseif ($validated['status'] === 'closed') {
+                ActivityLog::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'status_changed',
+                    'module' => 'tickets',
+                    'description' => "{$userName} completed ticket #{$ticket->id}: {$ticket->subject}",
+                    'old_values' => ['status' => $oldStatus],
+                    'new_values' => ['status' => $validated['status']],
+                    'ip_address' => $request->ip(),
+                ]);
+            }
         }
 
         return response()->json([
@@ -154,17 +146,6 @@ class TicketController extends Controller
             if ($ticket->location_id !== $request->user()->location_id) {
                 return response()->json(['message' => 'Unauthorized.'], 403);
             }
-        }
-
-        if ($request->user()->isAdmin() || $request->user()->isModerator()) {
-            ActivityLog::create([
-                'user_id' => $request->user()->id,
-                'action' => 'deleted',
-                'module' => 'tickets',
-                'description' => "Deleted ticket #{$ticket->id}: {$ticket->subject}",
-                'old_values' => ['status' => $ticket->status, 'priority' => $ticket->priority, 'subject' => $ticket->subject],
-                'ip_address' => $request->ip(),
-            ]);
         }
 
         $ticket->delete();

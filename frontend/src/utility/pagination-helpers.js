@@ -30,44 +30,34 @@ export function getTotalPages(totalItems, itemsPerPage) {
 
 /**
  * Returns visible page numbers with ellipsis
- * Example: [1, '...', 4, 5, 6, '...', 20]
+ * Example: [1, 2, 3, '...', 20]
  */
 export function getVisiblePages(
   currentPage,
   totalPages,
   maxVisible = 3
 ) {
-  if (totalPages <= maxVisible + 2) {
+  if (totalPages <= 4) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   }
 
-  const pages = [];
-  const half = Math.floor(maxVisible / 2);
+  const pages = [1];
 
-  let start = Math.max(2, currentPage - half);
-  let end = Math.min(totalPages - 1, currentPage + half);
-
-  if (currentPage <= half + 1) {
-    start = 2;
-    end = maxVisible + 1;
+  // Near the start: show first few pages + ... + last
+  if (currentPage <= maxVisible) {
+    for (let i = 2; i <= maxVisible; i++) pages.push(i);
+    pages.push('...', totalPages);
+    return pages;
   }
 
-  if (currentPage >= totalPages - half) {
-    start = totalPages - maxVisible;
-    end = totalPages - 1;
+  // Near the end: show first + ... + last few pages
+  if (currentPage >= totalPages - maxVisible + 1) {
+    pages.push('...');
+    for (let i = totalPages - maxVisible + 1; i <= totalPages; i++) pages.push(i);
+    return pages;
   }
 
-  pages.push(1);
-
-  if (start > 2) pages.push('...');
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  if (end < totalPages - 1) pages.push('...');
-
-  pages.push(totalPages);
-
+  // In the middle: show first + ... + current + ... + last
+  pages.push('...', currentPage, '...', totalPages);
   return pages;
 }

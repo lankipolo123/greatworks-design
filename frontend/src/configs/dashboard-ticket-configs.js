@@ -1,12 +1,14 @@
 // src/configs/dashboard-ticket-configs.js
 import { html } from 'lit';
 import '/src/components/badge-component.js';
+import { hashId } from '@/utility/hash-id.js';
 
 export const dasboardTicketConfig = {
     columns: [
         {
             key: 'id',
-            label: 'ID'
+            label: 'Ticket ID',
+            render: (value) => hashId('TKT', value)
         },
         {
             key: 'user',
