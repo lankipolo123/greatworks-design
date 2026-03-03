@@ -5,6 +5,7 @@ import { ICONS } from '/src/components/dashboard-icons.js';
 import '/src/components/app-dialog.js';
 import { notifBadge } from '/src/utility/notification-badge.js';
 import { fetchNotificationCounts, getNotificationCounts, markSeen, invalidateNotificationCache } from '/src/utility/notification-tracker.js';
+import { fetchUrgencyCounts, getUrgencyCounts, invalidateUrgencyCache } from '/src/utility/urgency-tracker.js';
 import { appState } from '/src/utility/app-state.js';
 
 class AppSidebar extends LitElement {
@@ -143,14 +144,16 @@ class AppSidebar extends LitElement {
     this._refreshBadges();
     this._unsubData = appState.on('data-changed', () => {
       invalidateNotificationCache();
+      invalidateUrgencyCache();
       this._refreshBadges();
     });
     this._unsubNotif = appState.on('notifications-changed', () => {
       this._refreshBadges();
     });
-    // Poll every 30s for new activity
+    // Poll every 30s for new activity and urgency
     this._pollInterval = setInterval(() => {
       invalidateNotificationCache();
+      invalidateUrgencyCache();
       this._refreshBadges();
     }, 30_000);
   }
@@ -163,8 +166,19 @@ class AppSidebar extends LitElement {
   }
 
   async _refreshBadges() {
-    await fetchNotificationCounts();
-    this._badgeCounts = getNotificationCounts();
+    await Promise.all([fetchNotificationCounts(), fetchUrgencyCounts()]);
+    const notif = getNotificationCounts();
+    const urgency = getUrgencyCounts();
+
+    // Combine activity-log counts with urgency counts.
+    // Activity badges clear when admin visits the page (markSeen).
+    // Urgency badges persist until admin handles the booking/reservation
+    // (changes its status from confirmed/pending).
+    this._badgeCounts = {
+      booking: (notif.booking || 0) + (urgency.booking || 0),
+      reservation: (notif.reservation || 0) + (urgency.reservation || 0),
+      ticket: notif.ticket || 0,
+    };
   }
 
   get menuItems() {

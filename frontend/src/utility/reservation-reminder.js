@@ -156,3 +156,51 @@ export function countUpcomingBookings(bookings, thresholdMinutes = 30) {
   }
   return count;
 }
+
+/**
+ * Check if a booking/reservation needs admin attention.
+ * Returns true when:
+ *  - It's on today's date
+ *  - Status is still confirmed or pending (admin hasn't handled it yet)
+ *  - The start time is within 30 minutes from now OR has already passed
+ * Persists until admin changes the status (completes, cancels, marks attendance).
+ * @param {Object} booking - { date, time/startTime, status }
+ * @param {number} thresholdMinutes - how early to start showing (default 30)
+ * @returns {boolean}
+ */
+export function needsAttention(booking, thresholdMinutes = 30) {
+  if (!booking) return false;
+
+  const status = booking.status?.toLowerCase();
+  if (!['confirmed', 'pending'].includes(status)) return false;
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // Must be today
+  if (booking.date !== todayStr) return false;
+
+  const time = booking.startTime || booking.time;
+  if (!time) return false;
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const bookingTime = new Date(today);
+  bookingTime.setHours(hours, minutes, 0, 0);
+
+  const diffMs = bookingTime - today;
+  const diffMin = diffMs / 60_000;
+
+  // Needs attention: starting within threshold OR already started (no upper limit)
+  return diffMin <= thresholdMinutes;
+}
+
+/**
+ * Count bookings/reservations that need admin attention from a list.
+ */
+export function countNeedingAttention(bookings, thresholdMinutes = 30) {
+  let count = 0;
+  for (const b of bookings) {
+    if (needsAttention(b, thresholdMinutes)) count++;
+  }
+  return count;
+}
