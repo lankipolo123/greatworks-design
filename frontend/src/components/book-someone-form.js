@@ -10,6 +10,7 @@ class BookSomeoneForm extends LitElement {
     booking: { type: Object },
     roomTypes: { type: Array },
     rooms: { type: Array },
+    selectedUser: { type: Object },
     _selectedRoomType: { type: String, state: true },
   };
 
@@ -18,6 +19,7 @@ class BookSomeoneForm extends LitElement {
     this.booking = null;
     this.roomTypes = null;
     this.rooms = [];
+    this.selectedUser = null;
     this._selectedRoomType = '';
   }
 
@@ -84,6 +86,28 @@ class BookSomeoneForm extends LitElement {
       padding-top: 10px;
       border-top: 1px solid #e0e0e0;
     }
+
+    .user-banner {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #f0f7ff;
+      border: 1px solid #b3d4fc;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: #1a1a1a;
+    }
+
+    .user-banner .user-name {
+      font-weight: 600;
+    }
+
+    .user-banner .user-email {
+      color: #666;
+      font-size: 0.78rem;
+    }
   `;
 
   _handleRoomTypeChange(e) {
@@ -104,38 +128,50 @@ class BookSomeoneForm extends LitElement {
     const types = this.roomTypes || ROOM_TYPES;
     const filteredRooms = this._filteredRooms;
 
+    const u = this.selectedUser;
+
     return html`
       <form id="book-form">
         <div class="form-grid">
-          <input-field
-            label="Full Name"
-            type="text"
-            name="userName"
-            placeholder="Enter name"
-            variant="compact"
-            .value=${b?.userName || ''}
-            ?required=${true}>
-          </input-field>
+          ${u ? html`
+            <input type="hidden" name="user_id" value="${u.id}" />
+            <div class="user-banner">
+              <div>
+                <span class="user-name">${u.name}</span>
+                <span class="user-email">${u.email || ''}</span>
+              </div>
+            </div>
+          ` : html`
+            <input-field
+              label="Full Name"
+              type="text"
+              name="userName"
+              placeholder="Enter name"
+              variant="compact"
+              .value=${b?.userName || ''}
+              ?required=${true}>
+            </input-field>
 
-          <input-field
-            label="Email"
-            type="email"
-            name="email"
-            placeholder="Enter email"
-            variant="compact"
-            .value=${b?.userEmail || ''}
-            ?required=${true}>
-          </input-field>
+            <input-field
+              label="Email"
+              type="email"
+              name="email"
+              placeholder="Enter email"
+              variant="compact"
+              .value=${b?.userEmail || ''}
+              ?required=${true}>
+            </input-field>
 
-          <input-field
-            label="Phone"
-            type="tel"
-            name="phone"
-            placeholder="Enter phone"
-            variant="compact"
-            .value=${b?.phone || ''}
-            ?required=${true}>
-          </input-field>
+            <input-field
+              label="Phone"
+              type="tel"
+              name="phone"
+              placeholder="Enter phone"
+              variant="compact"
+              .value=${b?.phone || ''}
+              ?required=${true}>
+            </input-field>
+          `}
 
           <input-field
             label="Date"

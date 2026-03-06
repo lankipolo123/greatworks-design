@@ -21,7 +21,7 @@ import { toast } from '/src/service/toast-widget.js';
 import { toastSpamProtection } from '/src/utility/toast-anti-spam.js';
 import { getTotalPages } from '/src/utility/pagination-helpers.js';
 import { hashId } from '@/utility/hash-id.js';
-import { bookings, rooms, locations } from '/src/service/api.js';
+import { bookings, rooms, locations, users as usersApi } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 import { getBookingUrgency, getTimeRemaining, getExpiredBookings, getExpiredPendingBookings, isBookingPastDate } from '/src/utility/reservation-reminder.js';
 
@@ -64,6 +64,11 @@ class AdminBooking extends LitElement {
     _moreDialogBookings: { type: Array, state: true },
     _showLocationPicker: { type: Boolean, state: true },
     _pendingLocation: { type: String, state: true },
+    _showBookChooser: { type: Boolean, state: true },
+    _showUserPicker: { type: Boolean, state: true },
+    _bookSelectedUser: { type: Object, state: true },
+    _userPickerSearch: { type: String, state: true },
+    _userPickerList: { type: Array, state: true },
   };
 
   static styles = css`
@@ -81,6 +86,103 @@ class AdminBooking extends LitElement {
 
     floating-action-button {
       display: contents;
+    }
+
+    .chooser-options {
+      display: flex;
+      gap: 16px;
+    }
+
+    .chooser-card {
+      flex: 1;
+      padding: 24px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chooser-card:hover {
+      border-color: #8d1409;
+      background: #fff5f5;
+    }
+
+    .chooser-card .chooser-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .chooser-card .chooser-desc {
+      font-size: 0.78rem;
+      color: #888;
+    }
+
+    .user-picker-search {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    .user-picker-search:focus {
+      outline: none;
+      border-color: #8d1409;
+    }
+
+    .user-picker-list {
+      max-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .user-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-picker-item:hover {
+      background: #f5f5f5;
+    }
+
+    .user-picker-item .upi-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #1a1a1a;
+    }
+
+    .user-picker-item .upi-email {
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .user-picker-item .upi-role {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: #666;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .user-picker-empty {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 0.85rem;
     }
 
     .slot-info {
@@ -363,6 +465,11 @@ class AdminBooking extends LitElement {
     this._showMoreDialog = false;
     this._moreDialogHour = '';
     this._moreDialogBookings = [];
+    this._showBookChooser = false;
+    this._showUserPicker = false;
+    this._bookSelectedUser = null;
+    this._userPickerSearch = '';
+    this._userPickerList = [];
 
     // Slot info
     this.slotInfo = null;
@@ -653,8 +760,8 @@ class AdminBooking extends LitElement {
 
     if (action === 'book-someone') {
       this.slotInfo = null;
-      this.showBookDialog = true;
-      toast.success('Opening booking form...');
+      this._bookSelectedUser = null;
+      this._showBookChooser = true;
     } else if (action === 'create-room') {
       this.showRoomDialog = true;
       toast.success('Opening room creation form...');
@@ -687,6 +794,36 @@ class AdminBooking extends LitElement {
 
   handleLocationImageRemoved() {
     this.selectedLocationImage = null;
+  }
+
+  _handleBookNew() {
+    this._showBookChooser = false;
+    this._bookSelectedUser = null;
+    this.showBookDialog = true;
+  }
+
+  async _handleBookExisting() {
+    this._showBookChooser = false;
+    this._userPickerSearch = '';
+    try {
+      const data = await usersApi.getAll({ per_page: 100 });
+      this._userPickerList = (data.data || data).filter(u => u.status === 'active');
+    } catch { this._userPickerList = []; }
+    this._showUserPicker = true;
+  }
+
+  _handleUserPicked(user) {
+    this._showUserPicker = false;
+    this._bookSelectedUser = user;
+    this.showBookDialog = true;
+  }
+
+  get _filteredPickerUsers() {
+    if (!this._userPickerSearch) return this._userPickerList;
+    const s = this._userPickerSearch.toLowerCase();
+    return this._userPickerList.filter(u =>
+      u.name?.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s)
+    );
   }
 
   async handleBookSomeoneSubmit(e) {
@@ -973,6 +1110,9 @@ class AdminBooking extends LitElement {
     this.showLocationDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
+    this._showBookChooser = false;
+    this._showUserPicker = false;
+    this._bookSelectedUser = null;
     this.roomImagePreview = null;
     this.selectedRoomImage = null;
     this.slotInfo = null;
@@ -986,6 +1126,9 @@ class AdminBooking extends LitElement {
     this.showDetailsDialog = false;
     this.showEditDialog = false;
     this.showDeleteDialog = false;
+    this._showBookChooser = false;
+    this._showUserPicker = false;
+    this._bookSelectedUser = null;
     this.roomImagePreview = null;
     this.selectedRoomImage = null;
     this.slotInfo = null;
@@ -1253,18 +1396,70 @@ class AdminBooking extends LitElement {
         @fab-option-click=${this.handleFabAction}>
       </floating-action-button>
 
+      <!-- Book Chooser Dialog -->
+      <app-dialog
+        .isOpen=${this._showBookChooser}
+        title="Book Someone"
+        description="Choose how to create this booking"
+        size="small"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${() => { this._showBookChooser = false; }}>
+        <div class="chooser-options">
+          <div class="chooser-card" @click=${() => this._handleBookNew()}>
+            <div class="chooser-title">New Person</div>
+            <div class="chooser-desc">Enter details manually</div>
+          </div>
+          <div class="chooser-card" @click=${() => this._handleBookExisting()}>
+            <div class="chooser-title">Existing User</div>
+            <div class="chooser-desc">Pick from registered users</div>
+          </div>
+        </div>
+      </app-dialog>
+
+      <!-- User Picker Dialog -->
+      <app-dialog
+        .isOpen=${this._showUserPicker}
+        title="Select User"
+        description="Choose an existing user to book for"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${true}
+        @dialog-close=${() => { this._showUserPicker = false; }}>
+        <input
+          class="user-picker-search"
+          type="text"
+          placeholder="Search by name or email..."
+          .value=${this._userPickerSearch}
+          @input=${(e) => { this._userPickerSearch = e.target.value; }}
+        />
+        <div class="user-picker-list">
+          ${this._filteredPickerUsers.length ? this._filteredPickerUsers.map(u => html`
+            <div class="user-picker-item" @click=${() => this._handleUserPicked(u)}>
+              <div>
+                <div class="upi-name">${u.name}</div>
+                <div class="upi-email">${u.email}</div>
+              </div>
+              <span class="upi-role">${u.role}</span>
+            </div>
+          `) : html`<div class="user-picker-empty">No users found</div>`}
+        </div>
+      </app-dialog>
+
       <!-- Create Booking Dialog -->
       <app-dialog
         id="book-dialog"
         .isOpen=${this.showBookDialog}
-        title="Book Someone"
+        title="${this._bookSelectedUser ? `Book for ${this._bookSelectedUser.name}` : 'Book Someone'}"
         description="Fill in the booking details"
         size="large"
         styleMode="compact"
         .closeOnOverlay=${false}
         .hideFooter=${true}
         @dialog-close=${this.handleDialogClose}>
-        <book-someone-form .roomTypes=${this._roomTypeOptions} .rooms=${this._locationFilteredRooms}>
+        <book-someone-form .roomTypes=${this._roomTypeOptions} .rooms=${this._locationFilteredRooms} .selectedUser=${this._bookSelectedUser}>
           ${this._renderSlotInfo()}
           <app-button slot="actions" type="warning" size="medium" @click=${this.handleCancelDialog} ?disabled=${this.bookLoading}>
             Cancel
