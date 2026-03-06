@@ -41,7 +41,7 @@ export function getLastSeen(module) {
 }
 
 // --- In-memory cache for badge counts ---
-let _counts = { booking: 0, reservation: 0, ticket: 0, user: 0 };
+let _counts = { booking: 0, reservation: 0, ticket: 0, user: 0, payment: 0, logs: 0 };
 let _fetching = false;
 let _lastFetch = 0;
 const FETCH_INTERVAL = 30_000; // 30s cache
@@ -61,7 +61,7 @@ export async function fetchNotificationCounts() {
     const user = getUser();
     const userId = user?.id;
 
-    const newCounts = { booking: 0, reservation: 0, ticket: 0, user: 0 };
+    const newCounts = { booking: 0, reservation: 0, ticket: 0, user: 0, payment: 0, logs: 0 };
 
     for (const log of logs) {
       // Skip own actions
@@ -76,7 +76,15 @@ export async function fetchNotificationCounts() {
       else if (mod === 'reservation' || mod === 'reservations') key = 'reservation';
       else if (mod === 'ticket' || mod === 'tickets') key = 'ticket';
       else if (mod === 'user' || mod === 'users') key = 'user';
-      else continue;
+      else if (mod === 'payment' || mod === 'payments') key = 'payment';
+
+      // Count towards logs badge (all modules)
+      const logsLastSeen = getLastSeen('logs');
+      if (!logsLastSeen || new Date(log.created_at) > new Date(logsLastSeen)) {
+        newCounts.logs++;
+      }
+
+      if (!key) continue;
 
       const lastSeen = getLastSeen(key);
       if (!lastSeen || new Date(log.created_at) > new Date(lastSeen)) {
