@@ -128,7 +128,7 @@ class AppSidebar extends LitElement {
     this.collapsed = false;
     this.showLogoutDialog = false;
     this.userRole = 'customer';
-    this._badgeCounts = { booking: 0, reservation: 0, ticket: 0 };
+    this._badgeCounts = { booking: 0, reservation: 0, ticket: 0, user: 0 };
   }
 
   connectedCallback() {
@@ -178,6 +178,7 @@ class AppSidebar extends LitElement {
       booking: (notif.booking || 0) + (urgency.booking || 0),
       reservation: (notif.reservation || 0) + (urgency.reservation || 0),
       ticket: notif.ticket || 0,
+      user: notif.user || 0,
     };
   }
 
@@ -194,6 +195,10 @@ class AppSidebar extends LitElement {
       { id: 'settings', label: 'Settings', icon: ICONS.settings }
     ];
 
+    if (this.userRole === 'temporary') {
+      return allItems.filter(item => !adminOnly.includes(item.id) && item.id !== 'settings');
+    }
+
     if (this.userRole === 'customer') {
       return allItems.filter(item => !adminOnly.includes(item.id));
     }
@@ -204,7 +209,7 @@ class AppSidebar extends LitElement {
   handleNavClick(pageId) {
     this.activePage = pageId;
     // Mark module as seen to clear its badge
-    if (['booking', 'reservation', 'ticket'].includes(pageId)) {
+    if (['booking', 'reservation', 'ticket', 'user'].includes(pageId)) {
       markSeen(pageId);
       invalidateNotificationCache();
       this._refreshBadges();

@@ -70,14 +70,20 @@ export const usersTableConfig = {
 
     actions: [
         { key: 'view', label: 'View', icon: 'visibility' },
+        { key: 'edit', label: 'Edit', icon: 'edit' },
         { key: 'delete', label: 'Remove', icon: 'delete' }
     ],
 
-    // Moderators cannot delete admin users
     filterActions: (actions, row) => {
-        if (isModerator() && row.role === 'admin') {
-            return actions.filter(a => a.key !== 'delete');
+        let filtered = actions;
+        // Only show edit for temporary users
+        if (row.role !== 'temporary') {
+            filtered = filtered.filter(a => a.key !== 'edit');
         }
-        return actions;
+        // Moderators cannot delete admin users
+        if (isModerator() && row.role === 'admin') {
+            filtered = filtered.filter(a => a.key !== 'delete');
+        }
+        return filtered;
     }
 };

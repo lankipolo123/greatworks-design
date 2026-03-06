@@ -67,7 +67,12 @@ class UserController extends Controller
             $validated['password'] = $generatedPassword;
         }
 
-        $validated['status'] = $validated['status'] ?? 'active';
+        // Temporary accounts default to inactive — admin must activate them
+        if ($validated['role'] === 'temporary') {
+            $validated['status'] = 'inactive';
+        } else {
+            $validated['status'] = $validated['status'] ?? 'active';
+        }
 
         $user = User::create($validated);
 
@@ -120,7 +125,26 @@ class UserController extends Controller
             'status' => 'sometimes|in:active,inactive,archived',
         ]);
 
+        $oldStatus = $user->status;
         $user->update($validated);
+
+        // Log activation/deactivation of temporary accounts
+        if (isset($validated['status']) && $oldStatus !== $validated['status'] && $user->isTemporary()) {
+            $action = $validated['status'] === 'active' ? 'activated' : 'status_changed';
+            $description = $validated['status'] === 'active'
+                ? "{$request->user()->name} activated temporary account {$user->name} ({$user->email})"
+                : "Changed {$user->name}'s status from {$oldStatus} to {$validated['status']}";
+
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => $action,
+                'module' => 'users',
+                'description' => $description,
+                'old_values' => ['status' => $oldStatus],
+                'new_values' => ['status' => $validated['status']],
+                'ip_address' => $request->ip(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',

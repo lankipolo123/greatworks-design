@@ -26,6 +26,7 @@ export const hasRole = (roles) => {
 export const isAdmin = () => hasRole('admin');
 export const isModerator = () => hasRole('moderator');
 export const isCustomer = () => hasRole('customer');
+export const isTemporary = () => hasRole('temporary');
 
 // ─── Data Cache ────────────────────────────────────────────
 const _cache = new Map();

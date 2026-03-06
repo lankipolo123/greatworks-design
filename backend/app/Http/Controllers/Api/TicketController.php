@@ -56,6 +56,13 @@ class TicketController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Temporary accounts must be activated before creating tickets
+        if ($request->user()->isTemporary() && $request->user()->status !== 'active') {
+            return response()->json([
+                'message' => 'Your account must be activated by an admin before you can create tickets.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'location_id' => 'nullable|exists:locations,id',

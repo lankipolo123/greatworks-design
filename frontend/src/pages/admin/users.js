@@ -12,6 +12,7 @@ import '@/components/search-bar.js';
 import '@/components/app-button.js';
 import '@/components/app-dialog.js';
 import '@/components/add-user-form.js';
+import '@/components/input-field.js';
 import '@/components/users-avatar.js';
 import '@/components/badge-component.js';
 import '@/layouts/header-controls.js';
@@ -42,6 +43,9 @@ class AdminUser extends LitElement {
     showDeleteDialog: { type: Boolean },
     deleteTarget: { type: Object },
     deleting: { type: Boolean },
+    showEditDialog: { type: Boolean },
+    editTarget: { type: Object },
+    editLoading: { type: Boolean },
     _loaded: { type: Boolean, state: true }
   };
 
@@ -175,6 +179,52 @@ class AdminUser extends LitElement {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .edit-form .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .edit-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .edit-form label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .edit-form select {
+      padding: 10px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: white;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .edit-form select:focus {
+      outline: none;
+      border-color: #8d1409;
+    }
+
+    .edit-id {
+      font-size: 0.78rem;
+      color: #999;
+      margin-bottom: 4px;
+    }
   `;
 
   constructor() {
@@ -195,6 +245,9 @@ class AdminUser extends LitElement {
     this.showDeleteDialog = false;
     this.deleteTarget = null;
     this.deleting = false;
+    this.showEditDialog = false;
+    this.editTarget = null;
+    this.editLoading = false;
     this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All Users' },
@@ -294,6 +347,9 @@ class AdminUser extends LitElement {
     if (action === 'view') {
       this.selectedUser = item;
       this.showDetailsDialog = true;
+    } else if (action === 'edit') {
+      this.editTarget = { ...item };
+      this.showEditDialog = true;
     } else if (action === 'delete') {
       this.deleteTarget = item;
       this.showDeleteDialog = true;
@@ -320,6 +376,99 @@ class AdminUser extends LitElement {
   handleDeleteDialogClose() {
     this.showDeleteDialog = false;
     this.deleteTarget = null;
+  }
+
+  handleEditDialogClose() {
+    this.showEditDialog = false;
+    this.editTarget = null;
+  }
+
+  async handleEditSubmit() {
+    if (!this.editTarget) return;
+    this.editLoading = true;
+
+    try {
+      const formRoot = this.shadowRoot.querySelector('#edit-form');
+      const getValue = (name) => formRoot?.querySelector(`[name="${name}"]`)?.value || '';
+
+      const payload = {
+        name: getValue('name'),
+        email: getValue('email'),
+        phone: getValue('phone') || null,
+        status: getValue('status'),
+      };
+
+      await usersApi.update(this.editTarget.id, payload);
+      const statusChanged = this.editTarget.status !== payload.status;
+      const activated = statusChanged && payload.status === 'active';
+
+      this.showEditDialog = false;
+      this.editTarget = null;
+      toast.success(activated ? 'Account activated successfully!' : 'User updated successfully!');
+      this.fetchUsers();
+    } catch (err) {
+      console.error('Edit user failed:', err);
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to update user'));
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  _renderEditForm() {
+    if (!this.editTarget) return '';
+    const u = this.editTarget;
+
+    return html`
+      <div class="edit-id">${hashId('USR', u.id)}</div>
+      <form id="edit-form" class="edit-form">
+        <input-field
+          label="Name"
+          type="text"
+          name="name"
+          .value=${u.name || ''}
+          variant="compact"
+          ?required=${true}>
+        </input-field>
+
+        <input-field
+          label="Email"
+          type="email"
+          name="email"
+          .value=${u.email || ''}
+          variant="compact"
+          ?required=${true}>
+        </input-field>
+
+        <div class="form-row">
+          <input-field
+            label="Phone"
+            type="text"
+            name="phone"
+            .value=${u.phone || ''}
+            variant="compact">
+          </input-field>
+
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+              <option value="inactive" ?selected=${u.status === 'inactive'}>Inactive</option>
+              <option value="active" ?selected=${u.status === 'active'}>Active</option>
+              <option value="archived" ?selected=${u.status === 'archived'}>Archived</option>
+            </select>
+          </div>
+        </div>
+      </form>
+
+      <div class="credentials-actions" style="justify-content: flex-end; margin-top: 16px;">
+        <app-button type="secondary" size="medium" @click=${this.handleEditDialogClose} ?disabled=${this.editLoading}>
+          Cancel
+        </app-button>
+        <app-button type="primary" size="medium" @click=${() => this.handleEditSubmit()} ?disabled=${this.editLoading}>
+          ${this.editLoading ? 'Saving...' : 'Save changes'}
+        </app-button>
+      </div>
+    `;
   }
 
   handlePageChange(e) {
@@ -618,6 +767,17 @@ class AdminUser extends LitElement {
             </app-button>
           </div>
         ` : ''}
+      </app-dialog>
+
+      <app-dialog
+        .isOpen=${this.showEditDialog}
+        title="Edit Temporary Account"
+        size="medium"
+        styleMode="compact"
+        .hideFooter=${true}
+        .closeOnOverlay=${false}
+        @dialog-close=${this.handleEditDialogClose}>
+        ${this._renderEditForm()}
       </app-dialog>
 
       <app-dialog

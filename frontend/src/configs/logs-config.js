@@ -5,12 +5,14 @@ import '/src/components/badge-component.js';
 const actionVariants = {
     created: 'success',
     status_changed: 'ongoing',
+    activated: 'success',
     deleted: 'danger',
 };
 
 const actionLabels = {
     created: 'Created',
     status_changed: 'Status Changed',
+    activated: 'Activated',
     deleted: 'Deleted',
 };
 
