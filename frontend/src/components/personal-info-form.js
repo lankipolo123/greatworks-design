@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import '/src/components/app-button.js';
+import { isTemporary } from '/src/service/api-core.js';
+import { toast } from '/src/service/toast-widget.js';
 
 export class PersonalInfoForm extends LitElement {
   static properties = {
@@ -90,6 +92,10 @@ export class PersonalInfoForm extends LitElement {
   }
 
   toggleEdit() {
+    if (isTemporary()) {
+      toast.warning('Temporary accounts cannot edit personal information');
+      return;
+    }
     this.editing = !this.editing;
   }
 

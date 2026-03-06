@@ -196,7 +196,7 @@ class AppSidebar extends LitElement {
     ];
 
     if (this.userRole === 'temporary') {
-      return allItems.filter(item => !adminOnly.includes(item.id) && item.id !== 'settings');
+      return allItems.filter(item => !adminOnly.includes(item.id));
     }
 
     if (this.userRole === 'customer') {

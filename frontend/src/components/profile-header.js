@@ -4,6 +4,7 @@ import '/src/components/app-dialog.js';
 import '/src/components/app-button.js';
 import { auth } from '/src/service/api.js';
 import { toast } from '/src/service/toast-widget.js';
+import { isTemporary } from '/src/service/api-core.js';
 
 export class ProfileHeader extends LitElement {
   static properties = {
@@ -490,6 +491,10 @@ export class ProfileHeader extends LitElement {
   }
 
   changeAvatar() {
+    if (isTemporary()) {
+      toast.warning('Temporary accounts cannot edit profile photo');
+      return;
+    }
     this.showUploadDialog = true;
   }
 
@@ -511,6 +516,10 @@ export class ProfileHeader extends LitElement {
 
   handle2FAToggle(e) {
     e.preventDefault();
+    if (isTemporary()) {
+      toast.warning('Temporary accounts cannot manage 2FA settings');
+      return;
+    }
     this._2faError = '';
     this._2faCode = '';
     this._2faPassword = '';

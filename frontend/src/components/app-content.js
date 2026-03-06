@@ -113,10 +113,7 @@ class AppContent extends LitElement {
             case 'booking': return html`<customer-booking></customer-booking>`;
             case 'ticket': return html`<customer-ticket .pendingTicketId=${this.pendingTicketId} @ticket-opened=${this._handleTicketOpened}></customer-ticket>`;
             case 'payments': return html`<customer-payments></customer-payments>`;
-            case 'settings':
-                // Temporary accounts cannot access settings
-                if (this.userRole === 'temporary') return html`<customer-dashboard></customer-dashboard>`;
-                return html`<app-settings></app-settings>`;
+            case 'settings': return html`<app-settings></app-settings>`;
             default: return html`<customer-dashboard></customer-dashboard>`;
         }
     }

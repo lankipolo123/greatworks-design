@@ -7,6 +7,7 @@ import '/src/components/app-dialog.js';
 import { toast } from '/src/service/toast-widget.js';
 import { ICONS } from '/src/components/dashboard-icons.js';
 import { auth } from '/src/service/api.js';
+import { isTemporary } from '/src/service/api-core.js';
 
 export class ManageAccountCard extends LitElement {
   static properties = {
@@ -213,6 +214,10 @@ export class ManageAccountCard extends LitElement {
   }
 
   handleUnlockAccount() {
+    if (isTemporary()) {
+      toast.warning('Temporary accounts cannot access account management');
+      return;
+    }
     this._openPasswordDialog();
   }
 
