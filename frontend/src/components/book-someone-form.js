@@ -3,6 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
 import '/src/components/app-button.js';
 import { ROOM_TYPES } from '/src/configs/room-types-config.js';
+import { bookings } from '/src/service/api.js';
 
 class BookSomeoneForm extends LitElement {
 
@@ -12,6 +13,11 @@ class BookSomeoneForm extends LitElement {
     rooms: { type: Array },
     selectedUser: { type: Object },
     _selectedRoomType: { type: String, state: true },
+    _selectedDate: { type: String, state: true },
+    _selectedTime: { type: String, state: true },
+    _selectedDuration: { type: String, state: true },
+    _roomAvailability: { type: Object, state: true },
+    _availLoading: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -21,12 +27,26 @@ class BookSomeoneForm extends LitElement {
     this.rooms = [];
     this.selectedUser = null;
     this._selectedRoomType = '';
+    this._selectedDate = '';
+    this._selectedTime = '';
+    this._selectedDuration = '1';
+    this._roomAvailability = {};
+    this._availLoading = false;
   }
 
   willUpdate(changed) {
     if (changed.has('booking') && this.booking) {
       if (this.booking.roomType && !this._selectedRoomType) {
         this._selectedRoomType = this.booking.roomType;
+      }
+      if (this.booking.date && !this._selectedDate) {
+        this._selectedDate = this.booking.date;
+      }
+      if ((this.booking.startTime || this.booking.time) && !this._selectedTime) {
+        this._selectedTime = this.booking.startTime || this.booking.time;
+      }
+      if (this.booking.durationHours != null && this._selectedDuration === '1') {
+        this._selectedDuration = String(this.booking.durationHours);
       }
     }
   }
@@ -108,6 +128,25 @@ class BookSomeoneForm extends LitElement {
       color: #666;
       font-size: 0.78rem;
     }
+
+    .room-avail {
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .room-avail.available {
+      color: #16a34a;
+    }
+
+    .room-avail.full {
+      color: #dc2626;
+    }
+
+    .avail-hint {
+      font-size: 0.68rem;
+      color: #999;
+      margin-top: 2px;
+    }
   `;
 
   _handleRoomTypeChange(e) {
@@ -115,6 +154,23 @@ class BookSomeoneForm extends LitElement {
     // Reset room selection when type changes
     const roomSelect = this.shadowRoot?.querySelector('[name="roomId"]');
     if (roomSelect) roomSelect.value = '';
+    this._roomAvailability = {};
+    this._checkAllRoomAvailability();
+  }
+
+  _handleDateChange(e) {
+    this._selectedDate = e.detail.value;
+    this._checkAllRoomAvailability();
+  }
+
+  _handleTimeChange(e) {
+    this._selectedTime = e.detail.value;
+    this._checkAllRoomAvailability();
+  }
+
+  _handleDurationChange(e) {
+    this._selectedDuration = e.detail.value;
+    this._checkAllRoomAvailability();
   }
 
   get _filteredRooms() {
@@ -123,10 +179,70 @@ class BookSomeoneForm extends LitElement {
     return this.rooms.filter(r => r.type === this._selectedRoomType);
   }
 
+  async _checkAllRoomAvailability() {
+    const date = this._selectedDate;
+    const time = this._selectedTime;
+    const duration = parseInt(this._selectedDuration);
+    const roomsToCheck = this._filteredRooms;
+
+    if (!date || !time || !duration || duration <= 0 || !roomsToCheck.length) {
+      this._roomAvailability = {};
+      return;
+    }
+
+    // Debounce
+    clearTimeout(this._availDebounce);
+    this._availDebounce = setTimeout(async () => {
+      this._availLoading = true;
+      const avail = {};
+
+      try {
+        const results = await Promise.all(
+          roomsToCheck.map(r =>
+            bookings.getAvailability({
+              room_id: r.id,
+              date,
+              start_time: time,
+              duration_hours: duration,
+            }).catch(() => null)
+          )
+        );
+
+        results.forEach((res, i) => {
+          if (res) {
+            avail[roomsToCheck[i].id] = {
+              available: res.available_slots,
+              total: res.total_slots,
+              booked: res.booked_slots,
+            };
+          }
+        });
+      } catch {
+        // fail silently
+      }
+
+      this._roomAvailability = avail;
+      this._availLoading = false;
+    }, 300);
+  }
+
+  _roomLabel(room) {
+    const a = this._roomAvailability[room.id];
+    if (!a) return `${room.name} (cap: ${room.capacity})`;
+    if (a.available <= 0) return `${room.name} — FULL`;
+    return `${room.name} — ${a.available}/${a.total} slots`;
+  }
+
+  _isRoomFull(room) {
+    const a = this._roomAvailability[room.id];
+    return a && a.available <= 0;
+  }
+
   render() {
     const b = this.booking;
     const types = this.roomTypes || ROOM_TYPES;
     const filteredRooms = this._filteredRooms;
+    const hasAvail = Object.keys(this._roomAvailability).length > 0;
 
     const u = this.selectedUser;
 
@@ -179,7 +295,8 @@ class BookSomeoneForm extends LitElement {
             name="date"
             variant="compact"
             .value=${b?.date || ''}
-            ?required=${true}>
+            ?required=${true}
+            @input-change=${this._handleDateChange}>
           </input-field>
 
           <input-field
@@ -188,7 +305,8 @@ class BookSomeoneForm extends LitElement {
             name="time"
             variant="compact"
             .value=${b?.startTime || b?.time || ''}
-            ?required=${true}>
+            ?required=${true}
+            @input-change=${this._handleTimeChange}>
           </input-field>
 
           <input-field
@@ -197,7 +315,8 @@ class BookSomeoneForm extends LitElement {
             name="duration"
             .value=${b?.durationHours != null ? String(b.durationHours) : '1'}
             variant="compact"
-            ?required=${true}>
+            ?required=${true}
+            @input-change=${this._handleDurationChange}>
           </input-field>
 
           <div class="form-group">
@@ -213,11 +332,20 @@ class BookSomeoneForm extends LitElement {
           <div class="form-group">
             <label>Room *</label>
             <select name="roomId" required ?disabled=${!this._selectedRoomType && !filteredRooms.length}>
-              <option value="">${this._selectedRoomType ? 'Select room' : 'Select room type first'}</option>
+              <option value="">${this._selectedRoomType
+                ? (this._availLoading ? 'Checking availability...' : 'Select room')
+                : 'Select room type first'}</option>
               ${filteredRooms.map(r => html`
-                <option value="${r.id}" ?selected=${b?.roomId === r.id || b?.room_id === r.id}>${r.name} (cap: ${r.capacity})</option>
+                <option
+                  value="${r.id}"
+                  ?selected=${b?.roomId === r.id || b?.room_id === r.id}
+                  ?disabled=${this._isRoomFull(r)}
+                >${this._roomLabel(r)}</option>
               `)}
             </select>
+            ${hasAvail && !this._availLoading ? html`
+              <span class="avail-hint">Availability shown for ${this._selectedDate} at ${this._selectedTime}</span>
+            ` : ''}
           </div>
 
           <input-field
