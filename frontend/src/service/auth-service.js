@@ -1,10 +1,10 @@
 import { apiRequest, cacheGet, cacheSet, cacheInvalidate, cacheInvalidateAll } from './api-core.js';
 
 export const auth = {
-  async login(email, password) {
+  async login(credential, password) {
     const data = await apiRequest('/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ credential, password }),
     });
 
     // If 2FA is required, return early without storing token

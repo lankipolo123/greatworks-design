@@ -39,6 +39,18 @@ export const users = {
     });
   },
 
+  async renewLoginCode(userId) {
+    const res = await apiRequest(`/users/${userId}/renew-login-code`, { method: 'POST' });
+    cacheInvalidate('users:');
+    return res;
+  },
+
+  async renewPassword(userId) {
+    const res = await apiRequest(`/users/${userId}/renew-password`, { method: 'POST' });
+    cacheInvalidate('users:');
+    return res;
+  },
+
   async uploadProfilePhoto(userId, file) {
     const formData = new FormData();
     formData.append('photo', file);

@@ -70,6 +70,7 @@ class UserController extends Controller
         // Temporary accounts default to inactive — admin must activate them
         if ($validated['role'] === 'temporary') {
             $validated['status'] = 'inactive';
+            $validated['login_code'] = self::generateLoginCode();
         } else {
             $validated['status'] = $validated['status'] ?? 'active';
         }
@@ -92,6 +93,10 @@ class UserController extends Controller
 
         if ($generatedPassword) {
             $response['generated_password'] = $generatedPassword;
+        }
+
+        if ($user->login_code) {
+            $response['login_code'] = $user->login_code;
         }
 
         return response()->json($response, 201);
@@ -184,6 +189,55 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User deleted successfully',
+        ]);
+    }
+
+    /**
+     * Generate a unique login code for temporary accounts (TMP-XXXXXX).
+     */
+    private static function generateLoginCode(): string
+    {
+        do {
+            $code = 'TMP-' . strtoupper(Str::random(6));
+        } while (User::where('login_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Renew the login code for a temporary account.
+     */
+    public function renewLoginCode(Request $request, User $user): JsonResponse
+    {
+        if (!$user->isTemporary()) {
+            return response()->json(['message' => 'Only temporary accounts have login codes.'], 403);
+        }
+
+        $user->update(['login_code' => self::generateLoginCode()]);
+
+        return response()->json([
+            'message' => 'Login code renewed',
+            'login_code' => $user->login_code,
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Renew the password for a temporary account.
+     */
+    public function renewPassword(Request $request, User $user): JsonResponse
+    {
+        if (!$user->isTemporary()) {
+            return response()->json(['message' => 'Only temporary accounts support password renewal.'], 403);
+        }
+
+        $newPassword = Str::random(16);
+        $user->update(['password' => $newPassword]);
+
+        return response()->json([
+            'message' => 'Password renewed',
+            'generated_password' => $newPassword,
+            'user' => $user,
         ]);
     }
 

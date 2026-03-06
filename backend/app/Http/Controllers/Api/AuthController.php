@@ -45,21 +45,34 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => 'required|string|email',
+            'credential' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($validated)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
+        $credential = $validated['credential'];
+        $password = $validated['password'];
 
-        $user = User::where('email', $validated['email'])->first();
+        // Determine if logging in with login_code (TMP-...) or email
+        $user = null;
+        if (str_starts_with(strtoupper($credential), 'TMP-')) {
+            $user = User::where('login_code', strtoupper($credential))->first();
+            if (!$user || !Hash::check($password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'credential' => ['The provided credentials are incorrect.'],
+                ]);
+            }
+        } else {
+            if (!Auth::attempt(['email' => $credential, 'password' => $password])) {
+                throw ValidationException::withMessages([
+                    'credential' => ['The provided credentials are incorrect.'],
+                ]);
+            }
+            $user = User::where('email', $credential)->first();
+        }
 
         if ($user->status !== 'active') {
             throw ValidationException::withMessages([
-                'email' => ['Your account is not active.'],
+                'credential' => ['Your account is not active.'],
             ]);
         }
 

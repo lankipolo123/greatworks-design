@@ -121,6 +121,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])
             ->middleware('prevent-admin-role');
         Route::post('/users/{user}/send-welcome', [UserController::class, 'sendWelcomeEmail']);
+        Route::post('/users/{user}/renew-login-code', [UserController::class, 'renewLoginCode']);
+        Route::post('/users/{user}/renew-password', [UserController::class, 'renewPassword']);
 
         // Activity Logs (read-only for moderators)
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);

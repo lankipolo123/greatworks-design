@@ -163,7 +163,7 @@ class LoginPage extends LitElement {
 
       this._redirectAfterLogin(response.user);
     } catch (err) {
-      this.error = err.message || 'Invalid email or password';
+      this.error = err.message || 'Invalid credentials';
     } finally {
       this.loading = false;
     }
@@ -263,8 +263,8 @@ class LoginPage extends LitElement {
 
           <form @submit=${this.handleSubmit}>
             <input-field
-              type="email"
-              placeholder="Please enter your Email"
+              type="text"
+              placeholder="Email or Login ID"
               .value=${this.email}
               @input=${e => (this.email = e.target.value)}
               ?disabled=${this.loading}

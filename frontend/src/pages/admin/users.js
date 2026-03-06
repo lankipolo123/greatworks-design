@@ -46,6 +46,7 @@ class AdminUser extends LitElement {
     showEditDialog: { type: Boolean },
     editTarget: { type: Object },
     editLoading: { type: Boolean },
+    editCredentials: { type: Object },
     _loaded: { type: Boolean, state: true }
   };
 
@@ -248,6 +249,7 @@ class AdminUser extends LitElement {
     this.showEditDialog = false;
     this.editTarget = null;
     this.editLoading = false;
+    this.editCredentials = null;
     this._loaded = false;
     this.tabs = [
       { id: 'all', label: 'All Users' },
@@ -381,6 +383,7 @@ class AdminUser extends LitElement {
   handleEditDialogClose() {
     this.showEditDialog = false;
     this.editTarget = null;
+    this.editCredentials = null;
   }
 
   async handleEditSubmit() {
@@ -389,21 +392,16 @@ class AdminUser extends LitElement {
 
     try {
       const formRoot = this.shadowRoot.querySelector('#edit-form');
-      const getValue = (name) => formRoot?.querySelector(`[name="${name}"]`)?.value || '';
+      const name = formRoot?.querySelector('[name="name"]')?.value || '';
+      const status = formRoot?.querySelector('[name="status"]')?.value || '';
 
-      const payload = {
-        name: getValue('name'),
-        email: getValue('email'),
-        phone: getValue('phone') || null,
-        status: getValue('status'),
-      };
-
+      const payload = { name, status };
       await usersApi.update(this.editTarget.id, payload);
-      const statusChanged = this.editTarget.status !== payload.status;
-      const activated = statusChanged && payload.status === 'active';
+      const activated = this.editTarget.status !== status && status === 'active';
 
       this.showEditDialog = false;
       this.editTarget = null;
+      this.editCredentials = null;
       toast.success(activated ? 'Account activated successfully!' : 'User updated successfully!');
       this.fetchUsers();
     } catch (err) {
@@ -412,6 +410,49 @@ class AdminUser extends LitElement {
       toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to update user'));
     } finally {
       this.editLoading = false;
+    }
+  }
+
+  async handleRenewLoginCode() {
+    if (!this.editTarget) return;
+    this.editLoading = true;
+    try {
+      const res = await usersApi.renewLoginCode(this.editTarget.id);
+      this.editTarget = { ...this.editTarget, login_code: res.login_code };
+      this.editCredentials = { ...(this.editCredentials || {}), login_code: res.login_code };
+      toast.success('Login ID renewed!');
+      this.fetchUsers();
+    } catch (err) {
+      toast.error(err.message || 'Failed to renew login code');
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  async handleRenewPassword() {
+    if (!this.editTarget) return;
+    this.editLoading = true;
+    try {
+      const res = await usersApi.renewPassword(this.editTarget.id);
+      this.editCredentials = { ...(this.editCredentials || {}), password: res.generated_password };
+      toast.success('Password renewed!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to renew password');
+    } finally {
+      this.editLoading = false;
+    }
+  }
+
+  async handleCopyEditCredentials() {
+    if (!this.editCredentials) return;
+    const parts = [];
+    if (this.editCredentials.login_code) parts.push(`Login ID: ${this.editCredentials.login_code}`);
+    if (this.editCredentials.password) parts.push(`Password: ${this.editCredentials.password}`);
+    try {
+      await navigator.clipboard.writeText(parts.join('\n'));
+      toast.success('Credentials copied!');
+    } catch {
+      toast.error('Failed to copy');
     }
   }
 
@@ -431,33 +472,49 @@ class AdminUser extends LitElement {
           ?required=${true}>
         </input-field>
 
-        <input-field
-          label="Email"
-          type="email"
-          name="email"
-          .value=${u.email || ''}
-          variant="compact"
-          ?required=${true}>
-        </input-field>
-
-        <div class="form-row">
-          <input-field
-            label="Phone"
-            type="text"
-            name="phone"
-            .value=${u.phone || ''}
-            variant="compact">
-          </input-field>
-
-          <div class="form-group">
-            <label>Status</label>
-            <select name="status">
-              <option value="inactive" ?selected=${u.status === 'inactive'}>Inactive</option>
-              <option value="active" ?selected=${u.status === 'active'}>Active</option>
-              <option value="archived" ?selected=${u.status === 'archived'}>Archived</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status">
+            <option value="inactive" ?selected=${u.status === 'inactive'}>Inactive</option>
+            <option value="active" ?selected=${u.status === 'active'}>Active</option>
+            <option value="archived" ?selected=${u.status === 'archived'}>Archived</option>
+          </select>
         </div>
+
+        <div class="credentials-field">
+          <label>Login ID</label>
+          <div class="value">${u.login_code || '—'}</div>
+        </div>
+
+        <div class="credentials-actions">
+          <app-button type="secondary" size="small" @click=${() => this.handleRenewLoginCode()} ?disabled=${this.editLoading}>
+            Renew ID
+          </app-button>
+          <app-button type="secondary" size="small" @click=${() => this.handleRenewPassword()} ?disabled=${this.editLoading}>
+            Renew Password
+          </app-button>
+        </div>
+
+        ${this.editCredentials ? html`
+          <div class="credentials-content" style="margin-top: 8px;">
+            ${this.editCredentials.login_code ? html`
+              <div class="credentials-field">
+                <label>New Login ID</label>
+                <div class="value">${this.editCredentials.login_code}</div>
+              </div>
+            ` : ''}
+            ${this.editCredentials.password ? html`
+              <div class="credentials-field">
+                <label>New Password</label>
+                <div class="value">${this.editCredentials.password}</div>
+              </div>
+            ` : ''}
+            <app-button type="secondary" size="small" @click=${() => this.handleCopyEditCredentials()}>
+              Copy Credentials
+            </app-button>
+            <div class="credentials-notice">Save these credentials — they won't be shown again after closing.</div>
+          </div>
+        ` : ''}
       </form>
 
       <div class="credentials-actions" style="justify-content: flex-end; margin-top: 16px;">
@@ -539,6 +596,7 @@ class AdminUser extends LitElement {
           name,
           email,
           password: result.generated_password,
+          login_code: result.login_code || null,
         };
         this.showCredentialsDialog = true;
       } else {
@@ -795,10 +853,17 @@ class AdminUser extends LitElement {
               <label>Name</label>
               <div class="value">${this.generatedCredentials.name}</div>
             </div>
-            <div class="credentials-field">
-              <label>Email</label>
-              <div class="value">${this.generatedCredentials.email}</div>
-            </div>
+            ${this.generatedCredentials.login_code ? html`
+              <div class="credentials-field">
+                <label>Login ID</label>
+                <div class="value">${this.generatedCredentials.login_code}</div>
+              </div>
+            ` : html`
+              <div class="credentials-field">
+                <label>Email</label>
+                <div class="value">${this.generatedCredentials.email}</div>
+              </div>
+            `}
             <div class="credentials-field">
               <label>Generated Password</label>
               <div class="value">${this.generatedCredentials.password}</div>
@@ -807,16 +872,18 @@ class AdminUser extends LitElement {
               <app-button type="secondary" size="medium" @click=${() => this.handleCopyPassword()}>
                 Copy Password
               </app-button>
-              <app-button
-                type="primary"
-                size="medium"
-                @click=${() => this.handleSendEmail()}
-                ?disabled=${this.sendingEmail}>
-                ${this.sendingEmail ? 'Sending...' : 'Send to Email'}
-              </app-button>
+              ${this.generatedCredentials.login_code ? '' : html`
+                <app-button
+                  type="primary"
+                  size="medium"
+                  @click=${() => this.handleSendEmail()}
+                  ?disabled=${this.sendingEmail}>
+                  ${this.sendingEmail ? 'Sending...' : 'Send to Email'}
+                </app-button>
+              `}
             </div>
             <div class="credentials-notice">
-              This password will not be shown again after closing this dialog.
+              These credentials will not be shown again after closing this dialog.
             </div>
             <div class="credentials-actions" style="justify-content: flex-end;">
               <app-button type="secondary" size="medium" @click=${this.handleCredentialsClose}>
