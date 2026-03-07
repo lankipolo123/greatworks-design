@@ -47,8 +47,6 @@ class CustomerTicket extends LitElement {
     _paymentLoading: { type: Boolean, state: true },
     _selectedPaymentMethod: { type: String, state: true },
     _createdBooking: { type: Object, state: true },
-    _roomAvailability: { type: Object, state: true },
-    _roomAvailLoading: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -494,8 +492,6 @@ class CustomerTicket extends LitElement {
     this._bookLoading = false;
     this._slotInfo = null;
     this._slotLoading = false;
-    this._roomAvailability = {};
-    this._roomAvailLoading = false;
     this._paymentLoading = false;
     this._selectedPaymentMethod = '';
     this._createdBooking = null;
@@ -711,7 +707,6 @@ class CustomerTicket extends LitElement {
     this.requestUpdate();
     if (duration > 0) {
       this._checkAvailability(roomId, date, startHour, duration);
-      this._checkAllRoomAvailability();
     }
   }
 
