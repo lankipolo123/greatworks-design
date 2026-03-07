@@ -51,6 +51,8 @@ class CustomerBooking extends LitElement {
     _showLocationPicker: { type: Boolean, state: true },
     _pendingLocation: { type: String, state: true },
     _bookFormRoomType: { type: String, state: true },
+    _roomAvailability: { type: Object, state: true },
+    _roomAvailLoading: { type: Boolean, state: true },
   };
 
   static styles = css`
@@ -695,6 +697,8 @@ class CustomerBooking extends LitElement {
     this._showLocationPicker = !savedLocation;
     this._pendingLocation = '';
     this._bookFormRoomType = '';
+    this._roomAvailability = {};
+    this._roomAvailLoading = false;
 
     this.showBookDialog = false;
     this.bookLoading = false;
@@ -934,6 +938,7 @@ class CustomerBooking extends LitElement {
     this.selectedBooking = null;
     this.slotInfo = null;
     this._bookFormRoomType = '';
+    this._roomAvailability = {};
   }
 
   handleRoomTypeChange(e) {
@@ -975,6 +980,65 @@ class CustomerBooking extends LitElement {
       });
     } catch { this.slotInfo = null; }
     finally { this.slotLoading = false; }
+  }
+
+  _checkAllRoomAvailability() {
+    const form = this.shadowRoot?.getElementById('customer-book-form');
+    if (!form) return;
+    const date = form.querySelector('[name="date"]')?.value;
+    const startHour = form.querySelector('[name="start_hour"]')?.value;
+    const endHour = form.querySelector('[name="end_hour"]')?.value;
+    const duration = this._calcDuration(startHour, endHour);
+
+    let rooms = this.selectedLocation && this.selectedLocation !== 'all'
+      ? this.roomsList.filter(r => String(r.location_id) === this.selectedLocation)
+      : this.roomsList;
+    if (this._bookFormRoomType) {
+      rooms = rooms.filter(r => r.type === this._bookFormRoomType);
+    }
+
+    if (!date || !startHour || !endHour || duration <= 0 || !rooms.length) {
+      this._roomAvailability = {};
+      return;
+    }
+
+    clearTimeout(this._availDebounce);
+    this._availDebounce = setTimeout(async () => {
+      this._roomAvailLoading = true;
+      const avail = {};
+      try {
+        const results = await Promise.all(
+          rooms.map(r =>
+            bookings.getAvailability({
+              room_id: r.id, date, start_time: startHour, duration_hours: duration,
+            }).catch(() => null)
+          )
+        );
+        results.forEach((res, i) => {
+          if (res) {
+            avail[rooms[i].id] = {
+              available: res.available_slots,
+              total: res.total_slots,
+              booked: res.booked_slots,
+            };
+          }
+        });
+      } catch { /* silent */ }
+      this._roomAvailability = avail;
+      this._roomAvailLoading = false;
+    }, 300);
+  }
+
+  _roomLabel(room) {
+    const a = this._roomAvailability[room.id];
+    if (!a) return `${room.name} (cap: ${room.capacity})`;
+    if (a.available <= 0) return `${room.name} — FULL`;
+    return `${room.name} — ${a.available}/${a.total} slots`;
+  }
+
+  _isRoomFull(room) {
+    const a = this._roomAvailability[room.id];
+    return a && a.available <= 0;
   }
 
   async handleBookSubmit() {
@@ -1197,7 +1261,7 @@ class CustomerBooking extends LitElement {
       <form id="customer-book-form" class="book-form" @submit=${(e) => e.preventDefault()}>
         <div class="form-group">
           <label>Room Type *</label>
-          <select name="room_type" required @change=${(e) => { this._bookFormRoomType = e.target.value; this.requestUpdate(); }}>
+          <select name="room_type" required @change=${(e) => { this._bookFormRoomType = e.target.value; this._roomAvailability = {}; this.requestUpdate(); this._checkAllRoomAvailability(); }}>
             <option value="">Select type</option>
             ${this._roomTypeOptions.map(rt => html`
               <option value="${rt.value}">${rt.label}</option>
@@ -1208,9 +1272,11 @@ class CustomerBooking extends LitElement {
         <div class="form-group">
           <label>Room *</label>
           <select name="room_id" required @change=${() => this._onBookFormChange()} ?disabled=${!this._bookFormRoomType}>
-            <option value="">${this._bookFormRoomType ? 'Select room' : 'Select room type first'}</option>
+            <option value="">${this._bookFormRoomType
+              ? (this._roomAvailLoading ? 'Checking availability...' : 'Select room')
+              : 'Select room type first'}</option>
             ${filteredRooms.map(r => html`
-              <option value="${r.id}">${r.name} (cap: ${r.capacity})</option>
+              <option value="${r.id}" ?disabled=${this._isRoomFull(r)}>${this._roomLabel(r)}</option>
             `)}
           </select>
         </div>
@@ -1596,6 +1662,7 @@ class CustomerBooking extends LitElement {
     this.requestUpdate();
     if (duration > 0) {
       this.checkAvailability(roomId, date, startHour, duration);
+      this._checkAllRoomAvailability();
     }
   }
 
