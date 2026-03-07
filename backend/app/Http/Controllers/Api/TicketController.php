@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Booking;
 use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,14 +64,46 @@ class TicketController extends Controller
             ], 403);
         }
 
+        // Check user already has an open/pending ticket
+        $hasPendingTicket = Ticket::where('user_id', $request->user()->id)
+            ->whereIn('status', ['open', 'pending'])
+            ->exists();
+
+        if ($hasPendingTicket) {
+            return response()->json([
+                'message' => 'You already have an open ticket. Please wait until it is resolved.',
+            ], 422);
+        }
+
+        // Find user's current active booking (confirmed, date not passed)
+        $activeBooking = Booking::where('user_id', $request->user()->id)
+            ->where('status', 'confirmed')
+            ->where('date', '>=', now()->toDateString())
+            ->first();
+
+        if (!$activeBooking) {
+            return response()->json([
+                'message' => 'You need an active booking to create a ticket.',
+            ], 422);
+        }
+
+        // Check this booking doesn't already have a ticket
+        $bookingHasTicket = Ticket::where('booking_id', $activeBooking->id)->exists();
+
+        if ($bookingHasTicket) {
+            return response()->json([
+                'message' => 'A ticket already exists for your current booking.',
+            ], 422);
+        }
+
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'location_id' => 'nullable|exists:locations,id',
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:open,pending,progress',
-            'priority' => 'sometimes|in:low,medium,high',
         ]);
+
+        $validated['user_id'] = $request->user()->id;
+        $validated['booking_id'] = $activeBooking->id;
+        $validated['location_id'] = $activeBooking->room?->location_id;
 
         $ticket = Ticket::create($validated);
 

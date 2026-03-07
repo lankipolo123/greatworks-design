@@ -13,6 +13,7 @@ class Ticket extends Model
     protected $fillable = [
         'user_id',
         'location_id',
+        'booking_id',
         'subject',
         'description',
         'status',
@@ -27,5 +28,10 @@ class Ticket extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
     }
 }

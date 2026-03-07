@@ -657,6 +657,11 @@ class CustomerTicket extends LitElement {
       this.showBookDialog = true;
       return;
     }
+    const hasOpenTicket = this.tickets.some(t => t.status === 'open' || t.status === 'pending');
+    if (hasOpenTicket) {
+      toast.warning('You already have an open ticket. Please wait until it is resolved.');
+      return;
+    }
     this.showCreateDialog = true;
   }
 
@@ -668,7 +673,7 @@ class CustomerTicket extends LitElement {
     try {
       await ticketsApi.create({
         subject: form.subject.value,
-        message: form.message.value,
+        description: form.message.value,
       });
       toast.success('Ticket submitted successfully!');
       this.showCreateDialog = false;
