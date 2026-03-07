@@ -319,15 +319,8 @@ class AdminPayments extends LitElement {
     return html`
       <form id="create-payment-form" class="create-form" @submit=${(e) => e.preventDefault()}>
         <div class="form-group">
-          <label>Payment Method *</label>
-          <select name="method" required>
-            <option value="">Select method</option>
-            <option value="gcash">GCash</option>
-            <option value="cash">Cash</option>
-            <option value="debit_card">Debit Card</option>
-            <option value="credit_card">Credit Card</option>
-            <option value="bank_transfer">Bank Transfer</option>
-          </select>
+          <label>Payment Method Name *</label>
+          <input type="text" name="method" required placeholder="e.g. GCash, Maya, PayPal" />
         </div>
 
         <div class="form-group">
