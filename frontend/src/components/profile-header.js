@@ -794,7 +794,7 @@ export class ProfileHeader extends LitElement {
 
           <div class="info">
             <div class="name">${this.displayName}</div>
-            <div class="role">${this.role}</div>
+            <div class="role">${this.role ? this.role.charAt(0).toUpperCase() + this.role.slice(1) : ''}</div>
             <div class="joined-date">Joined: ${this.formatDate(this.joinedDate)}</div>
             <div class="status">Last login: ${this.lastLoginDate}</div>
           </div>
