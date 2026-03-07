@@ -18,7 +18,6 @@ import { hashId } from '@/utility/hash-id.js';
 import '/src/components/floating-action-button.js';
 import { paymentFabOptions } from '/src/configs/fab-options-config.js';
 import { toast } from '/src/service/toast-widget.js';
-import { users as usersApi, bookings as bookingsApi } from '/src/service/api.js';
 
 class AdminPayments extends LitElement {
   static properties = {
@@ -32,8 +31,6 @@ class AdminPayments extends LitElement {
     selectedPayment: { type: Object },
     showCreateDialog: { type: Boolean },
     _createLoading: { type: Boolean, state: true },
-    _usersList: { type: Array, state: true },
-    _bookingsList: { type: Array, state: true },
     _loaded: { type: Boolean, state: true }
   };
 
@@ -191,8 +188,6 @@ class AdminPayments extends LitElement {
     this.showDetailsDialog = false;
     this.showCreateDialog = false;
     this._createLoading = false;
-    this._usersList = [];
-    this._bookingsList = [];
     this.selectedPayment = null;
     this._loaded = false;
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -289,26 +284,11 @@ class AdminPayments extends LitElement {
   async handleFabAction(e) {
     const { action } = e.detail;
     if (action === 'new-payment') {
-      this._loadUsersAndBookings();
       this.showCreateDialog = true;
     }
   }
 
-  async _loadUsersAndBookings() {
-    try {
-      const [usersRes, bookingsRes] = await Promise.all([
-        usersApi.getAll({ per_page: 100 }),
-        bookingsApi.getAll({ per_page: 100 }),
-      ]);
-      this._usersList = usersRes.data || usersRes || [];
-      this._bookingsList = (bookingsRes.data || bookingsRes || []);
-    } catch (e) {
-      this._usersList = [];
-      this._bookingsList = [];
-    }
-  }
-
-  async handleCreatePayment() {
+  async handleCreatePaymentMethod() {
     const form = this.shadowRoot.getElementById('create-payment-form');
     if (!form || !form.checkValidity()) {
       form?.reportValidity();
@@ -320,21 +300,16 @@ class AdminPayments extends LitElement {
 
     try {
       await paymentsApi.create({
-        user_id: parseInt(getValue('user_id')),
-        booking_id: getValue('booking_id') ? parseInt(getValue('booking_id')) : null,
-        amount: parseFloat(getValue('amount')),
-        currency: 'PHP',
         method: getValue('method'),
-        status: getValue('status') || 'pending',
-        reference_number: getValue('reference_number') || null,
+        label: getValue('label') || null,
       });
 
-      toast.success('Payment created successfully!');
+      toast.success('Payment method added successfully!');
       this.showCreateDialog = false;
       await this.fetchPayments();
       appState.emit('data-changed');
     } catch (err) {
-      toast.error(err.message || 'Failed to create payment');
+      toast.error(err.message || 'Failed to add payment method');
     } finally {
       this._createLoading = false;
     }
@@ -344,32 +319,7 @@ class AdminPayments extends LitElement {
     return html`
       <form id="create-payment-form" class="create-form" @submit=${(e) => e.preventDefault()}>
         <div class="form-group">
-          <label>User *</label>
-          <select name="user_id" required>
-            <option value="">Select user</option>
-            ${(this._usersList || []).map(u => html`
-              <option value="${u.id}">${u.name || u.email}</option>
-            `)}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Booking (optional)</label>
-          <select name="booking_id">
-            <option value="">No booking</option>
-            ${(this._bookingsList || []).map(b => html`
-              <option value="${b.id}">${hashId('BKG', b.id)} — ${b.room?.name || `Room #${b.room_id}`}</option>
-            `)}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Amount (PHP) *</label>
-          <input type="number" name="amount" min="0" step="0.01" placeholder="0.00" required />
-        </div>
-
-        <div class="form-group">
-          <label>Method *</label>
+          <label>Payment Method *</label>
           <select name="method" required>
             <option value="">Select method</option>
             <option value="gcash">GCash</option>
@@ -381,26 +331,16 @@ class AdminPayments extends LitElement {
         </div>
 
         <div class="form-group">
-          <label>Status</label>
-          <select name="status">
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed</option>
-            <option value="refunded">Refunded</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Reference Number</label>
-          <input type="text" name="reference_number" placeholder="Optional" />
+          <label>Label</label>
+          <input type="text" name="label" placeholder="e.g. Main GCash, Company Card" />
         </div>
 
         <div class="create-form-actions">
           <app-button type="secondary" size="small" @click=${this.handleDialogClose} ?disabled=${this._createLoading}>
             Cancel
           </app-button>
-          <app-button type="primary" size="small" @click=${() => this.handleCreatePayment()} ?disabled=${this._createLoading}>
-            ${this._createLoading ? 'Creating...' : 'Create Payment'}
+          <app-button type="primary" size="small" @click=${() => this.handleCreatePaymentMethod()} ?disabled=${this._createLoading}>
+            ${this._createLoading ? 'Adding...' : 'Add Method'}
           </app-button>
         </div>
       </form>
@@ -569,11 +509,11 @@ class AdminPayments extends LitElement {
         ${this._renderDetailsDialog()}
       </app-dialog>
 
-      <!-- Create Payment Dialog -->
+      <!-- Add Payment Method Dialog -->
       <app-dialog
         .isOpen=${this.showCreateDialog}
-        title="New Payment"
-        description="Record a new payment entry"
+        title="Add Payment Method"
+        description="Add a new payment method"
         size="large"
         styleMode="compact"
         .closeOnOverlay=${false}

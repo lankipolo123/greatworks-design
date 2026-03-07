@@ -41,7 +41,7 @@ export const userFabOptions = [
 // Payment page FAB options
 export const paymentFabOptions = [
     {
-        label: 'New Payment',
+        label: 'Add Payment Method',
         action: 'new-payment',
         icon: html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>`
     }
