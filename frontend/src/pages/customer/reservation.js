@@ -494,10 +494,11 @@ class CustomerReservation extends LitElement {
           <span class="detail-label">Room Type</span>
           <span class="detail-value">${r.roomType ? this._formatRoomType(r.roomType) : '-'}</span>
         </div>
+        ${this._getLocationName(r.locationId) || r.locationName ? `
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${this._getLocationName(r.locationId) || r.locationName || '-'}</span>
-        </div>
+          <span class="detail-value">${this._getLocationName(r.locationId) || r.locationName}</span>
+        </div>` : ''}
         <div class="detail-item">
           <span class="detail-label">Date</span>
           <span class="detail-value">${r.date ? new Date(r.date).toLocaleDateString() : '-'}</span>

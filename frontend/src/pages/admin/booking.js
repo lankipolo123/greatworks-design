@@ -1184,10 +1184,11 @@ class AdminBooking extends LitElement {
           <span class="detail-label">Room</span>
           <span class="detail-value">${b.roomName}</span>
         </div>
+        ${this._getLocationName(b.locationId) ? `
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${this._getLocationName(b.locationId) || '-'}</span>
-        </div>
+          <span class="detail-value">${this._getLocationName(b.locationId)}</span>
+        </div>` : ''}
         <div class="detail-item">
           <span class="detail-label">Date</span>
           <span class="detail-value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
