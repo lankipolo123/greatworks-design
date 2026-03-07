@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile photo management (all authenticated users can manage their own)
     Route::post('/users/{user}/profile-photo', [UserController::class, 'uploadProfilePhoto']);
     Route::delete('/users/{user}/profile-photo', [UserController::class, 'deleteProfilePhoto']);
+
+    // System settings (all authenticated users can read)
+    Route::get('/system-settings', [SystemSettingController::class, 'index']);
+    Route::get('/system-settings/{key}', [SystemSettingController::class, 'show']);
 
     // Bookings (all authenticated users can view/create their own)
     Route::get('/bookings/calendar', [BookingController::class, 'calendar']);
@@ -145,6 +150,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Payment deletion (admin only)
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
+
+        // System settings management (admin only)
+        Route::put('/system-settings', [SystemSettingController::class, 'update']);
 
         // Activity log creation (admin only — prevents audit trail manipulation)
         Route::post('/activity-logs', [ActivityLogController::class, 'store']);
