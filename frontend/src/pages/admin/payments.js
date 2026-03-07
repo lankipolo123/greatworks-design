@@ -302,6 +302,7 @@ class AdminPayments extends LitElement {
       await paymentsApi.create({
         method: getValue('method'),
         label: getValue('label') || null,
+        icon: getValue('icon') || null,
       });
 
       toast.success('Payment method added successfully!');
@@ -326,6 +327,11 @@ class AdminPayments extends LitElement {
         <div class="form-group">
           <label>Label</label>
           <input type="text" name="label" placeholder="e.g. Main GCash, Company Card" />
+        </div>
+
+        <div class="form-group">
+          <label>Icon (optional)</label>
+          <input type="text" name="icon" placeholder="e.g. URL or icon name" />
         </div>
 
         <div class="create-form-actions">
