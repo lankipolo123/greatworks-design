@@ -355,6 +355,22 @@ class AdminUser extends LitElement {
     } else if (action === 'delete') {
       this.deleteTarget = item;
       this.showDeleteDialog = true;
+    } else if (action === 'activate') {
+      this._toggleAccountStatus(item, 'active');
+    } else if (action === 'deactivate') {
+      this._toggleAccountStatus(item, 'inactive');
+    }
+  }
+
+  async _toggleAccountStatus(user, newStatus) {
+    try {
+      await usersApi.update(user.id, { status: newStatus });
+      const label = newStatus === 'active' ? 'activated' : 'deactivated';
+      toast.success(`Account ${label} successfully!`);
+      this.fetchUsers();
+    } catch (err) {
+      const msg = err.errors ? Object.values(err.errors)[0] : err.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to update status'));
     }
   }
 

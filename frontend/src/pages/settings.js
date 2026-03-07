@@ -4,9 +4,8 @@ import '/src/layouts/settings-layout.js';
 import '/src/components/profile-header.js';
 import '/src/components/personal-info-form.js';
 import '/src/components/manage-account-card.js';
-import '/src/components/system-settings-card.js';
 import { toast } from '/src/service/toast-widget.js';
-import { auth, getUser, users, isAdmin } from '/src/service/api.js';
+import { auth, getUser, users } from '/src/service/api.js';
 import { appState } from '/src/utility/app-state.js';
 
 export class AppSettings extends LitElement {
@@ -193,12 +192,6 @@ export class AppSettings extends LitElement {
           @delete-account="${this.handleDeleteAccount}">
         </manage-account-card>
       </settings-layout>
-
-      ${isAdmin() ? html`
-        <div style="margin-top: 16px;">
-          <system-settings-card></system-settings-card>
-        </div>
-      ` : ''}
     `;
   }
 }

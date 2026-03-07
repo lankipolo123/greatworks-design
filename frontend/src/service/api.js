@@ -15,4 +15,3 @@ export { payments } from './payments-service.js';
 export { users } from './users-service.js';
 export { activityLogs } from './activity-logs-service.js';
 export { locations } from './locations-service.js';
-export { systemSettings } from './system-settings-service.js';

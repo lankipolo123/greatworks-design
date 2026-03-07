@@ -3,7 +3,7 @@ import { LitElement, html, css } from 'lit';
 import '/src/components/input-field.js';
 import '/src/components/app-button.js';
 import { ROOM_TYPES } from '/src/configs/room-types-config.js';
-import { bookings, systemSettings } from '/src/service/api.js';
+import { bookings } from '/src/service/api.js';
 
 class BookSomeoneForm extends LitElement {
 
@@ -18,7 +18,6 @@ class BookSomeoneForm extends LitElement {
     _selectedDuration: { type: String, state: true },
     _roomAvailability: { type: Object, state: true },
     _availLoading: { type: Boolean, state: true },
-    _availEnabled: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -33,21 +32,6 @@ class BookSomeoneForm extends LitElement {
     this._selectedDuration = '1';
     this._roomAvailability = {};
     this._availLoading = false;
-    this._availEnabled = false;
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._loadAvailSetting();
-  }
-
-  async _loadAvailSetting() {
-    try {
-      const settings = await systemSettings.getAll();
-      this._availEnabled = settings['room_availability_check'] === '1';
-    } catch {
-      this._availEnabled = false;
-    }
   }
 
   willUpdate(changed) {
@@ -196,11 +180,6 @@ class BookSomeoneForm extends LitElement {
   }
 
   async _checkAllRoomAvailability() {
-    if (!this._availEnabled) {
-      this._roomAvailability = {};
-      return;
-    }
-
     const date = this._selectedDate;
     const time = this._selectedTime;
     const duration = parseInt(this._selectedDuration);

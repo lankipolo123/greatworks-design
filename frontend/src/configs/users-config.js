@@ -70,6 +70,8 @@ export const usersTableConfig = {
 
     actions: [
         { key: 'view', label: 'View', icon: 'visibility' },
+        { key: 'activate', label: 'Activate', icon: 'check_circle' },
+        { key: 'deactivate', label: 'Deactivate', icon: 'block' },
         { key: 'edit', label: 'Edit', icon: 'edit' },
         { key: 'delete', label: 'Remove', icon: 'delete' }
     ],
@@ -79,6 +81,14 @@ export const usersTableConfig = {
         // Only show edit for temporary users
         if (row.role !== 'temporary') {
             filtered = filtered.filter(a => a.key !== 'edit');
+        }
+        // Show activate only for temporary users that are not active
+        if (row.role !== 'temporary' || row.status === 'active') {
+            filtered = filtered.filter(a => a.key !== 'activate');
+        }
+        // Show deactivate only for temporary users that are active
+        if (row.role !== 'temporary' || row.status !== 'active') {
+            filtered = filtered.filter(a => a.key !== 'deactivate');
         }
         // Moderators cannot delete admin users
         if (isModerator() && row.role === 'admin') {
