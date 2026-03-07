@@ -841,7 +841,7 @@ class CustomerBooking extends LitElement {
       roomName: b.room?.name || `Room #${b.room_id}`,
       roomType: b.room?.type || '',
       locationId: b.room?.location_id ? String(b.room.location_id) : null,
-      locationName: b.room?.location || '',
+      locationName: (typeof b.room?.location === 'object' ? b.room?.location?.name : b.room?.location) || '',
       date: typeof b.date === 'string' ? b.date.split('T')[0] : b.date,
       startTime: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
       time: typeof b.start_time === 'string' ? b.start_time.substring(0, 5) : b.start_time,
@@ -1157,11 +1157,10 @@ class CustomerBooking extends LitElement {
           <span class="detail-label">Room Type</span>
           <span class="detail-value">${b.roomType ? this._formatRoomType(b.roomType) : '-'}</span>
         </div>
-        ${this._getLocationName(b.locationId) || b.locationName ? `
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${this._getLocationName(b.locationId) || b.locationName}</span>
-        </div>` : ''}
+          <span class="detail-value">${this._getLocationName(b.locationId) || b.locationName || '-'}</span>
+        </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>
           <span class="detail-value">${b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>

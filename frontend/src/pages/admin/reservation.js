@@ -387,6 +387,7 @@ class AdminReservation extends LitElement {
       roomId: r.room_id,
       roomName: r.room?.name || (r.room_id ? `Room #${r.room_id}` : 'No room'),
       locationId: r.room?.location_id ? String(r.room.location_id) : null,
+      locationName: (typeof r.room?.location === 'object' ? r.room?.location?.name : r.room?.location) || '',
       date: typeof r.date === 'string' ? r.date.split('T')[0] : r.date,
       time: typeof r.start_time === 'string' ? r.start_time.substring(0, 5) : (typeof r.time === 'string' ? r.time.substring(0, 5) : r.time),
       guests: r.guests,
@@ -757,11 +758,10 @@ class AdminReservation extends LitElement {
           <span class="detail-label">Room</span>
           <span class="detail-value">${r.roomName || 'No room assigned'}</span>
         </div>
-        ${this._getLocationName(r.locationId) ? `
         <div class="detail-item">
           <span class="detail-label">Location</span>
-          <span class="detail-value">${this._getLocationName(r.locationId)}</span>
-        </div>` : ''}
+          <span class="detail-value">${this._getLocationName(r.locationId) || r.locationName || '-'}</span>
+        </div>
         <div class="detail-item">
           <span class="detail-label">Date</span>
           <span class="detail-value">${r.date ? new Date(r.date).toLocaleDateString() : '-'}</span>
