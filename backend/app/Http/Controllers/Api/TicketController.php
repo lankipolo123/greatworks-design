@@ -68,7 +68,7 @@ class TicketController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:open,pending,progress,closed',
+            'status' => 'sometimes|in:open,pending,progress',
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
@@ -107,7 +107,7 @@ class TicketController extends Controller
         $validated = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'sometimes|in:open,pending,progress,closed',
+            'status' => 'sometimes|in:open,pending,progress',
             'priority' => 'sometimes|in:low,medium,high',
         ]);
 
@@ -117,22 +117,12 @@ class TicketController extends Controller
         if (isset($validated['status']) && $oldStatus !== $validated['status']) {
             $userName = $request->user()->name;
 
-            if ($validated['status'] === 'progress') {
+            if ($validated['status'] === 'pending') {
                 ActivityLog::create([
                     'user_id' => $request->user()->id,
                     'action' => 'status_changed',
                     'module' => 'tickets',
                     'description' => "{$userName} accepted ticket #{$ticket->id}: {$ticket->subject}",
-                    'old_values' => ['status' => $oldStatus],
-                    'new_values' => ['status' => $validated['status']],
-                    'ip_address' => $request->ip(),
-                ]);
-            } elseif ($validated['status'] === 'closed') {
-                ActivityLog::create([
-                    'user_id' => $request->user()->id,
-                    'action' => 'status_changed',
-                    'module' => 'tickets',
-                    'description' => "{$userName} completed ticket #{$ticket->id}: {$ticket->subject}",
                     'old_values' => ['status' => $oldStatus],
                     'new_values' => ['status' => $validated['status']],
                     'ip_address' => $request->ip(),

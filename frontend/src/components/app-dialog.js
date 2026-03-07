@@ -563,21 +563,6 @@ export class AppDialog extends LitElement {
           >
             Accept
           </button>
-          <button
-            class="ticket-action-btn decline"
-            @click=${() => this.handleTicketAction('decline')}
-          >
-            Decline
-          </button>
-        </div>
-      ` : ticket.status === 'progress' ? html`
-        <div class="ticket-actions">
-          <button
-            class="ticket-action-btn close"
-            @click=${() => this.handleTicketAction('close')}
-          >
-            Close Ticket
-          </button>
         </div>
       ` : ''}
     `;

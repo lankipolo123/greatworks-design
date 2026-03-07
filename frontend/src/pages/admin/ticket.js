@@ -211,13 +211,13 @@ class AdminTicket extends LitElement {
     const { action, ticket } = e.detail;
     this.showTicketDialog = false;
 
-    const statusMap = { accept: 'progress', decline: 'closed', close: 'closed' };
+    const statusMap = { accept: 'pending' };
     const newStatus = statusMap[action];
     if (!newStatus) return;
 
     try {
       await ticketsApi.update(ticket.id, { status: newStatus });
-      toast.success(`Ticket #${ticket.id} ${action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'closed'}`);
+      toast.success(`Ticket #${ticket.id} accepted`);
       await this.fetchTickets();
     } catch (err) {
       console.error('Failed to update ticket:', err);
