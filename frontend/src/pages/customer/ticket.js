@@ -468,6 +468,32 @@ class CustomerTicket extends LitElement {
     .receipt-actions button.primary-action:hover {
       background: #ffa000;
     }
+
+    .ticket-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ticket-form label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .ticket-form input,
+    .ticket-form textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1.25px solid #2d2b2b45;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .ticket-form textarea {
+      resize: vertical;
+    }
   `;
 
   constructor() {
@@ -1143,6 +1169,21 @@ class CustomerTicket extends LitElement {
     this.requestUpdate();
   }
 
+  _renderCreateForm() {
+    return html`
+      <form class="ticket-form" @submit=${this.handleCreateSubmit}>
+        <label>Subject</label>
+        <input name="subject" required placeholder="Brief summary of your issue">
+        <label>Message</label>
+        <textarea name="message" required rows="4" placeholder="Describe your issue in detail..."></textarea>
+        <app-button type="primary" size="small" .disabled=${this._submitting}
+          @click=${(e) => e.target.closest('form').requestSubmit()}>
+          ${this._submitting ? 'Submitting...' : 'Submit Ticket'}
+        </app-button>
+      </form>
+    `;
+  }
+
   _renderBookForm() {
     const today = new Date().toISOString().split('T')[0];
     const form = this.shadowRoot?.getElementById('ticket-book-form');
@@ -1327,20 +1368,7 @@ class CustomerTicket extends LitElement {
         .hideFooter=${true}
         .closeOnOverlay=${true}
         @dialog-close=${this.handleDialogClose}>
-        <form @submit=${this.handleCreateSubmit}>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <label style="font-size:0.8rem;font-weight:600;color:#333;">Subject</label>
-            <input name="subject" required placeholder="Brief summary of your issue"
-              style="padding:0.5rem 0.75rem;border:1.25px solid #2d2b2b45;border-radius:8px;font-size:0.85rem;outline:none;">
-            <label style="font-size:0.8rem;font-weight:600;color:#333;">Message</label>
-            <textarea name="message" required rows="4" placeholder="Describe your issue in detail..."
-              style="padding:0.5rem 0.75rem;border:1.25px solid #2d2b2b45;border-radius:8px;font-size:0.85rem;resize:vertical;outline:none;font-family:inherit;"></textarea>
-            <app-button type="primary" size="small" .disabled=${this._submitting}
-              @click=${(e) => e.target.closest('form').requestSubmit()}>
-              ${this._submitting ? 'Submitting...' : 'Submit Ticket'}
-            </app-button>
-          </div>
-        </form>
+        ${this._renderCreateForm()}
       </app-dialog>
 
       <!-- Book a Room Dialog (from ticket page) -->
